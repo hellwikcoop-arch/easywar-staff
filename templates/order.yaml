@@ -1,0 +1,55 @@
+# Шаблон з CONTRACT_v0_4.md, розділ 3. Не заповнюй цей файл: скопіюй у tasks/T-XXXX/ і заповни там.
+# Лише синтетичні дані (data_class: synthetic).
+
+id: T-0000
+version: 1                     # зростає лише з погодженою поправкою
+parent_task_id: null           # для дочірніх задач і власної роботи начальників
+title: ""
+
+intent:                        # ЗАДУМ
+  purpose: ""
+  end_state: [""]              # перевіряні умови
+  red_lines: ["тільки синтетичні дані"]
+
+mission: ""                    # ЗАВДАННЯ
+scope: {in: [], out: []}
+context_refs: []
+materials: []
+
+data_class: synthetic          # ADM відхиляє будь-що інше
+requester: J5
+assignee: J3                   # один виконавець
+priority: normal               # змінює лише JE
+important: false               # ознака важливої події (ставить requester, змінює JE); дає право просити третю спробу
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: false          # true: остаточно приймає JE
+
+checks:                        # ПЕРЕВІРКИ визначає наказ; якщо блоку немає, діють правила для коду
+  subject_kind: commit         # commit | file_hash | doc_version
+  verify: []                   # команди або перевірки, які мають пройти
+  review_kind: code            # code (C3) | logic (C5.4) | none
+
+resources:                     # обмеження, а не оцінки
+  max_calls: 40
+  max_tokens: null             # null, якщо провайдер не дає обліку
+  max_cost_usd: null
+  max_attempts: 2              # усього спроб на крок: перша плюс одна повторна; третя лише за рішенням JE
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "~30 хв", accuracy: estimate}   # лише інформація
+
+reporting:
+  milestones: []
+  thresholds:
+    resources_used_pct: 70
+    on_last_attempt: true
+    on_provider_limit: true
+    on_review_incomplete: true
+    on_red_line_risk: true
+
+amendments: []
