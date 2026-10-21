@@ -1,4 +1,5 @@
-# Наказ за CONTRACT_v0_4.md, розділ 3. ПРОЄКТ (ред. 22.10.2026 за вимогами J5 A–D): на остаточну перевірку J5. Набирає чинності лише
+# Наказ за CONTRACT_v0_4.md, розділ 3. Затверджено J5 (остаточний наказ 22.10.2026, tasks/T-0004/j5-final-authorization.md)
+# за рішеннями JE-T6–JE-T9; синхронізовано J3. Набирає чинності з task_accepted від C5.1. Набирає чинності лише
 # після погодження J5, злиття PR #157 (C1b) і події task_accepted від C5.1. Лише синтетичні дані.
 
 id: T-0004
@@ -12,7 +13,7 @@ intent:
     учасників, вступ за взаємною згодою, вихід, відкликання, PENDING_HISTORY і детермінована машина
     станів вступу за коротким кодом. J3 керує, технічно приймає й інтегрує.
   end_state:
-    - "src/collective-core.js, src/collective-pair-core.js, tests/collective.test.mjs, tests/collective-pair.test.mjs — у гілці codex/t-0004-c1c-membership від main після злиття PR #157"
+    - "src/collective-core.js, src/collective-pair-core.js, tests/collective.test.mjs, tests/collective-pair.test.mjs — у гілці codex/t-0004-c1c-membership від main 2106f9ed85d66c8dc3621a1e4739e3e72060b84b"
     - "журнал членства згортається детерміновано; кожна подія — з перевіркою підпису (параметр verify); невалідна подія відкидається з машинним кодом, стан не змінюється"
     - "вступ — лише за згодою кандидата І підтвердженням учасника, який має всі потрібні епохи ключів (JE-T2, К3, AC19); без епох — відмова approver-missing-epochs"
     - "відкликає адміністратор або власник; вийти може сам учасник; відкликання й вихід вимагають нової епохи, відкликаний не входить до одержувачів нової епохи (AC10, логіка)"
@@ -21,8 +22,9 @@ intent:
     - "машина станів Pair (ADR collective-pairing.md) детермінована: недозволений перехід повертає invalid-transition і не змінює стан; COMPLETE недосяжний без MEMBERSHIP_RECORDED, повних ключів і повної історії"
     - "ліміти (TTL, спроби, max_joins) — лише параметри config без значень за замовчуванням (JE-07); без config — відмова config-required"
     - "учасник без усіх епох: memberCapabilities описує, що він може; підтверджувати вступ не може; відсутні ключі ніколи не запитуються й не видаються автоматично (вимога J5, A)"
-    - "неврегульовані дії з ролями (відкликання власника чи адміністратора, вихід власника, призначення й зняття адміністратора до JE-T6) — owner-decision-required (вимога J5, B)"
-    - "нового стану EXHAUSTED немає; витрачене запрошення блокує заявки кодом invitation-exhausted (вимога J5, C)"
+    - "правила ролей JE-T6: таблиця з codex-prompt.md розділ 4 виконується повністю; власника не відкликає ніхто й він не виходить; адміністратора відкликає, призначає й знімає лише власник; невизначене — not-allowed (fail-closed)"
+    - "JE-T7: нового стану EXHAUSTED немає; joinsUsed/maxJoins; invitation-exhausted для нових заявок і для membership_recorded понад ліміт (паралельні вступи не перевищують maxJoins)"
+    - "F-15: перевірено в межах C1c — обидва нові ядра входять у C1_CORES; семантика повторів shared-table лишається tracked для C3b/C5"
     - "у власних тестах Codex перевіряє, що src/collective-core.js і src/collective-pair-core.js входять у C1_CORES межового тесту (зауваження C3 F-15)"
     - "npm run test:unit зелений; CI checks і audit — success на head-коміті; межовий тест покриває обидва нові ядра"
   red_lines:
@@ -47,7 +49,7 @@ scope:
     - "файли C1b (shared-table) і C1d (sync-policy, report-submission) — J3"
 
 context_refs:
-  - "EasyWAR main — коміт злиття PR #157 (визначає J3 у task_created)"
+  - "EasyWAR main 2106f9ed85d66c8dc3621a1e4739e3e72060b84b (злиття PR #157, C1b)"
   - "AGENTS.md (зокрема «Codex task-boundary board»); CLAUDE.md"
   - "docs/COLLECTIVES_PLAN.md: 2 (Q10в), 6 (Вступ, К3, Відкликання чи вихід, К4), 11 (AC01, AC02, AC10, AC19, AC20)"
   - "docs/adr/collective-pairing.md"
