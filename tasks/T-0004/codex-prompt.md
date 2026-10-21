@@ -1,6 +1,6 @@
 # T-0004 · Завдання для Codex (C5.1): E8 / C1c — ядро членства й машина станів вступу
 
-**Статус:** проєкт на погодження J5. Не запускати до погодження J5, злиття PR #157 і `task_accepted`.
+**Статус:** проєкт v1 (ред. 22.10.2026 за вимогами J5 A–D) на остаточну перевірку J5 і рішення JE. Не запускати до погодження J5, злиття PR #157 і `task_accepted`.
 
 ## 1. Хто ти й межі
 
@@ -51,10 +51,20 @@
 |---|---|---|---|
 | `collective_created` | `owner_member_id` | перша подія, `actor` = власник | один раз; власник має епоху 0 |
 | `member_admitted` | `member_id`, `request_id`, `candidate_consent: true`, `approver_member_id` | `actor` = `approver_member_id` | лише за згодою кандидата **і** підтвердженням чинного учасника, який має **всі** епохи (JE-T2, К3, AC19). Наявність епох — функція-параметр `heldEpochs(memberId) → number[]`, порівнюється з `state.epochs` |
-| `member_revoked` | `member_id` | `owner` або `admin` | власника не відкликає ніхто (до окремого рішення) |
-| `member_left` | — | сам учасник | власник не виходить (до окремого рішення) |
-| `admin_granted`, `admin_revoked` | `member_id` | лише `owner` (до окремого рішення) | |
+| `member_revoked` | `member_id` звичайного учасника | `owner` або `admin` (Q10в) | відкликання власника чи адміністратора — `owner-decision-required` |
+| `member_left` | — | сам учасник, крім власника | вихід власника — `owner-decision-required` |
+| `admin_granted`, `admin_revoked` | `member_id` | — | **до рішення JE-T6** — `owner-decision-required` для будь-кого; адміністратор не має прав власника автоматично |
 | `role_label_set` | `label` (1–60 символів, без керівних символів) | сам учасник | |
+
+**Неврегульовані дії не дозволяються:** будь-яка дія з ролями, якої немає в таблиці, повертає
+`owner-decision-required` (fail-closed). Правила JE-T6 (`j5-brief.md`, розділ B), якщо JE їх
+затвердить, J3 внесе в цей розділ до запуску.
+
+**Учасник без усіх епох ключів** (уточнення J5, A): лишається учасником; читає дані лише тих
+епох, ключі яких має; не може підтверджувати вступ (`approver-missing-epochs`) і передавати
+ключі; ядро **ніколи** не запитує й не видає відсутні ключі автоматично. Експорт
+`memberCapabilities(state, memberId, { heldEpochs }) → { isMember, heldEpochs, missingEpochs,
+canApproveJoin, canUseCurrentEpoch }` — лише опис, без дій.
 
 `member_revoked` і `member_left` вимагають нової епохи: `state.epochs` отримує нову епоху, а
 `epochRecipients(state, epoch)` повертає лише чинних учасників (AC10, логіка; розсилку ключів робить C2).
@@ -65,7 +75,7 @@
 |---|---|
 | `ROLE_KINDS`, `EVENT_TYPES` | заморожені |
 | `membershipState(events, { verify, heldEpochs })` | згортання в заданому порядку; повтор `event_id` з тими самими канонічними байтами — пропуск, з іншими — `integrity_violation` у `state.rejected`; без `verify` або з `verify !== true` (у т. ч. виняток) — подія відкинута; невалідна подія — у `state.rejected` з машинним кодом (`bad-signature`, `not-allowed`, `approver-missing-epochs`, `no-candidate-consent`, `not-a-member`, `owner-protected`, `invalid-event`, …), стан учасників не змінюється |
-| `isMember(state, id)`, `roleOf(state, id)`, `canApprove(state, id, { heldEpochs })` | `canApprove` — чинний учасник із усіма епохами |
+| `isMember(state, id)`, `roleOf(state, id)`, `canApprove(state, id, { heldEpochs })`, `memberCapabilities(...)` | `canApprove` — чинний учасник із усіма епохами |
 | `canRevoke(state, actorId, targetId)` | owner/admin; не власника |
 | `epochRecipients(state, epoch)` | чинні учасники для епохи |
 | `adminWarnings(state)` | `['single-admin']`, якщо власник + адміністратори < 2 (К4, AC20) |
@@ -76,9 +86,11 @@
 Стани запиту (ADR): `DRAFT → ACTIVE → JOIN_REQUESTED → SAS_VERIFIED → APPROVED_BOTH →
 MEMBERSHIP_RECORDED → KEYS_DISTRIBUTED → HISTORY_VERIFIED → COMPLETE`; гілки `EXPIRED`, `REVOKED`,
 `REJECTED`, `RATE_LIMITED`, `WAITING_FOR_APPROVAL`, `PENDING_HISTORY`, `ERROR_RETRYABLE`.
-`DRAFT` і `ACTIVE` — стани запрошення; запрошення також може бути `EXPIRED`, `REVOKED`,
-`RATE_LIMITED` або `EXHAUSTED` (витрачено: особисте — після першого `MEMBERSHIP_RECORDED`,
-групове — після `max_joins`).
+`DRAFT` і `ACTIVE` — стани запрошення; запрошення також може бути `EXPIRED`, `REVOKED` або
+`RATE_LIMITED`. **Нового стану `EXHAUSTED` не вводити** (вимога J5, C: до затвердження контракту).
+Витрачене запрошення лишається `ACTIVE`, а лічильник `joinsUsed` (зростає при
+`membership_recorded`) блокує нові заявки: `join_requested` при `joinsUsed ≥ maxJoins` →
+`{ ok: false, code: 'invitation-exhausted' }`. Особисте — `maxJoins = 1`.
 
 **Config** (обов'язковий, без значень за замовчуванням — JE-07): `{ maxAttempts, maxActiveRequests,
 profileHasPassword }`. Без config або з `profileHasPassword !== true` — `config-required` /
@@ -116,10 +128,10 @@ expiresAt`, ліміти; той самий `requestId` з тими самими
 
 Членство: AC01 (кілька колективів одного профілю без витоку повноважень — два незалежні стани),
 AC02 (згода обох; підроблений підпис і підроблений `member_id`; відкликання; вихід), AC19
-(підтверджувач без усіх епох — відмова), AC10 (відкликаний не в одержувачах нової епохи), AC20
-(попередження), захист власника, повтор і цілісність `event_id`, незмінність стану, ключі прототипу.
+(підтверджувач без усіх епох — відмова; `memberCapabilities` не дає підтверджувати й не видає ключів), AC10 (відкликаний не в одержувачах нової епохи), AC20
+(попередження), захист власника й `owner-decision-required` для всіх неврегульованих дій з ролями, повтор і цілісність `event_id`, незмінність стану, ключі прототипу.
 
-Pair: P01 (особисте: повний шлях до `COMPLETE`, запрошення `EXHAUSTED`), P02 (групове на 20: 20
+Pair: P01 (особисте: повний шлях до `COMPLETE`; друга заявка — `invitation-exhausted`, запрошення лишається `ACTIVE`), P02 (групове на 20: 20
 окремих вступів, 21-й — відмова), P03 (прострочення, ліміт спроб, `RATE_LIMITED`), P04 (повтор
 події не переприв'язує; `request-id-conflict`), P05 (запрошувач недоступний — `WAITING_FOR_APPROVAL`,
 без ключів), P06 (SAS не збігся — `REJECTED`), P07 (той самий `requestId` двічі — ідемпотентно), P08
