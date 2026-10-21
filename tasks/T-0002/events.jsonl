@@ -1,0 +1,2 @@
+{"seq":1,"event":"task_created","task_id":"T-0002","task_version":1,"by":"JE","at":"2026-10-21T18:40:00+03:00","ref":"tasks/T-0002/je-order.md","note":"Наказ JE T-0002 v1 затверджено; рішення JE-01, JE-T1..JE-T5, JE-02"}
+{"seq":2,"event":"task_accepted","task_id":"T-0002","task_version":1,"by":"J3","at":"2026-10-21T15:42:03+00:00","ref":"tasks/T-0002/order.yaml","note":"Прийнято до виконання; база EasyWAR main 611841c88a981f9c29fe396f437bae9806e2fae5"}

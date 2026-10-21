@@ -1,0 +1,23 @@
+task_id: T-0002
+task_version: 1
+seq: 1
+author: J3
+kind: milestone
+at: 2026-10-21T15:42:03+00:00
+subject: {kind: doc_version, ref: "tasks/T-0002/order.yaml v1"}
+situation:
+  current_step: "наказ зафіксовано; старт C1a"
+  tool_results_refs: []
+  done: ["order.yaml, brief.md, je-order.md записано в tasks/T-0002/", "події task_created і task_accepted записано"]
+verified:
+  - claim: "База EasyWAR для C1a — main 611841c88a981f9c29fe396f437bae9806e2fae5"
+    evidence: {kind: commit, ref: "611841c88a981f9c29fe396f437bae9806e2fae5"}
+    subject_ref: "611841c88a981f9c29fe396f437bae9806e2fae5"
+claimed: []
+deviation: null
+decision_needed: []
+remaining: ["C1a", "C1b", "C1c", "C1d"]
+next_action: "реалізувати C1a"
+notes:
+  - "ADM як скрипта немає (розділ 26): card_created не створено; журнал веде J3 вручну, роль ADM — людина за чек-листом розділу 6"
+  - "Облік викликів — estimate, зведення в донесеннях на рубежах"
