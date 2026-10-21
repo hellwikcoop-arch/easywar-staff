@@ -1,0 +1,18 @@
+{
+  "$comment": "Дозволені ребра маршрутизації. Усе, чого тут немає, J4 відхиляє з кодом route-denied. Горизонтальні J3↔J5 — запити, не накази (розділ 1).",
+  "routes": [
+    {"from": "J3", "to": "J5", "kinds": ["request", "response", "report", "ack"]},
+    {"from": "J5", "to": "J3", "kinds": ["request", "response", "ack"]},
+    {"from": "J5", "to": "C5.1", "kinds": ["request"], "requires_task_accepted": true},
+    {"from": "J5", "to": "C5.1-R", "kinds": ["request"], "requires_task_accepted": true},
+    {"from": "J3", "to": "C5.1-R", "kinds": ["request"], "requires_task_accepted": true},
+    {"from": "J3", "to": "C3", "kinds": ["request"]},
+    {"from": "C5.1", "to": "J5", "kinds": ["report", "response"]},
+    {"from": "C5.1", "to": "J3", "kinds": ["handoff"]},
+    {"from": "C5.1-R", "to": "J5", "kinds": ["review"]},
+    {"from": "C5.1-R", "to": "J3", "kinds": ["review"]},
+    {"from": "C3", "to": "J3", "kinds": ["review"]},
+    {"from": "*", "to": "JE", "kinds": ["escalation"]},
+    {"from": "JE", "to": "*", "kinds": ["command", "decision"]}
+  ]
+}

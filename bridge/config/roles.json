@@ -1,0 +1,63 @@
+{
+  "$comment": "Права ролей J4 Bridge v0.1. Джерело: CONTRACT_v0_4.md, розділи 1, 2, 17, 19. Роль відправника визначає J4 за адаптером, а не за текстом повідомлення.",
+  "roles": {
+    "JE": {
+      "kind": "human",
+      "origin": ["human_cli"],
+      "may_send": ["command", "decision"],
+      "adapter": "escalation",
+      "note": "Командир. Повідомлення від JE приймаються лише з людського входу, ніколи з відповіді агента."
+    },
+    "J3": {
+      "kind": "agent",
+      "runtime": "Claude Code",
+      "origin": ["agent_cli", "adapter"],
+      "may_send": ["request", "response", "report", "ack", "escalation"],
+      "adapter": "inbox",
+      "repo_write": "branch_and_pr",
+      "may_merge": false,
+      "note": "Злиття — лише за правилами JE-T5 поза мостом; міст злиттів не виконує."
+    },
+    "J5": {
+      "kind": "agent",
+      "runtime": "OpenAI Responses API",
+      "origin": ["adapter"],
+      "may_send": ["response", "request", "ack", "escalation"],
+      "may_task": ["C5.1"],
+      "adapter": "openai",
+      "repo_write": "none",
+      "tools": "none",
+      "note": "Без інструментів і без доступу до репозиторію; бачить лише тіло повідомлення й позначені посилання."
+    },
+    "C5.1": {
+      "kind": "agent",
+      "runtime": "Codex CLI",
+      "origin": ["adapter"],
+      "may_send": ["report", "response", "handoff"],
+      "adapter": "codex",
+      "repo_write": "own_branch",
+      "sandbox": "workspace-write",
+      "may_merge": false
+    },
+    "C5.1-R": {
+      "kind": "agent",
+      "runtime": "Codex CLI (окремий запуск)",
+      "origin": ["adapter"],
+      "may_send": ["review"],
+      "adapter": "codex",
+      "repo_write": "none",
+      "sandbox": "read-only",
+      "independent_of": "C5.1",
+      "note": "Незалежна рецензія: інший запуск, лише читання, автор коду не рецензує себе (розділ 18)."
+    },
+    "C3": {
+      "kind": "agent",
+      "runtime": "Claude (рецензент J3)",
+      "origin": ["adapter"],
+      "may_send": ["review"],
+      "adapter": "inbox",
+      "repo_write": "none",
+      "sandbox": "read-only"
+    }
+  }
+}
