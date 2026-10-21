@@ -45,6 +45,10 @@ export class J4 {
   }
 
   nextId(kind, taskId) {
+    return this.store.locked('counters', () => this.nextIdUnlocked(kind, taskId));
+  }
+
+  nextIdUnlocked(kind, taskId) {
     const c = this.store.readJson('counters.json', {});
     const key = `${kind}:${taskId}`;
     c[key] = (c[key] ?? 0) + 1;

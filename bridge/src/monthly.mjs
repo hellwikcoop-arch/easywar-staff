@@ -9,6 +9,7 @@
 // Stub-виклики сюди не потрапляють: облік ведеться лише для живих (платних) адаптерів.
 import fs from 'node:fs';
 import path from 'node:path';
+import { withFileLock } from './store.mjs';
 
 export const USD = 1_000_000;
 export const LEVELS = [
@@ -25,10 +26,6 @@ export function toMicro(usd) {
   return Math.ceil(Number(usd) * USD);
 }
 
-function sleepSync(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
 export class MonthlyBudget {
   constructor(file, cfg) {
     this.file = path.resolve(file);
@@ -40,26 +37,15 @@ export class MonthlyBudget {
   }
 
   withLock(fn) {
-    const lock = `${this.file}.lock`;
-    const deadline = Date.now() + (this.cfg.lock_timeout_ms ?? 5000);
-    for (;;) {
-      try {
-        fs.writeFileSync(lock, String(process.pid), { flag: 'wx', mode: 0o600 });
-        break;
-      } catch (e) {
-        if (e.code !== 'EEXIST') throw e;
-        if (Date.now() > deadline) {
-          const err = new Error('monthly-lock-timeout');
-          err.code = 'monthly-lock-timeout';
-          throw err;
-        }
-        sleepSync(20);
-      }
-    }
     try {
-      return fn();
-    } finally {
-      fs.rmSync(lock, { force: true });
+      return withFileLock(`${this.file}.lock`, fn, { timeoutMs: this.cfg.lock_timeout_ms ?? 5000 });
+    } catch (e) {
+      if (e.code === 'lock-timeout') {
+        const err = new Error('monthly-lock-timeout');
+        err.code = 'monthly-lock-timeout';
+        throw err;
+      }
+      throw e;
     }
   }
 

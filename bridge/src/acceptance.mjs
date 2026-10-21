@@ -28,9 +28,10 @@ export function acceptanceReady({ subject, checks = [], reviews = [], acceptance
   const req = [...requiredRoles];
   if (keyDecision) req.push(['JE', 'key_decision']);
   for (const [by, role] of req) {
-    if (!acceptances.some((a) => a.by === by && a.role === role && a.subject === subject && a.evidence_ref && a.result !== 'rejected')) {
-      missing.push(`acceptance-${by}-${role}-missing`);
-    }
+    // діє останній запис ролі на цьому SHA; прийнятим вважається лише явне accepted (F-1, C3)
+    const last = acceptances.filter((a) => a.by === by && a.role === role && a.subject === subject).at(-1);
+    if (!last) missing.push(`acceptance-${by}-${role}-missing`);
+    else if (last.result !== 'accepted' || !last.evidence_ref) missing.push(`acceptance-${by}-${role}-not-accepted`);
   }
   return { ready: missing.length === 0, missing };
 }

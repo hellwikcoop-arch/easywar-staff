@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { canonical, sha256 } from './protocol.mjs';
 import { scanObject } from './scanner.mjs';
+import { withFileLock } from './store.mjs';
 
 const GENESIS = '0'.repeat(64);
 
@@ -28,11 +29,24 @@ export class Ledger {
     const { entries, partial } = this.readAll();
     if (partial === null) return null;
     const kept = entries.map((e) => JSON.stringify(e)).join('\n');
-    fs.writeFileSync(this.file, kept ? `${kept}\n` : '');
+    // атомарно: тимчасовий файл, fsync, rename (F-7, C3)
+    const tmp = `${this.file}.repair-${process.pid}`;
+    const fd = fs.openSync(tmp, 'w');
+    try {
+      fs.writeSync(fd, kept ? `${kept}\n` : '');
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tmp, this.file);
     return this.append({ event: 'ledger_repaired', at: now, detail: { dropped_bytes: Buffer.byteLength(partial), dropped_sha256: sha256(partial) } });
   }
 
   append(entry) {
+    return withFileLock(`${this.file}.lock`, () => this.appendUnlocked(entry));
+  }
+
+  appendUnlocked(entry) {
     const leaks = scanObject(entry);
     if (leaks.length) {
       const e = new Error('ledger-leak');

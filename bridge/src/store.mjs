@@ -15,6 +15,10 @@ export class Store {
     return path.join(this.home, ...parts);
   }
 
+  locked(name, fn) {
+    return withFileLock(this.p(`${name}.lock`), fn);
+  }
+
   writeJson(rel, obj) {
     const file = this.p(rel);
     fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
@@ -89,5 +93,40 @@ function pidAlive(pid) {
     return true;
   } catch (e) {
     return e.code === 'EPERM';
+  }
+}
+
+// Короткий ексклюзивний файловий замок із відновленням після загиблого власника (F-4, F-6, C3).
+export function withFileLock(lockFile, fn, { timeoutMs = 5000, staleMs = 30000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      fs.writeFileSync(lockFile, JSON.stringify({ pid: process.pid, at: Date.now() }), { flag: 'wx', mode: 0o600 });
+      break;
+    } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      let held = null;
+      try {
+        held = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+      } catch {
+        held = null;
+      }
+      const dead = !held || (held.pid !== process.pid && !pidAlive(held.pid)) || Date.now() - (held.at ?? 0) > staleMs;
+      if (dead) {
+        fs.rmSync(lockFile, { force: true });
+        continue;
+      }
+      if (Date.now() > deadline) {
+        const err = new Error('lock-timeout');
+        err.code = 'lock-timeout';
+        throw err;
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 15);
+    }
+  }
+  try {
+    return fn();
+  } finally {
+    fs.rmSync(lockFile, { force: true });
   }
 }

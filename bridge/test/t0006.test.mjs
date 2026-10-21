@@ -196,7 +196,7 @@ const ok = (subject = SHA_A) => ({
   subject,
   checks: [{ subject, passed: true, evidence_ref: 'log' }],
   reviews: [{ by: 'C3', subject, review_status: 'complete', verdict: 'passed', evidence_ref: 'r' }],
-  acceptances: [{ by: 'J3', role: 'technical', subject, evidence_ref: 'a' }, { by: 'J5', role: 'content', subject, evidence_ref: 'b' }],
+  acceptances: [{ by: 'J3', role: 'technical', subject, evidence_ref: 'a', result: 'accepted' }, { by: 'J5', role: 'content', subject, evidence_ref: 'b', result: 'accepted' }],
 });
 
 test('бар\'єр приймання: усе на одному SHA', () => {
@@ -229,4 +229,71 @@ test('done лише ADM і лише після бар\'єра; докази з e
   const ev = evidenceFromEvents(root, 'T-0900');
   const r = acceptanceReady({ subject: SHA_A, checks: [{ subject: SHA_A, passed: true, evidence_ref: 'log' }], ...ev });
   assert.deepEqual(r.missing, ['acceptance-J5-content-missing']);
+});
+
+// --- виправлення за рецензією C3 (T-0006, донесення C3 на b83cd93)
+import { Ledger, verifyLedger } from '../src/ledger.mjs';
+import { validateMessage } from '../src/protocol.mjs';
+
+test('F-1: пізніше відхилення скасовує приймання; лише явне accepted', () => {
+  const base = ok();
+  base.acceptances.push({ by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'c', result: 'rejected' });
+  assert.ok(acceptanceReady(base).missing.includes('acceptance-J5-content-not-accepted'));
+  const pending = ok();
+  pending.acceptances[1].result = 'pending';
+  assert.ok(acceptanceReady(pending).missing.includes('acceptance-J5-content-not-accepted'));
+  const fixed = ok();
+  fixed.acceptances.push({ by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'd', result: 'rejected' }, { by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'e', result: 'accepted' });
+  assert.equal(acceptanceReady(fixed).ready, true);
+});
+
+test('F-5: довжина й формат полів, що потрапляють у журнал', () => {
+  const root = tmpStaff();
+  const codes = (d) => validateMessage(d, { draft: true }).map((x) => x.field);
+  assert.ok(codes(draft(root, { subject: { kind: 'doc_version', ref: 'x'.repeat(20000) } })).includes('subject.ref'));
+  assert.deepEqual(codes(draft(root, { subject: { kind: 'doc_version', ref: 'contract-v0.4@2026-10-22' } })), []);
+  assert.ok(codes(draft(root, { contract: { version: 'x'.repeat(500), sha256: 'a'.repeat(64) } })).includes('contract'));
+  assert.ok(codes(draft(root, { thread_id: 'довільний текст' })).includes('thread_id'));
+  assert.ok(codes(draft(root, { in_reply_to: 'довільний текст' })).includes('in_reply_to'));
+});
+
+test('F-4: паралельні процеси send не рвуть ланцюг журналу й не дублюють msg_id', () => {
+  const root = tmpStaff();
+  const mod = (f) => new URL(`../src/${f}`, import.meta.url).href;
+  const sf = path.join(root, 'send.mjs');
+  fs.writeFileSync(sf, `import { J4 } from '${mod('router.mjs')}'; import { loadConfig } from '${mod('policy.mjs')}';
+    import { PROTOCOL, sha256 } from '${mod('protocol.mjs')}'; import fs from 'node:fs';
+    const root = ${JSON.stringify(root)};
+    const j4 = new J4({ config: loadConfig(), home: root + '/.j4', ledgerFile: root + '/ledger.jsonl', staffRoot: root, env: {} });
+    const c = { version: '0.4', sha256: sha256(fs.readFileSync(root + '/CONTRACT_v0_4.md')) };
+    for (let i = 0; i < 3; i++) j4.submit({ protocol: PROTOCOL, task_id: 'T-09' + process.argv[2], task_version: 1, contract: c, subject: { kind: 'commit', ref: '${SHA_A}' }, from: 'J3', to: 'J5', kind: 'request', decision_level: 'A', data_class: 'synthetic', body: { summary: 'p' + process.argv[2] + '-' + i } }, { origin: 'agent_cli' });`);
+  const procs = ['10', '11', '12', '13'].map((n) => spawnSync(process.execPath, [sf, n], { encoding: 'utf8' }));
+  for (const p of procs) assert.equal(p.status, 0, p.stderr);
+  const v = verifyLedger(path.join(root, 'ledger.jsonl'));
+  assert.equal(v.ok, true, JSON.stringify(v.problems));
+  assert.equal(v.entries, 12);
+  const ids = events(root, 'message_accepted').map((e) => e.msg_id);
+  assert.equal(new Set(ids).size, 12);
+});
+
+test('F-6: замок загиблого процесу не блокує облік назавжди', () => {
+  const root = tmpStaff();
+  const f = path.join(root, 'm.json');
+  fs.writeFileSync(`${f}.lock`, JSON.stringify({ pid: 999999, at: Date.now() }));
+  assert.equal(new MonthlyBudget(f, CFG).reserve('a', toMicro(1), T0).ok, true);
+  assert.equal(fs.existsSync(`${f}.lock`), false);
+});
+
+test('F-7: ремонт журналу атомарний і зберігає цілі записи', () => {
+  const root = tmpStaff();
+  const f = path.join(root, 'l.jsonl');
+  const l = new Ledger(f);
+  l.append({ event: 'a', at: 'x' });
+  l.append({ event: 'b', at: 'y' });
+  fs.appendFileSync(f, '{"event":"c"');
+  l.repairIfNeeded('z');
+  const v = verifyLedger(f);
+  assert.equal(v.ok, true);
+  assert.equal(v.entries, 3);
+  assert.deepEqual(fs.readdirSync(root).filter((x) => x.startsWith('l.jsonl.')), []);
 });
