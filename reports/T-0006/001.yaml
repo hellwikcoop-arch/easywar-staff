@@ -1,0 +1,52 @@
+task_id: T-0006
+task_version: 1
+seq: 1
+author: J3
+kind: before_handoff
+at: 2026-10-21T22:08:47+00:00
+subject: {kind: commit, ref: 359178c7396067fb5e0a81abdbddbbc73e75ec59}
+
+base_sha: 3f0af115c2fb012b63212012ddf8276b8c05e77b
+head_sha: 359178c7396067fb5e0a81abdbddbbc73e75ec59
+pr_url: https://github.com/hellwikcoop-arch/easywar-staff/pull/4
+contract_amendments_status:
+  CONTRACT_v0_4.md: "розділи 1, 2, 9а, 25.1 (D-10…D-20) — лише затверджені A-T5-01…07; A-T5-08 відкладено; розділи 16–20 сторони J5 не змінено"
+  amendments_file: "tasks/T-0005/amendments.md — статуси й decided_by JE 2026-10-22"
+  A-T5-09: "EasyWAR AGENTS.md — окремий PR https://github.com/hellwikcoop-arch/EasyWAR/pull/159 (чернетка, коміт c910cb6c9eabdf927fc469536f6feaf6a30da273)"
+  narrowing_for_JE: "A-T5-01 і A-T5-09 звужено проти проєкту: без маршрутизації C5.1 (A-T5-08 відкладено), C5.1-R не замінює C3 (умова A-T5-07)"
+security_review: {ref: reports/T-0006/c3-reviews.yaml, rounds: 3}
+tests_passed: {value: "68/68", evidence: {kind: log, ref: "node --test 'bridge/test/*.test.mjs' — сеанс J3 і C3 на 359178c7396067fb5e0a81abdbddbbc73e75ec59"}, subject_ref: 359178c7396067fb5e0a81abdbddbbc73e75ec59}
+budget_tests:
+  - "місячні пороги 35/45/50 і блок на 50 (t0006.test.mjs)"
+  - "резерв верхньої межі; паралельні процеси не перевищують стелю (3 процеси, 16 × $3 ≤ $50)"
+  - "облік переживає перезапуск і зміну задачі; пошкоджений файл — відмова"
+  - "невідома вартість і збій виклику — весь резерв як estimate; stub не рахується"
+  - "живий шлях через J4 (fake fetch): 9 викликів по $5, warning_35, critical_45, 10-й заблоковано"
+  - "погодження без моделі/ціни недійсне; погодження не піднімає стелю"
+C3_verdict: {review_status: complete, verdict: passed, subject_ref: 359178c7396067fb5e0a81abdbddbbc73e75ec59, ref: reports/T-0006/c3-reviews.yaml}
+J3_technical_acceptance: {result: accepted, subject_ref: 359178c7396067fb5e0a81abdbddbbc73e75ec59, ref: reports/T-0006/001.yaml}
+J5_content_acceptance: pending
+PR3_disposition: "не злито; закрити як замінений T-0006 після штатного злиття PR #4 (посилання на merge SHA)"
+resources_used:
+  J3_calls: {value: 27, limit: 30, accuracy: estimate}
+  C3_calls: {value: 20, limit: "10 на первинну рецензію", accuracy: exact, note: "первинна 10 + дві повторні 6 і 4; повторні рецензії наказ окремо не лімітує — на розсуд JE"}
+  fix_attempts: {value: 2, limit: 2, accuracy: exact}
+  paid_api_calls: {value: 0, accuracy: exact}
+verified:
+  - {claim: "CI test success на cec9281; на 359178c7396067fb5e0a81abdbddbbc73e75ec59 — див. PR #4", evidence: {kind: log, ref: "GitHub check-runs"}, subject_ref: 359178c7396067fb5e0a81abdbddbbc73e75ec59}
+  - {claim: "мутації F-1 (перший запис замість останнього) і F-10 (старий критерій замка) ламають тести", evidence: {kind: log, ref: "сеанс J3"}, subject_ref: 359178c7396067fb5e0a81abdbddbbc73e75ec59}
+claimed:
+  - "тест F-4 (паралельні send) не ловить мутацію без замка — гонка не відтворюється стабільно; F-4 закрито кодом і рецензією C3"
+remaining_risks:
+  - "F-2 (JE): місячний облік — локальний файл; у CI обнуляється з runner; перед першим живим викликом — постійне сховище"
+  - "F-3 (JE): --human у локальному CLI = довіра до користувача ОС"
+  - "F-9 (JE): приймання в events.jsonl не прив'язані до автора; ловить лише рецензія PR"
+  - "F-8: хибна ескалація у вузькому вікні збою (без подвійної доставки)"
+  - "F-14…F-16 (low): argv claude; залишкове вікно гонки замка; зависання withFileLock, якщо шлях замка — каталог"
+decisions_needed_from_JE:
+  - "F-2: де зберігати місячний облік для живого режиму (локальний постійний файл, гілка, зовнішнє сховище)"
+  - "F-3, F-9: прийняти залишковий ризик чи розділити користувачів ОС / вимагати підпис приймань"
+  - "звуження формулювань A-T5-01 і A-T5-09 — підтвердити"
+  - "перевищення ліміту C3 повторними рецензіями (20 проти 10) — визнати чи ні"
+  - "F-16 — виправити окремою дрібною задачею (спроби T-0006 вичерпано)"
+next_action: "J5: змістове приймання на 359178c7396067fb5e0a81abdbddbbc73e75ec59"
