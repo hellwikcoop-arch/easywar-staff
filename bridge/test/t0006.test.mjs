@@ -164,7 +164,7 @@ test('погодження JE не піднімає місячну стелю й
 test('збій живого виклику: резерв зараховано як оцінку; stub не потрапляє в місячний облік', async () => {
   const root = tmpStaff();
   approval(root);
-  const failing = { name: 'openai', mode: 'sync', live: true, requiredEnv: ['OPENAI_API_KEY'], call: async () => { throw new AdapterError('http-400'); } };
+  const failing = { name: 'openai', mode: 'sync', live: true, outputLimit: true, requiredEnv: ['OPENAI_API_KEY'], call: async () => { throw new AdapterError('http-400'); } };
   const j4 = makeJ4(root, { adapters: { J5: failing }, env: LIVE_ENV, now: () => T0 });
   j4.submit(draft(root), { origin: 'agent_cli' });
   await j4.process();
@@ -296,4 +296,43 @@ test('F-7: ремонт журналу атомарний і зберігає ц
   assert.equal(v.ok, true);
   assert.equal(v.entries, 3);
   assert.deepEqual(fs.readdirSync(root).filter((x) => x.startsWith('l.jsonl.')), []);
+});
+
+// --- повторна рецензія C3 на cec9281: F-10…F-13
+import { withFileLock } from '../src/store.mjs';
+import { checkLive } from '../src/gate.mjs';
+
+test('F-10: живий замок не знімається — ні порожній свіжий, ні старий живого pid; чужий замок не звільняється', () => {
+  const root = tmpStaff();
+  const lf = path.join(root, 'x.lock');
+  fs.writeFileSync(lf, ''); // свіжий нечитаний замок (вікно створення в старій схемі)
+  assert.throws(() => withFileLock(lf, () => 1, { timeoutMs: 100 }), /lock-timeout/);
+  fs.writeFileSync(lf, JSON.stringify({ pid: process.ppid, at: Date.now() - 3600_000, nonce: 'x' })); // живий, старий
+  assert.throws(() => withFileLock(lf, () => 1, { timeoutMs: 100 }), /lock-timeout/);
+  fs.writeFileSync(lf, JSON.stringify({ pid: 999999, at: Date.now(), nonce: 'dead' })); // мертвий
+  // fn підміняє замок «чужим» — після виходу чужий замок лишається
+  withFileLock(lf, () => fs.writeFileSync(lf, JSON.stringify({ pid: process.ppid, at: Date.now(), nonce: 'other' })));
+  assert.equal(JSON.parse(fs.readFileSync(lf, 'utf8')).nonce, 'other');
+  fs.rmSync(lf);
+  const old = Date.now() / 1000 - 3600;
+  fs.writeFileSync(lf, '');
+  fs.utimesSync(lf, old, old); // нечитаний і старий — знімається
+  assert.equal(withFileLock(lf, () => 7, { timeoutMs: 100 }), 7);
+  assert.equal(fs.existsSync(lf), false);
+});
+
+test('F-11: ідентифікатори J4 з великими лічильниками приймаються', () => {
+  const root = tmpStaff();
+  const f = (d) => validateMessage(d, { draft: true }).map((x) => x.field);
+  assert.deepEqual(f(draft(root, { thread_id: 'TH-T-0006-1000', in_reply_to: 'M-T-0006-10000' })), []);
+});
+
+test('F-13: живий адаптер без стелі виходу або без max_output_tokens не допускається', () => {
+  const root = tmpStaff();
+  approval(root);
+  const base = { taskId: 'T-0900', env: LIVE_ENV, approvalFile: path.join(root, 'approval.json'), now: T0 };
+  const defaults = loadConfig().limits.defaults;
+  assert.equal(checkLive({ ...base, adapter: { name: 'openai', requiredEnv: [] }, defaults }).code, 'adapter-output-unbounded');
+  assert.equal(checkLive({ ...base, adapter: { name: 'openai', outputLimit: true, requiredEnv: [] }, defaults: { ...defaults, max_output_tokens: undefined } }).code, 'max-output-tokens-missing');
+  assert.equal(checkLive({ ...base, adapter: { name: 'openai', outputLimit: true, requiredEnv: [] }, defaults }).ok, true);
 });

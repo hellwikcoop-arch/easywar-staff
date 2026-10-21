@@ -26,6 +26,10 @@ export class Ledger {
 
   // Обірваний останній рядок (збій під час запису) відкидається й фіксується подією.
   repairIfNeeded(now) {
+    return withFileLock(`${this.file}.lock`, () => this.repairUnlocked(now));
+  }
+
+  repairUnlocked(now) {
     const { entries, partial } = this.readAll();
     if (partial === null) return null;
     const kept = entries.map((e) => JSON.stringify(e)).join('\n');
@@ -39,7 +43,7 @@ export class Ledger {
       fs.closeSync(fd);
     }
     fs.renameSync(tmp, this.file);
-    return this.append({ event: 'ledger_repaired', at: now, detail: { dropped_bytes: Buffer.byteLength(partial), dropped_sha256: sha256(partial) } });
+    return this.appendUnlocked({ event: 'ledger_repaired', at: now, detail: { dropped_bytes: Buffer.byteLength(partial), dropped_sha256: sha256(partial) } });
   }
 
   append(entry) {

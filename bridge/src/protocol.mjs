@@ -19,8 +19,8 @@ const SHA256_RE = /^[0-9a-f]{64}$/;
 // межі довжини й формату полів, що потрапляють у журнал (F-5, C3)
 const DOCVER_RE = /^[A-Za-z0-9._:@/-]{1,128}$/;
 const VERSION_RE = /^\d{1,3}(\.\d{1,3}){1,2}$/;
-const THREAD_RE = /^TH-T-\d{4}-\d{3}$/;
-const MSG_RE = /^M-T-\d{4}-\d{4}$/;
+const THREAD_RE = /^TH-T-\d{4}-\d{3,6}$/;
+const MSG_RE = /^M-T-\d{4}-\d{4,7}$/;
 const REF_RE = /^[A-Za-z0-9._\-/]+(@[0-9a-f]{7,64})?$/;
 
 export function sha256(data) {

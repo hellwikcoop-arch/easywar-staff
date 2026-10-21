@@ -38,6 +38,7 @@ export function openaiAdapter({ fetchImpl = globalThis.fetch, baseUrl = 'https:/
     name: 'openai',
     mode: 'sync',
     live: true,
+    outputLimit: true, // max_output_tokens у запиті
     requiredEnv: ['OPENAI_API_KEY'],
     async call({ instructions, input, model, limits }) {
       const body = buildRequest({ model, instructions, input, maxOutputTokens: limits.max_output_tokens });

@@ -96,37 +96,82 @@ function pidAlive(pid) {
   }
 }
 
-// Короткий ексклюзивний файловий замок із відновленням після загиблого власника (F-4, F-6, C3).
+// Короткий ексклюзивний файловий замок (F-4, F-6, F-10 — C3).
+// Створення атомарне разом із вмістом: тимчасовий файл + link() (EEXIST, якщо замок є).
+// Замок живого процесу не знімається ніколи, хоч би скільки він тримався. Знімається лише замок
+// мертвого pid або нечитаний замок, старший за staleMs; перехоплення — через rename на унікальне ім'я
+// з повторною перевіркою вмісту. Звільняє замок лише власник (збіг nonce).
 export function withFileLock(lockFile, fn, { timeoutMs = 5000, staleMs = 30000 } = {}) {
+  const nonce = `${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const mine = JSON.stringify({ pid: process.pid, at: Date.now(), nonce });
   const deadline = Date.now() + timeoutMs;
+  const wait = () => {
+    if (Date.now() > deadline) {
+      const err = new Error('lock-timeout');
+      err.code = 'lock-timeout';
+      throw err;
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 15);
+  };
   for (;;) {
+    const tmp = `${lockFile}.new-${nonce}`;
+    fs.writeFileSync(tmp, mine, { mode: 0o600 });
     try {
-      fs.writeFileSync(lockFile, JSON.stringify({ pid: process.pid, at: Date.now() }), { flag: 'wx', mode: 0o600 });
+      fs.linkSync(tmp, lockFile);
+      fs.rmSync(tmp, { force: true });
       break;
     } catch (e) {
+      fs.rmSync(tmp, { force: true });
       if (e.code !== 'EEXIST') throw e;
-      let held = null;
-      try {
-        held = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
-      } catch {
-        held = null;
-      }
-      const dead = !held || (held.pid !== process.pid && !pidAlive(held.pid)) || Date.now() - (held.at ?? 0) > staleMs;
-      if (dead) {
-        fs.rmSync(lockFile, { force: true });
-        continue;
-      }
-      if (Date.now() > deadline) {
-        const err = new Error('lock-timeout');
-        err.code = 'lock-timeout';
-        throw err;
-      }
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 15);
     }
+    let raw = null;
+    let st = null;
+    try {
+      raw = fs.readFileSync(lockFile, 'utf8');
+      st = fs.statSync(lockFile);
+    } catch {
+      continue; // замок щойно звільнено
+    }
+    let held = null;
+    try {
+      held = JSON.parse(raw);
+    } catch {
+      held = null;
+    }
+    const dead = held ? !pidAlive(held.pid) : Date.now() - st.mtimeMs > staleMs;
+    if (!dead) {
+      wait();
+      continue;
+    }
+    const grave = `${lockFile}.stale-${nonce}`;
+    try {
+      fs.renameSync(lockFile, grave);
+    } catch {
+      continue; // інший процес уже прибрав
+    }
+    let taken = null;
+    try {
+      taken = fs.readFileSync(grave, 'utf8');
+    } catch {
+      taken = null;
+    }
+    if (taken !== raw) {
+      // між перевіркою й rename замок змінився — повернути чужий свіжий замок
+      try {
+        fs.linkSync(grave, lockFile);
+      } catch {
+        /* його вже замінено іншим власником */
+      }
+    }
+    fs.rmSync(grave, { force: true });
   }
   try {
     return fn();
   } finally {
-    fs.rmSync(lockFile, { force: true });
+    try {
+      if (JSON.parse(fs.readFileSync(lockFile, 'utf8')).nonce === nonce) fs.rmSync(lockFile, { force: true });
+    } catch {
+      /* замка вже немає */
+    }
   }
 }
