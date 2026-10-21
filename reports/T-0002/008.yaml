@@ -1,0 +1,20 @@
+# Змістове приймання J5 (перенесено J3 з повідомлення J5, переданого JE 21.10.2026 19:38) і злиття C1a.
+task_id: T-0002
+task_version: 1
+seq: 8
+author: J5
+kind: milestone
+at: 2026-10-21T19:38:00+03:00
+subject: {kind: commit, ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757}
+acceptance: {content: {by: J5, subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757, result: accepted}}
+findings:
+  - {id: F-6, status: closed}
+  - {id: F-7, severity: low, mandatory: false, status: deferred, note: "перенесено на C3b/C5 як необов'язкове архітектурне зауваження без зміни чинної політики"}
+merge:
+  by: J3
+  at: 2026-10-21T16:39:23+00:00
+  pr: "https://github.com/hellwikcoop-arch/EasyWAR/pull/156"
+  head_sha: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  merge_sha: ea03a1488b911b0bacb6a5f1322d6cc35e358c0a
+  conditions_checked: ["head = 5923b49d31814e6dedc3aacb924a94aca6a9c757 (перевірено API перед злиттям; злиття з параметром sha)", "checks success, audit success на 5923b49d31814e6dedc3aacb924a94aca6a9c757 (run 39634085989, спроба 2)", "C3 passed на 5923b49d31814e6dedc3aacb924a94aca6a9c757 (006.yaml)", "J3 technical на 5923b49d31814e6dedc3aacb924a94aca6a9c757 (007.yaml)", "J5 content на 5923b49d31814e6dedc3aacb924a94aca6a9c757"]
+next_action: "C1b від main ea03a1488b911b0bacb6a5f1322d6cc35e358c0a"
