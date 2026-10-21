@@ -4,3 +4,5 @@
 {"seq":4,"event":"review_finished","task_id":"T-0002","by":"C3","at":"2026-10-21T15:51:17+00:00","subject":"e1e11dbc2adb8bae6db36cf55b70550ba39e04a4","ref":"reports/T-0002/002.yaml","verdict":"passed"}
 {"seq":5,"event":"review_requested","task_id":"T-0002","by":"J3","to":"C3","at":"2026-10-21T15:51:17+00:00","subject":"90b3a3346b038cd673232e3cee19e0bcbce31c80","note":"повторна після виправлення F-1..F-5"}
 {"seq":6,"event":"review_finished","task_id":"T-0002","by":"C3","at":"2026-10-21T15:51:17+00:00","subject":"90b3a3346b038cd673232e3cee19e0bcbce31c80","ref":"reports/T-0002/003.yaml","verdict":"passed"}
+{"seq":7,"event":"acceptance","task_id":"T-0002","by":"J3","role":"technical","at":"2026-10-21T15:59:25+00:00","subject":"90b3a3346b038cd673232e3cee19e0bcbce31c80","ref":"reports/T-0002/004.yaml"}
+{"seq":8,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T15:59:25+00:00","ref":"reports/T-0002/004.yaml"}
