@@ -1,0 +1,31 @@
+name: J4 Bridge synthetic tests
+
+on:
+  pull_request:
+    paths:
+      - 'j4_bridge/**'
+      - 'tests/test_j4_bridge.py'
+      - 'docs/j4-bridge-stage1.md'
+      - '.github/workflows/j4-bridge-tests.yml'
+  push:
+    branches:
+      - 'codex/j4-bridge-stage1'
+    paths:
+      - 'j4_bridge/**'
+      - 'tests/test_j4_bridge.py'
+      - 'docs/j4-bridge-stage1.md'
+      - '.github/workflows/j4-bridge-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run synthetic tests
+        run: python -m unittest discover -s tests -p 'test_j4_bridge.py' -v
