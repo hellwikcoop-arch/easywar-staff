@@ -6,6 +6,7 @@ export const PROTOCOL = 'j4.msg/0.1';
 export const KINDS = ['request', 'response', 'report', 'ack', 'handoff', 'review', 'escalation', 'command', 'decision'];
 export const INTENTS = ['question', 'proposal', 'review_request', 'acceptance_request', 'status', 'task', 'answer', 'other'];
 export const LEVELS = ['A', 'B', 'C'];
+export const TASK_STATES = ['queued', 'working', 'waiting', 'review', 'blocked', 'done', 'failed']; // розділ 6
 export const SUBJECT_KINDS = ['commit', 'file_hash', 'doc_version'];
 export const DECISION_CATEGORIES = [
   'budget_over_reserve', 'scope_change', 'end_state_change', 'priority_change', 'third_attempt',
@@ -74,6 +75,11 @@ export function validateMessage(msg, { limits, draft = false } = {}) {
     else if (b.summary.length > max.summary) err(e, 'too-long', 'body.summary', `> ${max.summary}`);
     if (b.text !== undefined && typeof b.text !== 'string') err(e, 'invalid', 'body.text');
     else if ((b.text ?? '').length > max.body) err(e, 'too-long', 'body.text', `> ${max.body}`);
+    if (b.task_state !== undefined) {
+      if (!TASK_STATES.includes(b.task_state)) err(e, 'invalid', 'body.task_state');
+      // done встановлює лише ADM через бар'єр приймання (acceptance.mjs), не повідомленням агента
+      else if (b.task_state === 'done') err(e, 'done-forbidden', 'body.task_state', 'done лише ADM');
+    }
     if (b.refs !== undefined) {
       if (!Array.isArray(b.refs) || b.refs.length > 20) err(e, 'invalid', 'body.refs');
       else b.refs.forEach((r, i) => { if (typeof r !== 'string' || !REF_RE.test(r) || r.includes('..')) err(e, 'invalid', `body.refs[${i}]`, 'шлях у репозиторії[@sha]'); });

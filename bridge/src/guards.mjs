@@ -46,6 +46,12 @@ export class Budget {
     return this.snapshot();
   }
 
+  // Зняти резерв без виклику (виклик не відбувся: відмова місячного бюджету).
+  release(msgId) {
+    delete this.s.reserved[msgId];
+    this.save();
+  }
+
   // Резерв без результату (збій після відправлення): витрата вважається здійсненою, accuracy estimate.
   consumeUnknown(msgId, now) {
     const s = this.settle(msgId, { calls: null, tokens: null, cost: null }, now);
