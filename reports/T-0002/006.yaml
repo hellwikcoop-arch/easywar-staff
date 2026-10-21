@@ -1,0 +1,23 @@
+# Донесення C3 (повторна рецензія C1a після F-6). Перенесено J3 з висновку рецензента без змін змісту.
+task_id: T-0002
+task_version: 1
+seq: 6
+author: C3
+kind: milestone
+subject: {kind: commit, ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757}
+review:
+  review_status: complete
+  verdict: passed
+  subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  unread: []
+  files_read: ["git diff 90b3a334..5923b49d", "git diff --name-only 611841c..5923b49d", "docs/COLLECTIVES_PLAN.md розділ 12 (розділ 4 і додаток А — seq 2)"]
+findings:
+  - {id: F-6, status: closed, closed_by: {subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757, re_review_ref: reports/T-0002/006.yaml}, note: "планова таблиця, непідтверджене чи чуже призначення — D; підтвердження класу й призначення таблиці розділені; тест падає без перевірки"}
+  - id: F-7
+    severity: low
+    mandatory: false
+    status: open
+    description: "Таблицю лише класів A або B виразити не можна: TABLE_PURPOSES має тільки after-fact і planned, тож вона стає D і йде лише по LAN. Консервативно, але розходиться з таблицею класів розділу 4 (A, B — Base44 з E2E)"
+    location: "src/sensitivity-core.js:27 (TABLE_PURPOSES), :140"
+    criterion_or_rule_ref: "COLLECTIVES_PLAN.md розділ 4 (таблиця класів), розділ 12"
+    how_to_verify: "effectiveColumnClass({key:'k',sensitivity:'A',confirmedBy:'o'},{tableOwnerId:'o'}) === 'D'; потрібне рішення J5/JE для таблиць A–B"
