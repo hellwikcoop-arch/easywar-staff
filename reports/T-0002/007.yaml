@@ -1,0 +1,51 @@
+task_id: T-0002
+task_version: 1
+seq: 7
+author: J3
+kind: milestone
+at: 2026-10-21T16:36:19+00:00
+subject: {kind: commit, ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757}
+situation:
+  current_step: "C1a: F-6 закрито; технічне приймання J3 на новому коміті; передано J5"
+  tool_results_refs: ["https://github.com/hellwikcoop-arch/EasyWAR/pull/156", reports/T-0002/005.yaml, reports/T-0002/006.yaml]
+  done:
+    - "F-6: підтверджено як дефект; виправлено — підтверджений клас діє лише в таблиці, яку власник підтвердив як облік після факту"
+    - "brief.md: правило мови J5 (коментарі українською; ідентифікатори й машинні коди англійською)"
+verified:
+  - claim: "F-6 суперечив правилам: COLLECTIVES_PLAN.md розділ 4 «Запобіжник від «попередніх» даних» (клас за призначенням; стовпці планових і попередніх даних — D), додаток А клас D пункт 2, розділ 12 рядок «Попередні (планові) дані…» (тип таблиці підтверджує власник, К7); JE-T3 (непідтверджене — D)"
+    evidence: {kind: file, ref: "docs/COLLECTIVES_PLAN.md @ 5923b49d31814e6dedc3aacb924a94aca6a9c757"}
+    subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  - claim: "Негативні тести F-6 реальні: без рядка перевірки призначення в effectiveColumnClass падають 3 тести"
+    evidence: {kind: log, ref: "сеанс J3, мутаційна проба (відкочено, не комічено)"}
+    subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  - claim: "node --test C1a — 19/19; npm run test:unit — 1460/1460"
+    evidence: {kind: log, ref: "сеанс J3, запуск на 5923b49d31814e6dedc3aacb924a94aca6a9c757"}
+    subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  - claim: "cargo test --locked локально — 458 passed, 0 failed, 1 ignored"
+    evidence: {kind: log, ref: "сеанс J3, запуск на 5923b49d31814e6dedc3aacb924a94aca6a9c757"}
+    subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  - claim: "CI Desktop build, run 39634085989: спроба 1 — checks failure на кроці «Rust tests»; спроба 2 (rerun-failed-jobs) — checks success, audit success"
+    evidence: {kind: log, ref: "GitHub Actions run 39634085989, attempts 1–2"}
+    subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+  - claim: "C3: verdict passed на 5923b49d31814e6dedc3aacb924a94aca6a9c757; F-6 закрито"
+    evidence: {kind: file, ref: reports/T-0002/006.yaml}
+    subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757
+claimed:
+  - "Падіння «Rust tests» у спробі 1 — нестабільний тест CI, не пов'язаний з PR: Rust-код між 90b3a33 (зелений) і 5923b49d31814e6dedc3aacb924a94aca6a9c757 не змінено; лог CI недоступний через проксі (403), тест не встановлено"
+deviation:
+  type: new_circumstance
+  detail: "Нестабільний Rust-тест у CI (main не стосується PR). Потрібне окреме завдання на пошук, поза T-0002"
+review: {review_status: complete, verdict: passed, subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757, unread: [], files_read: ["див. 006.yaml"]}
+findings:
+  - {id: F-5, severity: low, mandatory: false, status: closed, description: "мова коментарів", closed_by: {subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757, re_review_ref: reports/T-0002/005.yaml}, note: "закрито правилом J5: коментарі українською"}
+  - {id: F-7, severity: low, mandatory: false, status: open, description: "таблицю лише класів A–B виразити не можна (лише after-fact і planned); консервативно — D і LAN", location: "src/sensitivity-core.js TABLE_PURPOSES", criterion_or_rule_ref: "COLLECTIVES_PLAN.md розділ 4", how_to_verify: "рішення J5/JE: потрібне окреме призначення таблиці (наприклад service) чи ні"}
+acceptance: {technical: {by: J3, subject_ref: 5923b49d31814e6dedc3aacb924a94aca6a9c757, result: accepted}, content: {by: J5, result: pending}}
+usage:
+  calls: {value: 61, accuracy: estimate, note: "≈46 J3 + ≈15 C3 разом; ліміт 190 — ≈32 %; розподіл C1a (30) перевищено через F-1..F-7 і повтор CI"}
+  attempts: {value: 1, accuracy: exact, note: "другий прогін CI — повтор інфраструктури, не спроба кроку"}
+  tokens: {value: null, accuracy: unknown}
+  cost_usd: {value: null, accuracy: unknown}
+decision_needed:
+  - "J5: рішення щодо F-7 (таблиці класів A–B) — для C1a не блокує"
+remaining: ["змістове приймання J5 на 5923b49d31814e6dedc3aacb924a94aca6a9c757", "злиття PR #156 J3", "C1b", "C1c", "C1d"]
+next_action: "чекати J5"
