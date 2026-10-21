@@ -65,6 +65,8 @@ class Message:
             raise BridgeError("Потрібен повний 40-символьний SHA коміту")
         if self.kind not in KINDS or self.status not in STATUSES:
             raise BridgeError("Неправильний тип або статус")
+        if self.status == "done":
+            raise BridgeError("Стан done встановлює лише ADM після незалежного приймання")
         utc_month(self.at)
         if self.data_class != "synthetic":
             raise BridgeError("Дозволено лише synthetic")
@@ -112,6 +114,7 @@ class MockAdapter:
     name: str
     actual_cost_cents: int = 0
     received: list[Message] = field(default_factory=list)
+    scripted_replies: dict[str, Message] = field(default_factory=dict)
 
     def send(self, message: Message) -> Delivery:
         self.received.append(message)
@@ -172,18 +175,26 @@ class Router:
         self.budget = budget
         self.limits = limits
         self.seen_ids: set[str] = set()
+        self.records: dict[str, dict] = {}
         self.fingerprints: set[str] = set()
         self.calls: dict[str, int] = {}
         self.attempts: dict[tuple[str, str], int] = {}
         self.rounds: dict[str, int] = {}
         if journal.exists():
             for line in journal.read_text(encoding="utf-8").splitlines():
-                record = json.loads(line)
-                old = Message(**record["message"])
-                old.validate()
+                try:
+                    record = json.loads(line)
+                    old = Message(**record["message"])
+                    old.validate()
+                    cost = record["delivery"]["actual_cost_cents"]
+                    if not isinstance(cost, int) or cost < 0:
+                        raise ValueError("cost")
+                except (ValueError, KeyError, TypeError) as exc:
+                    raise BridgeError("Журнал пошкоджено; автоматичне відновлення зупинено") from exc
                 if utc_month(old.at) != budget.month or old.message_id in self.seen_ids:
                     raise BridgeError("Журнал містить інший місяць або повторний ID")
                 self.seen_ids.add(old.message_id)
+                self.records[old.message_id] = record
                 self.fingerprints.add(self._fingerprint(old))
                 key = (old.task_id, old.step)
                 self.attempts[key] = max(self.attempts.get(key, 0), old.attempt)
@@ -191,7 +202,7 @@ class Router:
                 if old.recipient != "JE":
                     self.calls[old.task_id] = self.calls.get(old.task_id, 0) + 1
                 if old.recipient == "J3":
-                    budget.spent_cents += record["delivery"]["actual_cost_cents"]
+                    budget.spent_cents += cost
             if budget.spent_cents > budget.limit_cents:
                 raise BridgeError("Журнал перевищує бюджет Claude")
 
@@ -253,6 +264,7 @@ class Router:
             handle.flush()
             os.fsync(handle.fileno())
         self.seen_ids.add(message.message_id)
+        self.records[message.message_id] = record
         self.fingerprints.add(fingerprint)
         self.attempts[key] = message.attempt
         self.rounds[message.task_id] = message.round

@@ -137,7 +137,8 @@ class BridgeTests(unittest.TestCase):
         self.assertFalse(self.journal.exists())
 
     def test_rejects_bad_sha_or_naive_time(self):
-        for bad in (message(commit_sha="abc"), message(at="2026-10-21T10:00:00")):
+        for bad in (message(commit_sha="abc"), message(at="2026-10-21T10:00:00"),
+                    message(status="done")):
             with self.assertRaises(BridgeError):
                 bad.validate()
 
