@@ -1,0 +1,91 @@
+# Наказ за CONTRACT_v0_4.md, розділ 3. ПРОЄКТ: подається на погодження J5. Набирає чинності лише
+# після погодження J5, злиття PR #157 (C1b) і події task_accepted від C5.1. Лише синтетичні дані.
+
+id: T-0004
+version: 1
+parent_task_id: T-0002
+title: "E8 / C1c — ядро членства колективу й машина станів вступу Pair (виконавець Codex)"
+
+intent:
+  purpose: >-
+    Реалізувати підетап C1c наказу T-0002 силами Codex (рішення JE 21.10.2026 19:48): чиста модель
+    учасників, вступ за взаємною згодою, вихід, відкликання, PENDING_HISTORY і детермінована машина
+    станів вступу за коротким кодом. J3 керує, технічно приймає й інтегрує.
+  end_state:
+    - "src/collective-core.js, src/collective-pair-core.js, tests/collective.test.mjs, tests/collective-pair.test.mjs — у гілці codex/t-0004-c1c-membership від main після злиття PR #157"
+    - "журнал членства згортається детерміновано; кожна подія — з перевіркою підпису (параметр verify); невалідна подія відкидається з машинним кодом, стан не змінюється"
+    - "вступ — лише за згодою кандидата І підтвердженням учасника, який має всі потрібні епохи ключів (JE-T2, К3, AC19); без епох — відмова approver-missing-epochs"
+    - "відкликає адміністратор або власник; вийти може сам учасник; відкликання й вихід вимагають нової епохи, відкликаний не входить до одержувачів нової епохи (AC10, логіка)"
+    - "попередження, якщо адміністратор (разом із власником) один (К4, AC20)"
+    - "стан історії рахується по таблицях: доки ключі чи історія не доставлені, вступ у PENDING_HISTORY, а не COMPLETE"
+    - "машина станів Pair (ADR collective-pairing.md) детермінована: недозволений перехід повертає invalid-transition і не змінює стан; COMPLETE недосяжний без MEMBERSHIP_RECORDED, повних ключів і повної історії"
+    - "ліміти (TTL, спроби, max_joins) — лише параметри config без значень за замовчуванням (JE-07); без config — відмова config-required"
+    - "у власних тестах Codex перевіряє, що src/collective-core.js і src/collective-pair-core.js входять у C1_CORES межового тесту (зауваження C3 F-15)"
+    - "npm run test:unit зелений; CI checks і audit — success на head-коміті; межовий тест покриває обидва нові ядра"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "лише чотири файли scope.in; tests/collective-core-boundaries.test.mjs не змінювати (перелік C1_PLANNED_CORES уже містить обидва ядра)"
+    - "src-tauri/**, міграції, capabilities, CSP, Cargo.*, package.json, package-lock.json, AGENTS.md, legacy HTML, docs/** — заборонено"
+    - "без генерації кодів, PAKE, обчислення SAS, мережі, пошуку учасників, криптографії, сховищ, DOM, годинника, випадковості, нових залежностей"
+    - "ядра не імпортуються робочим застосунком"
+    - "без злиття PR, без запису в main, без підлеглих виконавців, без розширення обсягу"
+
+mission: "Реалізувати C1c за специфікацією codex-prompt.md і передати J3 гілку за handoff_format_for_C5.1_code (CONTRACT_v0_4.md, розділ 20)"
+
+scope:
+  in:
+    - src/collective-core.js
+    - src/collective-pair-core.js
+    - tests/collective.test.mjs
+    - tests/collective-pair.test.mjs
+  out:
+    - "tests/collective-core-boundaries.test.mjs та інші наявні тести"
+    - "docs/** (рядки стану вносить J3 після приймання)"
+    - "файли C1b (shared-table) і C1d (sync-policy, report-submission) — J3"
+
+context_refs:
+  - "EasyWAR main — коміт злиття PR #157 (визначає J3 у task_created)"
+  - "AGENTS.md (зокрема «Codex task-boundary board»); CLAUDE.md"
+  - "docs/COLLECTIVES_PLAN.md: 2 (Q10в), 6 (Вступ, К3, Відкликання чи вихід, К4), 11 (AC01, AC02, AC10, AC19, AC20)"
+  - "docs/adr/collective-pairing.md"
+  - "src/sensitivity-core.js, src/shared-table-core.js — зразки стилю ядер C1"
+  - "easywar-staff setup/staff-bootstrap: tasks/T-0002/order.yaml, je-order.md, brief.md (C1c); CONTRACT_v0_4.md"
+materials:
+  - "tasks/T-0004/codex-prompt.md"
+  - "tasks/T-0004/j5-brief.md"
+
+data_class: synthetic
+requester: J3
+assignee: C5.1
+priority: normal
+important: true
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: false
+
+checks:
+  subject_kind: commit
+  verify:
+    - "node --test tests/collective.test.mjs tests/collective-pair.test.mjs tests/collective-core-boundaries.test.mjs"
+    - "npm run test:unit"
+    - "git diff --name-only origin/main...HEAD — лише чотири файли scope.in"
+    - "CI desktop-build: checks і audit — success на head-коміті"
+  review_kind: code
+
+resources:
+  max_calls: 25                # для Codex; облік Codex — estimate (розділ 19); рецензія C3 і інтеграція J3 — окремо в бюджеті T-0002
+  max_tokens: null
+  max_cost_usd: null
+  max_attempts: 2
+  max_delegation_depth: 0
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+
+reporting:
+  milestones: ["claim опубліковано, гілку створено", "handoff J3", "C3 passed", "J3 technical", "J5 content"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+amendments: []

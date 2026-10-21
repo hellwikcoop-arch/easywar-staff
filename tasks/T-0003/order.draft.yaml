@@ -1,0 +1,81 @@
+# Наказ за CONTRACT_v0_4.md, розділ 3. Проєкт; набирає чинності після рішення JE щодо варіанта
+# (див. codex-prompt.md, розділ 0) і події task_accepted від C5.1. Лише синтетичні дані.
+
+id: T-0003
+version: 1
+parent_task_id: T-0002
+title: "E8 / C1b — ядро операцій над рядками спільної таблиці (виконавець Codex)"
+
+intent:
+  purpose: "Реалізувати підетап C1b наказу T-0002 силами Codex під керівництвом і технічним прийманням J3"
+  end_state:
+    - "src/shared-table-core.js і tests/shared-table.test.mjs у гілці codex/t-0003-c1b-shared-table від main ea03a14"
+    - "upsert і restore несуть повний рядок схеми (К1); неповний рядок, зайвий стовпець, невідоме поле — відмова з машинним кодом"
+    - "той самий op_id з тими самими канонічними байтами — duplicate; з іншими — integrity_violation; стан не змінюється"
+    - "операція від застарілої base_version — conflict; обидві версії збережено; рядок — останній безконфліктний; client_time, порядок доставки й ID не обирають переможця"
+    - "delete — надгробок з останнім значенням і автором; restore без обмеження за часом; restore на зайнятий ключ і upsert у видалений рядок — conflict"
+    - "вносить і розв'язує конфлікт лише учасник із правом запису на всю таблицю (К6); без функції перевірки підпису або з поганим підписом — відмова"
+    - "src/shared-table-core.js додано в C1_CORES у tests/collective-core-boundaries.test.mjs; межовий тест зелений"
+    - "npm run test:unit зелений; CI checks і audit — success на head-коміті"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "лише файли scope.in; src-tauri/**, міграції, capabilities, CSP, Cargo.*, package.json, package-lock.json, AGENTS.md, legacy HTML — заборонено"
+    - "без мережі, сховищ, DOM, годинника, випадковості, Tauri, криптографії й нових залежностей"
+    - "ядро не імпортується робочим застосунком"
+    - "без злиття PR і без запису в main; лише власна гілка codex/…"
+    - "без підлеглих виконавців (глибина 0)"
+
+mission: "Реалізувати C1b за специфікацією codex-prompt.md і передати J3 гілку за форматом handoff_format_for_C5.1_code (CONTRACT_v0_4.md, розділ 20)"
+
+scope:
+  in:
+    - src/shared-table-core.js
+    - tests/shared-table.test.mjs
+    - "tests/collective-core-boundaries.test.mjs — лише рядок C1_CORES"
+  out:
+    - "усе інше, зокрема документи: рядки стану в docs/ вносить J3 після приймання"
+
+context_refs:
+  - "EasyWAR main ea03a1488b911b0bacb6a5f1322d6cc35e358c0a"
+  - "AGENTS.md; CLAUDE.md; .codex/coordination/project.yaml (claim перед записом)"
+  - "docs/COLLECTIVES_PLAN.md: 5.1–5.5, 10 (К1, К5, К6), 11 (AC03, AC06–AC08, AC21)"
+  - "src/sensitivity-core.js — зразок стилю ядра C1"
+  - "easywar-staff setup/staff-bootstrap: tasks/T-0002/order.yaml, brief.md (розділ C1b), CONTRACT_v0_4.md"
+materials:
+  - "tasks/T-0003/codex-prompt.md"
+
+data_class: synthetic
+requester: J3
+assignee: C5.1
+priority: normal
+important: true
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: false
+
+checks:
+  subject_kind: commit
+  verify:
+    - "node --test tests/shared-table.test.mjs tests/collective-core-boundaries.test.mjs"
+    - "npm run test:unit"
+    - "git diff --name-only origin/main...HEAD — лише scope.in"
+    - "CI desktop-build: checks і audit — success"
+  review_kind: code
+
+resources:
+  max_calls: 30                # частина залишку T-0002; облік Codex — estimate/unknown (розділ 19)
+  max_tokens: null
+  max_cost_usd: null
+  max_attempts: 2
+  max_delegation_depth: 0
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+
+reporting:
+  milestones: ["гілку передано J3 (handoff)", "C3 passed", "J3 technical", "J5 content"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+amendments: []

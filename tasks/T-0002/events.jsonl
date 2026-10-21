@@ -14,3 +14,7 @@
 {"seq":14,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T16:36:19+00:00","ref":"reports/T-0002/007.yaml","note":"передано J5 на змістове приймання"}
 {"seq":15,"event":"acceptance","task_id":"T-0002","by":"J5","role":"content","at":"2026-10-21T19:38:00+03:00","subject":"5923b49d31814e6dedc3aacb924a94aca6a9c757","ref":"reports/T-0002/008.yaml","note":"C1a accepted; F-7 deferred на C3b/C5"}
 {"seq":16,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T16:39:23+00:00","ref":"reports/T-0002/008.yaml","note":"PR #156 злито J3 (JE-T5): merge ea03a1488b911b0bacb6a5f1322d6cc35e358c0a, head 5923b49d31814e6dedc3aacb924a94aca6a9c757"}
+{"seq":17,"event":"review_finished","task_id":"T-0002","by":"C3","at":"2026-10-21T16:53:11+00:00","subject":"32e43fb3652e26a14bec5060a2bb70b605982e5d","ref":"reports/T-0002/009.yaml","verdict":"changes_requested"}
+{"seq":18,"event":"review_finished","task_id":"T-0002","by":"C3","at":"2026-10-21T16:53:11+00:00","subject":"9ec729ee2dae539ab70be028756644785201348a","ref":"reports/T-0002/010.yaml","verdict":"passed","note":"спроба 2 кроку C1b"}
+{"seq":19,"event":"command","task_id":"T-0002","by":"JE","at":"2026-10-21T19:48:00+03:00","note":"C1b завершує J3 у PR #157; T-0003 не активувати; підготувати C1c для Codex (T-0004) на погодження J5"}
+{"seq":20,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T16:53:11+00:00","ref":"tasks/T-0004/j5-brief.md","note":"T-0003 зафіксовано як не активоване (tasks/T-0003/STATUS.md); пакет T-0004 подано J5"}

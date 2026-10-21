@@ -1,0 +1,18 @@
+# Донесення C3 (повторна рецензія C1b, спроба 2). Перенесено J3 з висновку рецензента без змін змісту; стиснуто.
+task_id: T-0002
+task_version: 1
+seq: 10
+author: C3
+kind: milestone
+subject: {kind: commit, ref: 9ec729ee2dae539ab70be028756644785201348a}
+review: {review_status: complete, verdict: passed, subject_ref: 9ec729ee2dae539ab70be028756644785201348a, unread: [], files_read: ["git diff 32e43fb..9ec729e", tests/collective-core-boundaries.test.mjs]}
+findings:
+  - {id: F-8, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-9, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-10, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-11, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-12, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-13, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-14, status: closed, closed_by: {subject_ref: 9ec729ee2dae539ab70be028756644785201348a, re_review_ref: reports/T-0002/010.yaml}}
+  - {id: F-15, severity: low, mandatory: false, status: open, description: "ідемпотентність повторів перевіряється за поточним складом writers; межовий тест не перевіряє наявності решти запланованих ядер", location: "src/shared-table-core.js applyOperation; tests/collective-core-boundaries.test.mjs", criterion_or_rule_ref: "COLLECTIVES_PLAN 5.2, 5.3 п.7", how_to_verify: "зафіксувати для C3b/C5; у C1c і C1d перевіряти свої файли в C1_CORES"}
+boundary_test_assessment: "межу не послаблено; C1_PLANNED_CORES із фільтром наявності підхоплює C1c і C1d без правки тесту"

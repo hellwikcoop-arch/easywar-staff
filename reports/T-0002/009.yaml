@@ -1,0 +1,17 @@
+# Донесення C3 (рецензія C1b, перший раунд). Перенесено J3 з висновку рецензента без змін змісту; стиснуто.
+task_id: T-0002
+task_version: 1
+seq: 9
+author: C3
+kind: milestone
+subject: {kind: commit, ref: 32e43fb3652e26a14bec5060a2bb70b605982e5d}
+review: {review_status: complete, verdict: changes_requested, subject_ref: 32e43fb3652e26a14bec5060a2bb70b605982e5d, unread: [],
+  files_read: [tasks/T-0002/order.yaml, tasks/T-0002/je-order.md, tasks/T-0002/brief.md, "git diff ea03a14..32e43fb", src/shared-table-core.js, tests/shared-table.test.mjs, docs/COLLECTIVES_PLAN.md, docs/plans/2026-10-21-easywar-sync-pair-mesh-review.md]}
+findings:
+  - {id: F-8, severity: medium, mandatory: true, status: open, description: "дубль і integrity_violation визначаються до перевірки підпису й права запису", location: "src/shared-table-core.js applyOperation", criterion_or_rule_ref: "COLLECTIVES_PLAN 5.2, AC03, К6", how_to_verify: "той самий op_id з поганим підписом — bad-signature; з чужим автором — no-write-right"}
+  - {id: F-9, severity: medium, mandatory: true, status: open, description: "нова schema_version з новими стовпцями — rejected замість карантину", location: "src/shared-table-core.js applyOperation", criterion_or_rule_ref: "review.md:180, :316", how_to_verify: "schema_version 2 + новий стовпець → quarantined"}
+  - {id: F-10, severity: medium, mandatory: true, status: open, description: "операція в конфлікті зберігається за посиланням на об'єкт викликача", location: "src/shared-table-core.js conflictOf", criterion_or_rule_ref: "COLLECTIVES_PLAN 5.4", how_to_verify: "мутація вхідної операції не змінює state.conflicts[0].op"}
+  - {id: F-11, severity: medium, mandatory: false, status: open, description: "resolveConflict закриває всі конфлікти рядка", location: "src/shared-table-core.js resolveConflict", criterion_or_rule_ref: "5.4, AC07", how_to_verify: "розв'язання cA лишає cB відкритим"}
+  - {id: F-12, severity: low, mandatory: false, status: open, description: "виняток у verify виходить назовні; verify отримує оригінал", location: "src/shared-table-core.js", criterion_or_rule_ref: "детермінованість", how_to_verify: "verify кидає → rejected verify-error"}
+  - {id: F-13, severity: low, mandatory: false, status: open, description: "diffRows: null/null → added; прототипні ключі", location: "src/shared-table-core.js diffRows", criterion_or_rule_ref: "5.3", how_to_verify: "тести null/null і constructor/toString"}
+  - {id: F-14, severity: low, mandatory: false, status: open, description: "прогалини в тестах", location: tests/shared-table.test.mjs, criterion_or_rule_ref: "завдання п.4", how_to_verify: "тести на F-8..F-13, ключі прототипу, restore від застарілої версії"}
