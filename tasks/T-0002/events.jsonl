@@ -21,3 +21,6 @@
 {"seq":21,"event":"acceptance","task_id":"T-0002","by":"J3","role":"technical","at":"2026-10-21T16:56:31+00:00","subject":"9ec729ee2dae539ab70be028756644785201348a","ref":"reports/T-0002/011.yaml","note":"C1b"}
 {"seq":22,"event":"acceptance","task_id":"T-0002","by":"J5","role":"content","at":"2026-10-22T00:35:00+03:00","subject":"9ec729ee2dae539ab70be028756644785201348a","ref":"reports/T-0002/012.yaml","note":"C1b accepted; F-15 перенесено на C3b/C5"}
 {"seq":23,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T21:39:32+00:00","ref":"reports/T-0002/012.yaml","note":"злиття PR #157 заблоковано запобіжником середовища; F-15 tracked; T-0004 переглянуто за A–D"}
+{"seq":24,"event":"amendment_approved","task_id":"T-0002","by":"JE","at":"2026-10-22T00:44:00+03:00","ref":"tasks/T-0004/j5-final-authorization.md","note":"A-1: max_calls 190 → 210 (JE-T8); task_version 2"}
+{"seq":25,"event":"command","task_id":"T-0002","by":"JE","at":"2026-10-22T00:44:00+03:00","ref":"tasks/T-0004/j5-final-authorization.md","note":"JE-T6 правила ролей; JE-T7 лічильник joinsUsed без EXHAUSTED; JE-T9 дозвіл J3 злити PR #157"}
+{"seq":26,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T21:44:49+00:00","ref":"tasks/T-0002/acceptance-c1b.json","note":"машинний запис приймань C1b на 9ec729ee2dae539ab70be028756644785201348a"}

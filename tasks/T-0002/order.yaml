@@ -111,4 +111,13 @@ reporting:
     on_review_incomplete: true
     on_red_line_risk: true
 
-amendments: []
+amendments:
+  - id: A-1
+    proposed_by: J3
+    base_version: 1
+    change: {field: resources.max_calls, from: 190, to: 210}
+    reason: "прогноз перевищення ≈20 (tasks/T-0004/j5-brief.md, розділ D); історичні витрати не обнуляються"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-22
+    decision_ref: "tasks/T-0004/j5-final-authorization.md, розділ 5 (JE-T8)" 
