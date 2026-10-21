@@ -1,0 +1,115 @@
+# J4 Bridge v0.1 (T-0005). Проєкт: bridge/docs/DESIGN.md, розділ 10.
+# test  — тести на PR без секретів.
+# route — ручний запуск маршрутизації: stub без секретів; live лише в environment j4-live,
+#         де власник налаштовує обов'язкового рецензента JE і секрет OPENAI_API_KEY.
+#         Крім environment, J4 вимагає J4_ALLOW_LIVE=1 і файл погодження JE (bridge/approvals/live.json).
+# Workflow нічого не комітить і не зливає; журнал — артефакт запуску.
+name: j4-bridge
+
+on:
+  pull_request:
+    paths: ['bridge/**', '.github/workflows/j4-bridge.yml']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'stub | live'
+        required: true
+        default: stub
+        type: choice
+        options: [stub, live]
+      task_id:
+        description: 'T-0000'
+        required: true
+        type: string
+      draft_path:
+        description: 'шлях до JSON-чернетки повідомлення в репозиторії'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test 'bridge/test/*.test.mjs'
+
+  route-stub:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'stub'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: j4-${{ inputs.task_id }}
+      cancel-in-progress: false
+    steps:
+      - name: paths
+        run: |
+          [[ "$TASK" =~ ^T-[0-9]{4}$ ]] || { echo "task_id має формат T-0000"; exit 1; }
+          echo "J4_HOME=$RUNNER_TEMP/j4" >> "$GITHUB_ENV"
+          echo "J4_LEDGER=$RUNNER_TEMP/j4-ledger/$TASK.jsonl" >> "$GITHUB_ENV"
+        env:
+          TASK: ${{ inputs.task_id }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: submit
+        run: node bridge/bin/j4.mjs submit --file "$DRAFT"
+        env:
+          DRAFT: ${{ inputs.draft_path }}
+      - name: run
+        run: node bridge/bin/j4.mjs run --mode stub
+      - name: verify
+        run: node bridge/bin/j4.mjs verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: j4-ledger-${{ inputs.task_id }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/j4-ledger/
+          retention-days: 30
+
+  route-live:
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'live'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: j4-live          # обов'язковий рецензент JE налаштовується в GitHub
+    concurrency:
+      group: j4-${{ inputs.task_id }}
+      cancel-in-progress: false
+    env:
+      J4_ALLOW_LIVE: '1'
+    steps:
+      - name: paths
+        run: |
+          [[ "$TASK" =~ ^T-[0-9]{4}$ ]] || { echo "task_id має формат T-0000"; exit 1; }
+          echo "J4_HOME=$RUNNER_TEMP/j4" >> "$GITHUB_ENV"
+          echo "J4_LEDGER=$RUNNER_TEMP/j4-ledger/$TASK.jsonl" >> "$GITHUB_ENV"
+        env:
+          TASK: ${{ inputs.task_id }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: submit
+        run: node bridge/bin/j4.mjs submit --file "$DRAFT"
+        env:
+          DRAFT: ${{ inputs.draft_path }}
+      - name: run
+        run: node bridge/bin/j4.mjs run --mode live
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      - name: verify
+        run: node bridge/bin/j4.mjs verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: j4-ledger-${{ inputs.task_id }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/j4-ledger/
+          retention-days: 30

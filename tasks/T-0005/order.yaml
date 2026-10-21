@@ -1,0 +1,68 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ видав JE безпосередньо J3 (je-order.md).
+# Поля resources заповнив J3: наказ JE чисел не задавав, тому це пропозиція J3 на затвердження JE.
+# Лише синтетичні дані.
+
+id: T-0005
+version: 1
+parent_task_id: null
+title: "J4 Bridge v0.1 — проєкт, протокол і мінімальний прототип мосту J3 (Claude) ↔ J5 (GPT)"
+
+intent:
+  purpose: >-
+    Автоматична двостороння комунікація J3 ↔ J5 без ручного пересилання промптів командиром;
+    J4 — координатор без власної LLM; журнал і докази в easywar-staff.
+  end_state:
+    - "Технічний проєкт мосту з локальним запуском і GitHub Actions (bridge/docs/DESIGN.md)"
+    - "Протокол структурованих повідомлень із task ID, commit SHA і версією контракту (bridge/docs/PROTOCOL.md, bridge/schema/)"
+    - "Автоматична маршрутизація повідомлень і відповідей (bridge/src/router.mjs)"
+    - "Ліміти викликів, витрат, спроб і раундів; захист від циклічних делегацій"
+    - "Ескалація рішень рівня C до JE"
+    - "Докази без секретів, повних промптів, приватних транскриптів і операційних даних"
+    - "Окремі права J3, J5, C5.1 і рецензентів (bridge/config/roles.json)"
+    - "Тести на синтетичних даних і сценарій відновлення після збою"
+    - "Поправки до CONTRACT_v0_4.md і AGENTS.md — лише як проєкт на затвердження JE (amendments.md)"
+    - "Критерій успіху: J3 надсилає тестове повідомлення J5 через J4, отримує автоматичну відповідь, обидва результати зафіксовано з доказами без ручного пересилання"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "не змінювати CONTRACT_v0_4.md і AGENTS.md"
+    - "жодних автоматичних злиттів PR і змін production"
+    - "не запускати платні API без окремого погодження JE"
+
+mission: "Проєкт, протокол і мінімальний прототип J4 Bridge; технічний звіт J3 з альтернативами й питаннями JE"
+scope:
+  in: ["bridge/**", ".github/workflows/j4-bridge.yml", ".gitignore", "tasks/T-0005/**", "reports/T-0005/**"]
+  out: ["CONTRACT_v0_4.md", "AGENTS.md (EasyWAR)", "EasyWAR main і production", "tasks/T-0001..T-0004", "живі виклики OpenAI, Claude, Codex"]
+context_refs: ["CONTRACT_v0_4.md (розділи 1–9, 16–20, 26)", "EasyWAR AGENTS.md на ea03a1488b911b0bacb6a5f1322d6cc35e358c0a"]
+materials: ["tasks/T-0005/je-order.md"]
+
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: false
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: true            # нова зовнішня інтеграція й зміна порядку роботи штабу
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'", "node bridge/bin/j4.mjs verify --ledger reports/T-0005/evidence/ledger.jsonl"]
+  review_kind: code
+
+resources:                      # пропозиція J3, не затверджено JE
+  max_calls: 60
+  max_tokens: null
+  max_cost_usd: 0               # платні API заборонені наказом
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 25}
+  reserve_pct: 0
+  accuracy: estimate
+
+reporting:
+  milestones: ["проєкт і протокол", "прототип і тести", "технічний звіт"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+amendments: []
