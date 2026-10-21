@@ -1,0 +1,54 @@
+task_id: T-0005
+task_version: 1
+seq: 1
+author: J3
+kind: milestone
+at: 2026-10-21T17:40:00+00:00
+subject: {kind: commit, ref: 621e480884a5a1fb15eb025c5cdedff9d4cd6994}
+
+situation:
+  current_step: "Перший етап: проєкт, протокол і мінімальний прототип готові; подано JE і J5"
+  tool_results_refs: [reports/T-0005/technical-report.md, reports/T-0005/evidence/ledger.jsonl, bridge/docs/DESIGN.md]
+  done:
+    - "Технічний проєкт з локальним запуском і GitHub Actions, альтернативи, питання JE — bridge/docs/DESIGN.md"
+    - "Протокол j4.msg/0.1 з task_id, subject (SHA), версією й sha256 контракту — bridge/docs/PROTOCOL.md, bridge/schema/message.schema.json"
+    - "Маршрутизатор J4 без LLM, права ролей, ліміти, захист від циклів, ескалація C, журнал із ланцюгом хешів, сканер, ворота платних викликів, відновлення — bridge/src/"
+    - "Workflow .github/workflows/j4-bridge.yml: тести на PR; маршрутизація stub; live лише в environment j4-live"
+    - "Поправки до CONTRACT_v0_4.md і AGENTS.md на затвердження — tasks/T-0005/amendments.md"
+verified:
+  - claim: "node --test 'bridge/test/*.test.mjs' — 49/49"
+    evidence: {kind: log, ref: "сеанс J3 на 621e480884a5a1fb15eb025c5cdedff9d4cd6994"}
+    subject_ref: 621e480884a5a1fb15eb025c5cdedff9d4cd6994
+  - claim: "Критерій успіху в режимі stub: J3 → J4 → J5 (stub) → автоматична відповідь J5 → J3 у тій самій нитці; 5 записів журналу; j4 verify ok; тексти тіл і інструкції ролі в журналі відсутні"
+    evidence: {kind: file, ref: "reports/T-0005/evidence/ledger.jsonl (sha256 3910f5c43fc4026f1fd04a0a9c92c8fa2658cd048681a86181f9bff70c04d20b)"}
+    subject_ref: 621e480884a5a1fb15eb025c5cdedff9d4cd6994
+  - claim: "Мутаційна перевірка: вимкнення захисту від циклу очікування, ping-pong, прапорця живого режиму, утримання рівня C, запису до виклику — кожне ламає щонайменше один тест"
+    evidence: {kind: log, ref: "сеанс J3 на робочій копії перед 621e480884a5a1fb15eb025c5cdedff9d4cd6994"}
+    subject_ref: 621e480884a5a1fb15eb025c5cdedff9d4cd6994
+  - claim: "CONTRACT_v0_4.md і AGENTS.md не змінено; живі виклики OpenAI, Codex і Claude не виконувались"
+    evidence: {kind: commit, ref: "git diff --name-only 0a9feafa7025ab57cad2f335ca99c916725d1f24..621e480884a5a1fb15eb025c5cdedff9d4cd6994"}
+    subject_ref: 621e480884a5a1fb15eb025c5cdedff9d4cd6994
+claimed:
+  - "Формат text.format json_schema у Responses API і прапорці codex exec / claude -p звірено з довідниками, запуском не підтверджено"
+deviation:
+  type: new_circumstance
+  detail: "Відповідь у критерії успіху дав адаптер stub, а не J5: живий виклик OpenAI заборонений наказом до погодження JE. Повний критерій із J5 потребує окремого погодження (DESIGN.md, питання 4)."
+review:
+  review_status: null
+  verdict: null
+  subject_ref: null
+  unread: []
+  files_read: []
+findings: []
+acceptance: {technical: {by: J3, subject_ref: 621e480884a5a1fb15eb025c5cdedff9d4cd6994, result: pending_C3}, content: {by: J5, result: pending}, key_decision: {by: JE, result: pending}}
+usage:
+  calls: {value: 75, accuracy: estimate, note: "виклики інструментів J3 у сеансі; пропонований ліміт картки 60 не затверджено"}
+  attempts: {value: 1, accuracy: exact}
+  tokens: {value: null, accuracy: unknown}
+  cost_usd: {value: 0, accuracy: exact, note: "платних API не викликано"}
+decision_needed:
+  - "JE: питання 1–9 з bridge/docs/DESIGN.md, розділ 15 (позначення J4/ADM, runtime J5, живий режим, перше погодження, рівень доказів, місце журналу, правила ролей, задачі J5→C5.1, ліміти)"
+  - "JE: поправки A-T5-01..A-T5-09 (tasks/T-0005/amendments.md)"
+  - "JE: дозвіл на рецензію C3 (за розділом 6 зміни репозиторію проходять C3)"
+remaining: ["рецензія C3", "змістове приймання J5", "рішення JE", "живий виклик J5 після погодження", "налаштування environment j4-live власником"]
+next_action: "чекати рішень JE; PR лишається чернеткою"
