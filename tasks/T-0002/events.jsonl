@@ -6,3 +6,6 @@
 {"seq":6,"event":"review_finished","task_id":"T-0002","by":"C3","at":"2026-10-21T15:51:17+00:00","subject":"90b3a3346b038cd673232e3cee19e0bcbce31c80","ref":"reports/T-0002/003.yaml","verdict":"passed"}
 {"seq":7,"event":"acceptance","task_id":"T-0002","by":"J3","role":"technical","at":"2026-10-21T15:59:25+00:00","subject":"90b3a3346b038cd673232e3cee19e0bcbce31c80","ref":"reports/T-0002/004.yaml"}
 {"seq":8,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T15:59:25+00:00","ref":"reports/T-0002/004.yaml"}
+{"seq":9,"event":"report_filed","task_id":"T-0002","by":"J5","at":"2026-10-21T19:18:00+03:00","subject":"90b3a3346b038cd673232e3cee19e0bcbce31c80","ref":"reports/T-0002/005.yaml","note":"умовне змістове приймання; F-6 обов'язкове; злиття заборонено"}
+{"seq":10,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T16:22:25+00:00","subject":"5923b49d31814e6dedc3aacb924a94aca6a9c757","note":"F-6 підтверджено як дефект за COLLECTIVES_PLAN.md розділ 4 «Запобіжник від «попередніх» даних», розділ 12, додаток А; ядро виправлено"}
+{"seq":11,"event":"review_requested","task_id":"T-0002","by":"J3","to":"C3","at":"2026-10-21T16:22:25+00:00","subject":"5923b49d31814e6dedc3aacb924a94aca6a9c757","note":"повторна рецензія після F-6"}
