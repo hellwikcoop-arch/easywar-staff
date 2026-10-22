@@ -93,4 +93,13 @@ reporting:
   milestones: ["claim опубліковано, гілку створено", "handoff J3", "C3 passed", "J3 technical", "J5 content"]
   thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
 
-amendments: []
+amendments:
+  - id: A-1
+    proposed_by: J3
+    base_version: 1
+    change: {field: context_refs.base, from: "main 2106f9ed85d66c8dc3621a1e4739e3e72060b84b", to: "main cf08ac4 (або новіший main, що містить 2106f9e)"}
+    reason: "після підготовки наказу в main злито PR #159 (лише AGENTS.md: розділ «Staff bridge (ADM / J4)»); файлів C1 не змінено; Codex має працювати від актуального main і прочитати новий розділ AGENTS.md"
+    status: approved
+    decided_by: J3
+    decided_at: 2026-10-22
+    note: "уточнення без зміни обсягу (CONTRACT_v0_4.md, розділ 4: погоджує requester)" 
