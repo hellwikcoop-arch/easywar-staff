@@ -26,3 +26,5 @@
 {"seq":26,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T21:44:49+00:00","ref":"tasks/T-0002/acceptance-c1b.json","note":"машинний запис приймань C1b на 9ec729ee2dae539ab70be028756644785201348a"}
 {"seq":27,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T21:46:21+00:00","ref":"reports/T-0002/013.yaml","note":"PR #157 злито J3 (JE-T9): head 9ec729ee2dae539ab70be028756644785201348a, merge 2106f9ed85d66c8dc3621a1e4739e3e72060b84b; C1b закрито"}
 {"seq":28,"event":"command","task_id":"T-0002","by":"JE","at":"2026-10-22T13:35:50+00:00","note":"Codex недоступний (ліміт): J3 виконує C1d до C1c; T-0004 лишається за Codex, запуск після скидання ліміту (зміна порядку C1c↔C1d, обсяг не змінено)"}
+{"seq":29,"event":"review_requested","task_id":"T-0002","by":"J3","to":"C3","at":"2026-10-22T18:50:25+00:00","subject":"e9db3eadac622314569497e1cafb77b1777b3a8d","note":"C1d, PR #160"}
+{"seq":30,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-22T18:50:25+00:00","ref":"reports/T-0002/014.yaml","note":"поріг 70 % бюджету T-0002"}
