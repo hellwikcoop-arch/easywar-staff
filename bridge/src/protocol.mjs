@@ -6,6 +6,7 @@ export const PROTOCOL = 'j4.msg/0.1';
 export const KINDS = ['request', 'response', 'report', 'ack', 'handoff', 'review', 'escalation', 'command', 'decision'];
 export const INTENTS = ['question', 'proposal', 'review_request', 'acceptance_request', 'status', 'task', 'answer', 'other'];
 export const LEVELS = ['A', 'B', 'C'];
+export const TASK_STATES = ['queued', 'working', 'waiting', 'review', 'blocked', 'done', 'failed']; // розділ 6
 export const SUBJECT_KINDS = ['commit', 'file_hash', 'doc_version'];
 export const DECISION_CATEGORIES = [
   'budget_over_reserve', 'scope_change', 'end_state_change', 'priority_change', 'third_attempt',
@@ -15,6 +16,11 @@ export const DECISION_CATEGORIES = [
 const TASK_RE = /^T-\d{4}$/;
 const SHA40_RE = /^[0-9a-f]{40}$/;
 const SHA256_RE = /^[0-9a-f]{64}$/;
+// межі довжини й формату полів, що потрапляють у журнал (F-5, C3)
+const DOCVER_RE = /^[A-Za-z0-9._:@/-]{1,128}$/;
+const VERSION_RE = /^\d{1,3}(\.\d{1,3}){1,2}$/;
+const THREAD_RE = /^TH-T-\d{4}-\d{3,6}$/;
+const MSG_RE = /^M-T-\d{4}-\d{4,7}$/;
 const REF_RE = /^[A-Za-z0-9._\-/]+(@[0-9a-f]{7,64})?$/;
 
 export function sha256(data) {
@@ -52,14 +58,16 @@ export function validateMessage(msg, { limits, draft = false } = {}) {
   }
   if (!TASK_RE.test(msg.task_id ?? '')) err(e, 'invalid', 'task_id', 'формат T-0000');
   if (!Number.isInteger(msg.task_version) || msg.task_version < 1) err(e, 'invalid', 'task_version');
-  if (!msg.contract || typeof msg.contract.version !== 'string' || !SHA256_RE.test(msg.contract.sha256 ?? '')) {
+  if (msg.thread_id !== undefined && msg.thread_id !== null && !THREAD_RE.test(msg.thread_id)) err(e, 'invalid', 'thread_id');
+  if (msg.in_reply_to !== undefined && msg.in_reply_to !== null && !MSG_RE.test(String(msg.in_reply_to))) err(e, 'invalid', 'in_reply_to');
+  if (!msg.contract || typeof msg.contract.version !== 'string' || !VERSION_RE.test(msg.contract.version) || !SHA256_RE.test(msg.contract.sha256 ?? '')) {
     err(e, 'invalid', 'contract', 'потрібні version і sha256 файла контракту');
   }
   const s = msg.subject;
   if (!s || !SUBJECT_KINDS.includes(s.kind)) err(e, 'invalid', 'subject.kind');
   else if (s.kind === 'commit' && !SHA40_RE.test(s.ref ?? '')) err(e, 'invalid', 'subject.ref', 'повний SHA коміту (40 hex)');
   else if (s.kind === 'file_hash' && !SHA256_RE.test(s.ref ?? '')) err(e, 'invalid', 'subject.ref', 'sha256 файла');
-  else if (s.kind === 'doc_version' && (typeof s.ref !== 'string' || !s.ref)) err(e, 'invalid', 'subject.ref');
+  else if (s.kind === 'doc_version' && !DOCVER_RE.test(s.ref ?? '')) err(e, 'invalid', 'subject.ref', 'ідентифікатор версії ≤ 128 символів');
   for (const f of ['from', 'to']) if (typeof msg[f] !== 'string' || !msg[f]) err(e, 'missing', f);
   if (!KINDS.includes(msg.kind)) err(e, 'invalid', 'kind');
   if (msg.intent !== undefined && !INTENTS.includes(msg.intent)) err(e, 'invalid', 'intent');
@@ -74,6 +82,11 @@ export function validateMessage(msg, { limits, draft = false } = {}) {
     else if (b.summary.length > max.summary) err(e, 'too-long', 'body.summary', `> ${max.summary}`);
     if (b.text !== undefined && typeof b.text !== 'string') err(e, 'invalid', 'body.text');
     else if ((b.text ?? '').length > max.body) err(e, 'too-long', 'body.text', `> ${max.body}`);
+    if (b.task_state !== undefined) {
+      if (!TASK_STATES.includes(b.task_state)) err(e, 'invalid', 'body.task_state');
+      // done встановлює лише ADM через бар'єр приймання (acceptance.mjs), не повідомленням агента
+      else if (b.task_state === 'done') err(e, 'done-forbidden', 'body.task_state', 'done лише ADM');
+    }
     if (b.refs !== undefined) {
       if (!Array.isArray(b.refs) || b.refs.length > 20) err(e, 'invalid', 'body.refs');
       else b.refs.forEach((r, i) => { if (typeof r !== 'string' || !REF_RE.test(r) || r.includes('..')) err(e, 'invalid', `body.refs[${i}]`, 'шлях у репозиторії[@sha]'); });

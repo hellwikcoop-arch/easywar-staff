@@ -29,6 +29,12 @@ export function checkLive({ adapter, taskId, env, approvalFile, now, defaults })
   if (Date.parse(a.expires_at) <= now) return { ok: false, code: 'approval-expired' };
   if (!a.adapters.includes(adapter.name)) return { ok: false, code: 'approval-adapter', detail: adapter.name };
   if (!a.task_ids.includes(taskId)) return { ok: false, code: 'approval-task', detail: taskId };
+  // погодження визначає модель і ціну: без них вартість невідома й виклик не починається
+  if (!a.models || !a.models[adapter.name]) return { ok: false, code: 'approval-model-missing', detail: adapter.name };
+  if (!a.price || !(Number(a.price.input_per_mtok) > 0) || !(Number(a.price.output_per_mtok) > 0)) return { ok: false, code: 'approval-price-missing' };
+  // стеля виходу обов'язкова: без неї верхня межа вартості невідома (F-13, C3)
+  if (!adapter.outputLimit) return { ok: false, code: 'adapter-output-unbounded', detail: adapter.name };
+  if (!Number.isInteger(defaults.max_output_tokens) || defaults.max_output_tokens <= 0) return { ok: false, code: 'max-output-tokens-missing' };
   for (const v of adapter.requiredEnv ?? []) if (!env[v]) return { ok: false, code: 'credentials-missing', detail: v };
   const limits = {
     ...defaults,

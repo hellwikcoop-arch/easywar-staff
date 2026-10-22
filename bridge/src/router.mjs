@@ -11,6 +11,7 @@ import { checkSender, checkRoute, taskAccepted } from './policy.mjs';
 import { Budget, Thread } from './guards.mjs';
 import { checkLive } from './gate.mjs';
 import { AdapterError, parseAgentJson, renderInput } from './adapters/common.mjs';
+import { MonthlyBudget, toMicro } from './monthly.mjs';
 
 const RETRYABLE_PARSE = new Set(['reply-not-json', 'reply-schema']);
 const pad = (n, w) => String(n).padStart(w, '0');
@@ -31,6 +32,8 @@ export class J4 {
     this.clock = o.now ?? (() => Date.now());
     this.hooks = o.hooks ?? {};
     this.keepSpool = o.keepSpool ?? false;
+    // місячна стеля платних викликів — спільна для всіх задач і агентів (T-0006)
+    this.monthly = new MonthlyBudget(o.monthlyFile ?? path.join(this.store.home, 'budget', 'monthly.json'), o.config.limits.monthly);
   }
 
   nowIso() {
@@ -42,6 +45,10 @@ export class J4 {
   }
 
   nextId(kind, taskId) {
+    return this.store.locked('counters', () => this.nextIdUnlocked(kind, taskId));
+  }
+
+  nextIdUnlocked(kind, taskId) {
     const c = this.store.readJson('counters.json', {});
     const key = `${kind}:${taskId}`;
     c[key] = (c[key] ?? 0) + 1;
@@ -97,6 +104,7 @@ export class J4 {
     };
     if (this.halted()) return reject('halted');
     const errors = validateMessage(draft, { limits: this.lim, draft: true });
+    if (errors.some((x) => x.code === 'done-forbidden')) return reject('done-forbidden', 'done встановлює лише ADM через бар\'єр приймання');
     if (errors.length) return reject('invalid', errors.map((x) => `${x.field}:${x.code}`).join(','));
     const cc = this.contractCheck(draft);
     if (!cc.ok) return reject(cc.code, cc.detail);
@@ -270,10 +278,26 @@ export class J4 {
       return;
     }
 
-    const estTokens = limits.reserve_tokens_per_call;
-    const estCost = gate?.price ? (estTokens / 1e6) * Math.max(gate.price.input_per_mtok ?? 0, gate.price.output_per_mtok ?? 0) : 0;
+    const instructions = this.instructionsFor(m.to);
+    const input = renderInput(m);
+    let upperTokens = limits.reserve_tokens_per_call;
+    let upperCost = 0;
+    if (ad.live) {
+      // верхня межа: вхідні токени ≤ байтів UTF-8 інструкцій і входу; вихідні ≤ max_output_tokens
+      upperTokens = Buffer.byteLength(instructions, 'utf8') + Buffer.byteLength(input, 'utf8') + limits.max_output_tokens;
+      const p = gate?.price;
+      const maxPrice = p ? Math.max(Number(p.input_per_mtok) || 0, Number(p.output_per_mtok) || 0) : 0;
+      if (!(maxPrice > 0)) {
+        m.status = 'blocked';
+        this.saveMsg(m);
+        this.log('dispatch_blocked', m, { adapter: ad.name, code: 'price-unknown' });
+        this.escalate(m, 'live-gate', ['budget_over_reserve'], 'вартість виклику невідома: виклик не починається');
+        return;
+      }
+      upperCost = (upperTokens / 1e6) * maxPrice;
+    }
     const budget = new Budget(this.store, m.task_id);
-    const deny = budget.reserve(m.msg_id, { calls: 1, tokens: estTokens, cost: estCost }, limits, this.clock());
+    const deny = budget.reserve(m.msg_id, { calls: 1, tokens: upperTokens, cost: upperCost }, limits, this.clock());
     if (deny) {
       m.status = 'blocked';
       this.saveMsg(m);
@@ -281,13 +305,29 @@ export class J4 {
       this.escalate(m, 'auto_on_limit', ['budget_over_reserve'], deny);
       return;
     }
-
-    const instructions = this.instructionsFor(m.to);
-    const input = renderInput(m);
+    let monthlyRes = null;
+    if (ad.live) {
+      const callId = `${m.msg_id}#a${m.attempts + 1}`;
+      let r;
+      try {
+        r = this.monthly.reserve(callId, toMicro(upperCost), this.clock());
+      } catch (e) {
+        r = { ok: false, code: e.code ?? 'monthly-error' };
+      }
+      if (!r.ok) {
+        budget.release(m.msg_id);
+        m.status = 'blocked';
+        this.saveMsg(m);
+        this.log('dispatch_blocked', m, { adapter: ad.name, code: r.code, monthly: r.snapshot ?? null });
+        this.escalate(m, 'monthly_cap', ['budget_over_reserve'], r.code);
+        return;
+      }
+      monthlyRes = { call_id: callId, month: r.month, upper_usd: upperCost };
+    }
     const promptSha = sha256(canonical({ instructions_sha256: sha256(instructions), input_sha256: sha256(input) }));
     m.attempts += 1;
     m.status = 'dispatched';
-    m.dispatch = { adapter: ad.name, live: !!ad.live, prompt_sha256: promptSha, instructions_sha256: sha256(instructions), approval: gate?.approval ?? null, attempt: m.attempts };
+    m.dispatch = { adapter: ad.name, live: !!ad.live, prompt_sha256: promptSha, instructions_sha256: sha256(instructions), approval: gate?.approval ?? null, attempt: m.attempts, monthly: monthlyRes };
     this.saveMsg(m); // запис до виклику: після збою відомо, що виклик міг відбутися
     this.log('dispatch_attempt', m, { adapter: ad.name, mode: ad.live ? 'live' : 'stub', attempt: m.attempts, max_attempts: maxAttempts, prompt_sha256: promptSha });
 
@@ -297,6 +337,7 @@ export class J4 {
     } catch (e) {
       if (!(e instanceof AdapterError)) throw e; // непередбачений збій процесу: стан dispatched лишається для відновлення
       budget.settle(m.msg_id, { calls: 1, tokens: null, cost: null }, this.clock());
+      this.settleMonthly(m, null, 'estimate'); // результат невідомий — консервативно весь резерв
       this.failAttempt(m, e, maxAttempts);
       return;
     }
@@ -305,6 +346,18 @@ export class J4 {
     this.saveMsg(m);
     if (this.hooks.afterSpool) this.hooks.afterSpool(m);
     await this.finalize(m, gate);
+  }
+
+  // Розрахунок місячного резерву живого виклику; перетнуті пороги — у журнал і JE (без утримання нитки).
+  settleMonthly(m, costUsd, accuracy) {
+    const mo = m.dispatch?.monthly;
+    if (!mo) return null;
+    const r = this.monthly.settle(mo.call_id, costUsd === null || costUsd === undefined ? null : toMicro(costUsd), accuracy, this.clock(), mo.month);
+    for (const lv of r.crossed) {
+      this.log('budget_threshold', m, { level: lv, monthly: r.snapshot });
+      this.escalate({ ...m, thread_id: null, msg_id: null }, 'budget_threshold', ['budget_over_reserve'], lv);
+    }
+    return r.snapshot;
   }
 
   failAttempt(m, e, maxAttempts) {
@@ -340,6 +393,7 @@ export class J4 {
       reply = parseAgentJson(spool.rawText);
     } catch (e) {
       if (budget.s.reserved[m.msg_id]) budget.settle(m.msg_id, { calls: 1, tokens: sumTokens(spool.meta), cost: null }, this.clock());
+      this.settleMonthly(m, null, 'estimate');
       this.store.remove(`spool/${m.msg_id}.reply.json`);
       this.failAttempt(m, e, maxAttempts);
       return;
@@ -350,12 +404,14 @@ export class J4 {
       ? (spool.meta.usage.input_tokens * (gate.price.input_per_mtok ?? 0) + spool.meta.usage.output_tokens * (gate.price.output_per_mtok ?? 0)) / 1e6
       : (spool.meta?.cost_usd ?? (m.dispatch?.live ? null : 0));
     if (budget.s.reserved[m.msg_id]) budget.settle(m.msg_id, { calls: 1, tokens, cost }, this.clock());
+    const monthly = this.settleMonthly(m, cost, gate?.price ? 'estimate' : (spool.meta?.cost_usd != null ? 'exact' : 'estimate'));
     const usage = {
       calls: { value: 1, accuracy: 'exact' },
       input_tokens: { value: spool.meta?.usage?.input_tokens ?? null, accuracy: spool.meta?.usage?.input_tokens != null ? 'exact' : 'unknown' },
       output_tokens: { value: spool.meta?.usage?.output_tokens ?? null, accuracy: spool.meta?.usage?.output_tokens != null ? 'exact' : 'unknown' },
       cost_usd: { value: cost, accuracy: cost === null ? 'unknown' : (gate?.price ? 'estimate' : 'exact') },
       task_total: budget.snapshot(),
+      monthly,
     };
     const meta = { adapter: m.dispatch?.adapter, mode: m.dispatch?.live ? 'live' : 'stub', model_id: spool.meta?.model_id ?? null, request_id: spool.meta?.request_id ?? null, raw_sha256: sha256(spool.rawText), prompt_sha256: m.dispatch?.prompt_sha256 ?? null, approval: m.dispatch?.approval ?? null };
     if (leaks.length) {
@@ -407,6 +463,7 @@ export class J4 {
         } else {
           const budget = new Budget(this.store, m.task_id);
           if (budget.s.reserved[m.msg_id]) budget.consumeUnknown(m.msg_id, this.clock());
+          this.settleMonthly(m, null, 'estimate');
           this.log('dispatch_outcome_unknown', m, { attempt: m.attempts, note: 'виклик міг відбутися; спроба й резерв зараховані', usage: budget.snapshot() });
           const maxAttempts = this.lim.max_attempts + (m.extra_attempts ?? 0);
           if (m.attempts < maxAttempts) {

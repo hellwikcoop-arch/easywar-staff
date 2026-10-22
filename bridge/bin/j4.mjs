@@ -8,6 +8,8 @@ import { loadConfig, BRIDGE_DIR } from '../src/policy.mjs';
 import { verifyLedger } from '../src/ledger.mjs';
 import { sha256, PROTOCOL } from '../src/protocol.mjs';
 import { stubAdapter } from '../src/adapters/stub.mjs';
+import { MonthlyBudget } from '../src/monthly.mjs';
+import { acceptanceReady, evidenceFromEvents } from '../src/acceptance.mjs';
 import { openaiAdapter } from '../src/adapters/openai.mjs';
 import { codexAdapter } from '../src/adapters/cli.mjs';
 
@@ -23,7 +25,7 @@ const { values: o, positionals } = parseArgs({
     intent: { type: 'string' }, level: { type: 'string', default: 'A' }, summary: { type: 'string' }, 'text-file': { type: 'string' },
     refs: { type: 'string' }, thread: { type: 'string' }, 'reply-to': { type: 'string' }, human: { type: 'boolean', default: false },
     role: { type: 'string' }, id: { type: 'string' }, decision: { type: 'string' }, note: { type: 'string', default: '' },
-    approval: { type: 'string' }, workdir: { type: 'string' }, file: { type: 'string' },
+    approval: { type: 'string' }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
   },
 });
 
@@ -47,6 +49,7 @@ function j4() {
     config: loadConfig(), home, ledgerFile, staffRoot: STAFF_ROOT,
     adapters: adaptersFor(o.mode), instructionsDir: path.join(BRIDGE_DIR, 'roles'),
     approvalFile: o.approval ?? process.env.J4_APPROVAL ?? path.join(BRIDGE_DIR, 'approvals', 'live.json'),
+    monthlyFile: process.env.J4_MONTHLY_BUDGET,
   });
 }
 
@@ -102,6 +105,20 @@ async function main() {
       out(j4().resolve(o.id, { decision: o.decision, note: o.note }, { origin: 'human_cli' }));
       break;
     }
+    case 'budget': {
+      const cfg = loadConfig().limits.monthly;
+      out(new MonthlyBudget(process.env.J4_MONTHLY_BUDGET ?? path.join(home, 'budget', 'monthly.json'), cfg).snapshot(Date.now()));
+      break;
+    }
+    case 'acceptance': {
+      // бар'єр приймання ADM на одному SHA: рецензії й приймання з events.jsonl задачі; перевірки — --checks-ref
+      const ev = evidenceFromEvents(STAFF_ROOT, o.task);
+      const checks = o['checks-ref'] ? [{ subject: o.subject, passed: true, evidence_ref: o['checks-ref'] }] : [];
+      const r = acceptanceReady({ subject: o.subject, checks, reviews: ev.reviews, acceptances: ev.acceptances, keyDecision: o['key-decision'] });
+      out(r);
+      process.exitCode = r.ready ? 0 : 3;
+      break;
+    }
     case 'verify': {
       const r = verifyLedger(ledgerFile);
       out(r);
@@ -109,7 +126,7 @@ async function main() {
       break;
     }
     default:
-      process.stderr.write('j4 <send|submit|run|inbox|escalations|resolve|verify> [опції]; див. bridge/README.md\n');
+      process.stderr.write('j4 <send|submit|run|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
       process.exitCode = 64;
   }
 }

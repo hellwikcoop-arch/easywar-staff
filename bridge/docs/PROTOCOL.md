@@ -29,6 +29,7 @@
 | `body.text` | відправник | ≤ 8000 символів; у журнал не потрапляє ніколи, лише хеш |
 | `body.refs` | відправник | ≤ 20 шляхів у репозиторії, `шлях[@sha]`, без `..` |
 | `body.decision_needed` | відправник / агент | `[{category, question}]`; непорожній список = рівень C |
+| `body.task_state` | відправник | стан задачі за розділом 6 (`queued`…`failed`); значення `done` відхиляється (`done-forbidden`): `done` ставить лише ADM через бар'єр приймання (`bridge/src/acceptance.mjs`) |
 | `body.verdict` | агент | для відповідей: `answer`, `accepted`, `changes_requested`, `question`, `cannot_answer` |
 | `body_sha256` | J4 | sha256 канонічного JSON тіла |
 
@@ -68,6 +69,7 @@ blocked: ліміт, спроби або ворота живого виклик�
 | `reply_received` | відповідь агента: адаптер, режим, `model_id` від провайдера, `request_id`, облік, `raw_sha256` |
 | `reply_blocked` | відповідь заблокував сканер; лише коди правил |
 | `escalation_raised` / `escalation_resolved` | рівень C, ліміти, цикли, ворота; рішення JE |
+| `budget_threshold` | живий виклик перетнув місячний поріг: `warning_35`, `critical_45`, `stop_50` (T-0006) |
 | `recovered`, `ledger_repaired`, `lock_recovered`, `halted` | відновлення й стоп-кран |
 
 Кожен запис містить `seq`, `prev` (хеш попереднього) і `hash` — ланцюг, який перевіряє `j4 verify`.
