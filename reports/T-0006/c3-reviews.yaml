@@ -46,3 +46,14 @@
   findings:
     - {id: F-17, severity: low, mandatory: false, category: documentation, description: "хронологія events.jsonl: review_finished seq 9 (22:08:47Z) раніше за review_requested seq 8 (22:09:00Z)", location: "tasks/T-0006/events.jsonl seq 8–9", how_to_fix: "подія-уточнення без переписування рядків", how_to_verify: "час review_requested ≤ review_finished для кожної пари одного subject з урахуванням уточнення"}
   usage: {calls: {value: 3, accuracy: exact}}
+- seq: 5
+  subject: {kind: commit, ref: 1144aea3f04de90d006c619cf0013b97d3e5218b}
+  basis: "re-check F-17 after correction tasks/T-0006/events.jsonl#seq=19 @740cce6df8abbd5126e2d89aa0798300ef689fa8"
+  verified:
+    - "seq 1–17 байтово не змінено (cmp з 1144aea і 875585a); seq 1..19 безперервні"
+    - "359178c committed 2026-10-21T22:05:59Z < seq 9 22:08:47Z — межі уточнення коректні"
+    - "git diff --name-only 1144aea 740cce6: лише reports/T-0006 і tasks/T-0006"
+  findings:
+    - {id: F-17, status: closed, closed_by: {correction_ref: "tasks/T-0006/events.jsonl#seq=19 @740cce6", re_review_ref: "C3 re-check F-17"}}
+  review: {review_status: complete, verdict: passed, subject_ref: 1144aea3f04de90d006c619cf0013b97d3e5218b}
+  usage: {calls: {value: 1, accuracy: exact}}
