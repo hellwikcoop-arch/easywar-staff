@@ -1,0 +1,90 @@
+# ПРОЄКТ наказу за CONTRACT_v0_4.md, розділ 3. Не діє до затвердження JE і події task_accepted.
+# Підготував J3 22.10.2026 за дорученням JE / J5. Обґрунтування — tasks/T-0007/brief.md. Лише синтетичні дані.
+
+id: T-0007
+version: 1
+parent_task_id: T-0006
+title: "Стабілізація ADM / J4 Bridge: безпечна відмова при збоях блокування й пошкодженому стані"
+
+intent:
+  purpose: "ADM / J4 Bridge відмовляє безпечно — без зависання, аварійного зупинення й перевищення бюджету — при збоях замків і пошкодженому стані"
+  end_state:
+    - "F-16: відтворюваний тест; каталог або нечитаний файл на місці замка → помилка lock-invalid у межах timeoutMs, без зависання"
+    - "F-18, F-19: пошкоджений стан (місячний облік, облік задачі) під час доставки, розрахунку чи відновлення → повідомлення blocked, подія журналу, ескалація JE; інші повідомлення черги обробляються; process() не кидає виняток"
+    - "бюджетний облік не допускає перевищення ліміту: наявні тести стелі, резерву й конкурентності проходять; пошкоджений облік ніколи не обнуляється"
+    - "F-15: відкат перехоплення мертвого замка не залишає двох власників (детермінований тест)"
+    - "F-8: повторне подання відповіді після збою не створює хибної ескалації (тест)"
+    - "рішення рівня C (F-2, F-3, F-9, F-14, F-20, маршрут C5.1) не прийняті J3, а винесені JE"
+    - "усі перевірки, рецензія C3 і приймання J3, J5 — на одному контрольному SHA; журнальні коміти після нього — лише tasks/T-0007 і reports/T-0007"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "жодних платних API-запитів; жодного live-режиму; J4_ALLOW_LIVE не встановлюється"
+    - "без змін секретів, Tauri, CSP, capabilities, міграцій, застосунку EasyWAR"
+    - "без змін CONTRACT_v0_4.md, AGENTS.md, .github/workflows, bridge/config/roles.json і routes.json"
+    - "без змін журналу, приймань, контрольних SHA і бюджету T-0006"
+    - "без автоматичного злиття"
+
+mission: "Виправити F-16, F-18, F-19, F-15, F-8 у bridge/ з тестами; рішення рівня C винести JE"
+
+scope:
+  in:
+    - bridge/src/store.mjs
+    - bridge/src/router.mjs
+    - bridge/src/guards.mjs
+    - bridge/test/t0007.test.mjs
+    - bridge/docs/DESIGN.md
+    - tasks/T-0007/**
+    - reports/T-0007/**
+  out:
+    - "bridge/src/adapters/** (F-14, F-20 — окрема задача маршруту C5.1)"
+    - "bridge/config/** , CONTRACT_v0_4.md, AGENTS.md, .github/**"
+    - "tasks/T-0006/**, reports/T-0006/**"
+    - "реалізація F-2, F-3, F-9 (рішення JE)"
+context_refs:
+  - "setup/staff-bootstrap aa682694b63ed986052f1e8d8d9edea87eb086ce"
+  - "reports/T-0006/002.yaml; reports/T-0006/c3-reviews.yaml"
+  - "tasks/T-0006/je-security-decisions.md; tasks/T-0006/tracked/findings.md"
+  - "CONTRACT_v0_4.md, розділи 2, 3, 5, 6, 9а"
+materials: ["tasks/T-0007/brief.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: false
+
+checks:
+  subject_kind: commit
+  verify:
+    - "node --test 'bridge/test/*.test.mjs'"
+    - "timeout 10 node --test bridge/test/t0007.test.mjs  # жоден тест не зависає"
+    - "node bridge/bin/j4.mjs verify --ledger reports/T-0005/evidence/ledger.jsonl"
+  review_kind: code
+
+resources:                      # ПРОПОЗИЦІЯ J3; не затверджено до рішення JE
+  max_calls: 30                 # J3
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15, max_calls: 10, re_review_max_calls: 6}
+  reserve_pct: 0
+  accuracy: estimate
+
+reporting:
+  milestones: ["відтворення F-16/F-18/F-19 тестами (червоні)", "виправлення (зелені)", "рецензія C3", "приймання"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+decisions_needed_from_JE:
+  - "затвердити наказ і бюджет"
+  - "підтвердити, що F-2, F-3, F-9 лишаються за JE і не блокують T-0007"
+  - "відкласти F-14, F-20 до задачі маршруту C5.1"
+  - "маршрут J3 → C5.1 і спосіб автентифікації Codex (tasks/T-0007/brief.md, розділ 5)"
+  - "чи входять повторні рецензії C3 до бюджету C3"
+
+amendments: []
