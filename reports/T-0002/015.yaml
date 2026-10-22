@@ -1,0 +1,18 @@
+# Донесення C3 (рецензія C1d, раунд 1). Перенесено J3 з висновку рецензента; стиснуто.
+task_id: T-0002
+task_version: 2
+seq: 15
+author: C3
+kind: milestone
+subject: {kind: commit, ref: e9db3eadac622314569497e1cafb77b1777b3a8d}
+review: {review_status: complete, verdict: changes_requested, subject_ref: e9db3eadac622314569497e1cafb77b1777b3a8d, unread: ["CONTRACT_v0_4.md", "brief.md поза C1d", "COLLECTIVES_PLAN.md розділ 11 (лише grep)"]}
+findings:
+  - {id: F-16, severity: medium, mandatory: true, status: open, description: "diff у перегляді посилається на об'єкти викликача; показане може розійтися з пакетом", location: "src/report-submission-core.js:94", criterion_or_rule_ref: "5.3, AC05", how_to_verify: "мутація вхідних після перегляду не змінює diff"}
+  - {id: F-17, severity: medium, mandatory: true, status: open, description: "перегляд пропускає чужу таблицю, колектив, іншу версію схеми", location: "src/report-submission-core.js:80-81", criterion_or_rule_ref: "5.3", how_to_verify: "такі операції — invalid, commitReport — invalid-operations"}
+  - {id: F-18, severity: medium, mandatory: false, status: open, description: "порядок відмов не закріплено тестом; ADR і код розходяться"}
+  - {id: F-19, severity: medium, mandatory: false, status: open, description: "неактивні inbound-значення через changeTablePolicy не тестуються"}
+  - {id: F-20, severity: medium, mandatory: false, status: open, description: "дві операції над рядком завжди конфлікт; контракт не задокументовано"}
+  - {id: F-21, severity: low, mandatory: false, status: open, description: "commitReport довіряє формі перегляду; null-ревізія"}
+  - {id: F-22, severity: low, mandatory: false, status: open, description: "прогалини тестів (allowed для конфлікту/карантину, sameBytes:false, S10)"}
+  - {id: F-23, severity: low, mandatory: false, status: open, description: "імпорт тест-файла — межові тести двічі"}
+  - {id: F-24, severity: low, mandatory: false, status: open, description: "сигнатури розходяться з брифом; роль owner"}

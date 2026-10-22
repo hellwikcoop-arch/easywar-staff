@@ -28,3 +28,6 @@
 {"seq":28,"event":"command","task_id":"T-0002","by":"JE","at":"2026-10-22T13:35:50+00:00","note":"Codex недоступний (ліміт): J3 виконує C1d до C1c; T-0004 лишається за Codex, запуск після скидання ліміту (зміна порядку C1c↔C1d, обсяг не змінено)"}
 {"seq":29,"event":"review_requested","task_id":"T-0002","by":"J3","to":"C3","at":"2026-10-22T18:50:25+00:00","subject":"e9db3eadac622314569497e1cafb77b1777b3a8d","note":"C1d, PR #160"}
 {"seq":30,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-22T18:50:25+00:00","ref":"reports/T-0002/014.yaml","note":"поріг 70 % бюджету T-0002"}
+{"seq":31,"event":"review_finished","task_id":"T-0002","by":"C3","at":"2026-10-22T18:59:02+00:00","subject":"e9db3eadac622314569497e1cafb77b1777b3a8d","ref":"reports/T-0002/015.yaml","verdict":"changes_requested"}
+{"seq":32,"event":"review_requested","task_id":"T-0002","by":"J3","to":"C3","at":"2026-10-22T18:59:02+00:00","subject":"923e1bc19d106a6f65a5a903d21c16c275abb380","note":"C1d, спроба 2 з 2; F-16..F-23 виправлено, F-24 — бриф уточнено"}
+{"seq":33,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-22T18:59:02+00:00","note":"бюджет: рецензія C3 C1d раунд 1 — 19 викликів (план 10); використано ≈173 з 210 (estimate); після повторної рецензії ≈181; на C1c лишиться ≈29 при плані ≈41 — нестача ≈12, потрібне рішення JE до старту C1c"}

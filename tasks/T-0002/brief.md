@@ -98,6 +98,13 @@ AC20 (попередження); за JE-02 — P01–P09 на рівні ста
 
 ### C1d — політики обміну й «Доповісти»
 
+> **Уточнення J3 22.10.2026 (зауваження C3 F-24): фактичні інтерфейси.** `evaluateOutbound(ctx)` і
+> `evaluateInbound(ctx)` приймають один об'єкт із полем `policy`; `previewReport({ pendingOps, currentRows,
+> schema, revision })`; `commitReport(preview, { currentRevision, confirmedDeletions })`; відмова неактивної
+> політики — `code: 'OwnerDecisionRequired'`, `reason` — текст українською. Порядок відмов відправки — за ADR:
+> маршрут → політика → право запису → перегляд. Зміну політики роблять власник таблиці, адміністратор і
+> власник колективу (JE-T6). Контракт черги: одна операція на рядок за одне «Доповісти».
+
 **Файли:** `src/sync-policy-core.js`, `src/report-submission-core.js`, `tests/sync-policy.test.mjs`,
 `tests/report-submission.test.mjs`.
 **Залежності:** C1a (`routeFor`), C1b (`diffRows`, `validateOperation`).
