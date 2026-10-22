@@ -1,0 +1,18 @@
+# Технічне приймання J3 — C1d (PR #160).
+task_id: T-0002
+task_version: 2
+seq: 17
+author: J3
+kind: milestone
+subject: {kind: commit, ref: 923e1bc19d106a6f65a5a903d21c16c275abb380}
+acceptance: {role: J3, scope: technical, verdict: accepted, subject_ref: 923e1bc19d106a6f65a5a903d21c16c275abb380, pending: ["J5: приймання змісту на тому самому SHA"]}
+evidence:
+  - "C3 раунд 2: passed (reports/T-0002/016.yaml)"
+  - "CI run 39836049078: спроба 1 — checks failure на кроці «Rust tests» (exit 101); спроба 2 (rerun-failed-jobs) — checks success, audit success"
+  - "C1d не змінює Rust: git diff e9db3ea..923e1bc19d106a6f65a5a903d21c16c275abb380 — лише src/report-submission-core.js, src/sync-policy-core.js і два тести; база — main cf08ac4"
+  - "локально на 923e1bc19d106a6f65a5a903d21c16c275abb380: cargo test --locked — 458 passed, 0 failed, 1 ignored"
+  - "лог спроби 1 недоступний (проксі блокує завантаження логів Actions) — причину нестабільного Rust-тесту не встановлено"
+tracked:
+  - "нестабільний Rust-тест у CI (2-й випадок після C1a 5923b49) — окрема задача поза T-0002, потрібне рішення JE"
+not_verified: ["macOS/Windows-збірки", "причина збою Rust-тесту в спробі 1"]
+budget: "≈181 з 210 (estimate); на C1c ≈29 при плані ≈41 — нестача ≈12, рішення JE відкрите"
