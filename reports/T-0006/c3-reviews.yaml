@@ -35,3 +35,14 @@
     - {id: F-15, severity: low, status: open, description: "залишкове вікно гонки при відкаті помилкового rename під час перехоплення мертвого замка (3 конкуренти в мікросекундному вікні)", location: "bridge/src/store.mjs withFileLock"}
     - {id: F-16, severity: low, status: open, description: "нескінченний цикл без тайм-ауту, якщо шлях замка — каталог або нечитаний файл (гілки continue обходять deadline)", location: "bridge/src/store.mjs withFileLock", how_to_verify: "mkdir x.lock; withFileLock(x.lock, fn, {timeoutMs:200}) не завершується"}
   usage: {calls: {value: 4, accuracy: exact}}
+- seq: 4
+  subject: {kind: commit, ref: 1144aea3f04de90d006c619cf0013b97d3e5218b}
+  basis: "confirmation of re-review-2 on 359178c by tree identity + tests"
+  verified:
+    - "git diff 359178c..1144aea: лише reports/T-0006 і tasks/T-0006 (7 файлів, +170/-0)"
+    - "tree bridge b0091938…, CONTRACT_v0_4.md b7f7bad5…, .github 3bb069c1… — однакові в обох SHA"
+    - "node --test 'bridge/test/*.test.mjs' у worktree 1144aea: 68/68, exit 0"
+  review: {review_status: complete, verdict: changes_requested, subject_ref: 1144aea3f04de90d006c619cf0013b97d3e5218b}
+  findings:
+    - {id: F-17, severity: low, mandatory: false, category: documentation, description: "хронологія events.jsonl: review_finished seq 9 (22:08:47Z) раніше за review_requested seq 8 (22:09:00Z)", location: "tasks/T-0006/events.jsonl seq 8–9", how_to_fix: "подія-уточнення без переписування рядків", how_to_verify: "час review_requested ≤ review_finished для кожної пари одного subject з урахуванням уточнення"}
+  usage: {calls: {value: 3, accuracy: exact}}
