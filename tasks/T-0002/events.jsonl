@@ -25,3 +25,4 @@
 {"seq":25,"event":"command","task_id":"T-0002","by":"JE","at":"2026-10-22T00:44:00+03:00","ref":"tasks/T-0004/j5-final-authorization.md","note":"JE-T6 правила ролей; JE-T7 лічильник joinsUsed без EXHAUSTED; JE-T9 дозвіл J3 злити PR #157"}
 {"seq":26,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T21:44:49+00:00","ref":"tasks/T-0002/acceptance-c1b.json","note":"машинний запис приймань C1b на 9ec729ee2dae539ab70be028756644785201348a"}
 {"seq":27,"event":"report_filed","task_id":"T-0002","by":"J3","at":"2026-10-21T21:46:21+00:00","ref":"reports/T-0002/013.yaml","note":"PR #157 злито J3 (JE-T9): head 9ec729ee2dae539ab70be028756644785201348a, merge 2106f9ed85d66c8dc3621a1e4739e3e72060b84b; C1b закрито"}
+{"seq":28,"event":"command","task_id":"T-0002","by":"JE","at":"2026-10-22T13:35:50+00:00","note":"Codex недоступний (ліміт): J3 виконує C1d до C1c; T-0004 лишається за Codex, запуск після скидання ліміту (зміна порядку C1c↔C1d, обсяг не змінено)"}
