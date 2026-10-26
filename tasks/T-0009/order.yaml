@@ -1,0 +1,62 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ J5: tasks/T-0009/order-j5.md (26.10.2026 15:04, Київ).
+# Лише синтетичні дані. Номер T-0009 зарезервовано рішенням JE (tasks/T-0007/events.jsonl seq 13).
+
+id: T-0009
+version: 1
+parent_task_id: T-0007
+title: "Автоматизація J4 Bridge, етап 1: черга за розкладом, події ADM, завершення через ADM"
+
+intent:
+  purpose: "Автоматичне виконання дозволених операцій J4 Bridge без ручного запуску кожного кроку"
+  end_state:
+    - "черга обробляється автоматично в stub без ручного запуску кожного повідомлення (run --once, j4-tick.sh)"
+    - "події ADM записуються в events.jsonl без дублікатів і без втрати послідовності seq"
+    - "після перезапуску процес відновлюється коректно"
+    - "рішення рівня C лишаються заблокованими; приймань і рішень JE ADM автоматично не пише"
+    - "done неможливий без повного комплекту приймань на одному SHA; повторне завершення не змінює стан"
+    - "усі обов'язкові тести успішні; C3 незалежно перевіряє контрольний SHA"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "live і платні API — заборонено"
+    - "автоматичне підтвердження рішень рівня C — заборонено; --human не є доказом особи JE"
+    - "не змінювати CONTRACT_v0_4.md, CSP, Tauri capabilities, міграції, секрети"
+    - "не зливати PR без рішення JE; не встановлювати done для T-0009"
+    - "зміна моделі довіри, повноважень JE чи автентифікації — зупинитися й передати JE"
+
+mission: "Реалізувати j4 run --once і скрипт такту, запис подій ADM у events.jsonl, j4 close через чинний бар'єр"
+scope:
+  in: ["bridge/src/events.mjs (новий)", "bridge/src/close.mjs (новий)", "bridge/src/router.mjs", "bridge/bin/j4.mjs", "bridge/bin/j4-tick.sh (новий)", "bridge/test/t0009.test.mjs (новий)", "bridge/docs/DESIGN.md", "bridge/README.md", ".gitignore", "tasks/T-0009/**", "reports/T-0009/**"]
+  out: ["CONTRACT_v0_4.md", "bridge/config/**", "bridge/src/acceptance.mjs", "модель довіри й resolve", "застосунок EasyWAR"]
+context_refs: ["CONTRACT_v0_4.md розд. 4, 6, 9а", "reports/T-0007/001.yaml (M-3, M-4, M-6; P-1…P-3)"]
+materials: ["tasks/T-0009/order-j5.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: false}
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: 20                # виклики адаптера J4 сукупно за всі тестові прогони (наказ, розд. 4); див. events: питання про регресійний набір
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2              # на сценарій
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: exact
+
+reporting:
+  milestones: ["контрольний SHA і рецензія C3", "донесення J3 для J5"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: 7313085f44ae5c8dcbc37235bc43207bfaf94c19   # setup/staff-bootstrap; робоча гілка t-0009/j4-automation
+
+amendments: []

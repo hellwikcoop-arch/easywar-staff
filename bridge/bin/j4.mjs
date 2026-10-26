@@ -12,8 +12,13 @@ import { MonthlyBudget } from '../src/monthly.mjs';
 import { acceptanceReady, evidenceFromEvents } from '../src/acceptance.mjs';
 import { openaiAdapter } from '../src/adapters/openai.mjs';
 import { codexAdapter } from '../src/adapters/cli.mjs';
+import { closeTask } from '../src/close.mjs';
+import { Store } from '../src/store.mjs';
 
-const STAFF_ROOT = path.resolve(BRIDGE_DIR, '..');
+// Корінь сховища штабу. J4_STAFF_ROOT — лише для тестів на копії сховища; стоп-кран bridge/HALT
+// канонічного сховища діє й тоді (див. haltedCanonical).
+const CANON_ROOT = path.resolve(BRIDGE_DIR, '..');
+const STAFF_ROOT = process.env.J4_STAFF_ROOT ? path.resolve(process.env.J4_STAFF_ROOT) : CANON_ROOT;
 const CONTRACT = 'CONTRACT_v0_4.md';
 
 const { values: o, positionals } = parseArgs({
@@ -25,7 +30,7 @@ const { values: o, positionals } = parseArgs({
     intent: { type: 'string' }, level: { type: 'string', default: 'A' }, summary: { type: 'string' }, 'text-file': { type: 'string' },
     refs: { type: 'string' }, thread: { type: 'string' }, 'reply-to': { type: 'string' }, human: { type: 'boolean', default: false },
     role: { type: 'string' }, id: { type: 'string' }, decision: { type: 'string' }, note: { type: 'string', default: '' },
-    approval: { type: 'string' }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
+    approval: { type: 'string' }, once: { type: 'boolean', default: false }, 'max-steps': { type: 'string' }, 'task-events': { type: 'boolean', default: false }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
   },
 });
 
@@ -50,7 +55,13 @@ function j4() {
     adapters: adaptersFor(o.mode), instructionsDir: path.join(BRIDGE_DIR, 'roles'),
     approvalFile: o.approval ?? process.env.J4_APPROVAL ?? path.join(BRIDGE_DIR, 'approvals', 'live.json'),
     monthlyFile: process.env.J4_MONTHLY_BUDGET,
+    env: haltedCanonical() ? { ...process.env, J4_HALT: '1' } : process.env,
+    taskEvents: o['task-events'] || process.env.J4_TASK_EVENTS === '1',
   });
+}
+
+function haltedCanonical() {
+  return STAFF_ROOT !== CANON_ROOT && fs.existsSync(path.join(CANON_ROOT, 'bridge', 'HALT'));
 }
 
 function out(x) {
@@ -83,9 +94,35 @@ async function main() {
       break;
     }
     case 'run': {
-      const r = await j4().process();
+      // --once: один прохід черги для запуску за розкладом (T-0009). Коди виходу: 0 — пройдено,
+      // 75 — інший обробник тримає замок (не помилка, наступний запуск підхопить), 4 — стоп-кран, 2 — інше.
+      if (o.once && o.mode !== 'stub') throw new Error('run --once дозволено лише в режимі stub');
+      if (haltedCanonical()) {
+        out({ ok: false, code: 'halted' });
+        process.exitCode = o.once ? 4 : 2;
+        break;
+      }
+      const maxSteps = o['max-steps'] ? Number(o['max-steps']) : 50;
+      if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 50) throw new Error('--max-steps 1..50');
+      const r = await j4().process({ maxSteps });
       out(r);
-      process.exitCode = r.ok ? 0 : 2;
+      if (r.ok) process.exitCode = 0;
+      else if (o.once && r.code === 'locked') process.exitCode = 75;
+      else if (o.once && r.code === 'halted') process.exitCode = 4;
+      else process.exitCode = 2;
+      break;
+    }
+    case 'close': {
+      // Завершення задачі ADM: done лише після бар'єра на одному subject (bridge/src/close.mjs).
+      if (!o.task || !o.subject) throw new Error('потрібні --task і --subject');
+      if (haltedCanonical() || process.env.J4_HALT === '1' || fs.existsSync(path.join(STAFF_ROOT, 'bridge', 'HALT'))) {
+        out({ ok: false, code: 'halted' });
+        process.exitCode = 4;
+        break;
+      }
+      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: new Store(home) });
+      out(r);
+      process.exitCode = r.ok ? 0 : 3;
       break;
     }
     case 'inbox': {
@@ -126,7 +163,7 @@ async function main() {
       break;
     }
     default:
-      process.stderr.write('j4 <send|submit|run|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
+      process.stderr.write('j4 <send|submit|run [--once]|close|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
       process.exitCode = 64;
   }
 }

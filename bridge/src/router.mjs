@@ -12,6 +12,7 @@ import { Budget, Thread } from './guards.mjs';
 import { checkLive } from './gate.mjs';
 import { AdapterError, parseAgentJson, renderInput } from './adapters/common.mjs';
 import { MonthlyBudget, toMicro } from './monthly.mjs';
+import { appendAdmEvent } from './events.mjs';
 
 const RETRYABLE_PARSE = new Set(['reply-not-json', 'reply-schema']);
 const pad = (n, w) => String(n).padStart(w, '0');
@@ -32,6 +33,8 @@ export class J4 {
     this.clock = o.now ?? (() => Date.now());
     this.hooks = o.hooks ?? {};
     this.keepSpool = o.keepSpool ?? false;
+    // запис подій ADM у tasks/<id>/events.jsonl (T-0009); вимкнено, доки явно не ввімкнено
+    this.taskEvents = o.taskEvents === true;
     // місячна стеля платних викликів — спільна для всіх задач і агентів (T-0006)
     this.monthly = new MonthlyBudget(o.monthlyFile ?? path.join(this.store.home, 'budget', 'monthly.json'), o.config.limits.monthly);
   }
@@ -234,7 +237,8 @@ export class J4 {
         steps += 1;
         await this.deliver(q[0]);
       }
-      return { ok: true, steps };
+      const events = this.syncTaskEvents();
+      return { ok: true, steps, events };
     } finally {
       this.store.releaseLock();
     }
@@ -447,6 +451,44 @@ export class J4 {
     m.reply_msg_id = res.msg_id ?? null;
     delete m.pending_reply;
     this.saveMsg(m);
+    return res;
+  }
+
+  // Події ADM у журнали задач (A-T5-04, T-0009). Джерело — журнал J4: кожен запис escalation_raised і
+  // message_accepted донесення (kind report) дає одну подію з ref на seq і хеш запису. Ключ — хеш запису журналу J4,
+  // тож повторний прохід (зокрема після збою посеред синхронізації) дублікатів не створює.
+  // Приймань, рецензій, рішень JE і змін стану тут немає й бути не може (events.mjs).
+  syncTaskEvents() {
+    const res = { written: 0, duplicate: 0, failed: 0 };
+    if (!this.taskEvents || !this.staffRoot) return res;
+    const all = this.ledger.readAll().entries;
+    const failedKeys = new Set(all.filter((x) => x.event === 'task_event_failed').map((x) => `${x.detail?.key}|${x.detail?.code}`));
+    for (const x of all) {
+      let ev = null;
+      if (x.event === 'escalation_raised') {
+        ev = { event: 'escalation', escalation_id: x.detail?.escalation_id ?? null, reason: x.detail?.reason ?? null, categories: x.detail?.categories ?? [], thread_id: x.detail?.thread_id ?? null, msg_id: x.msg_id ?? null };
+      } else if (x.event === 'message_accepted' && x.kind === 'report') {
+        ev = { event: 'report_filed', report_author: x.from, msg_id: x.msg_id, thread_id: x.thread_id ?? null };
+      }
+      if (!ev) continue;
+      const taskId = x.task_id ?? x.detail?.task_id ?? null;
+      if (x.subject?.kind === 'commit') ev.subject = x.subject.ref;
+      ev.ref = `j4-ledger#seq=${x.seq}`;
+      ev.ledger_hash = x.hash;
+      const key = `j4:${x.hash.slice(0, 32)}`;
+      try {
+        const r = appendAdmEvent(this.staffRoot, taskId, ev, { key, now: this.clock() });
+        if (r.duplicate) res.duplicate += 1;
+        else res.written += 1;
+      } catch (e) {
+        res.failed += 1;
+        const code = typeof e.code === 'string' ? e.code.slice(0, 40) : 'error';
+        if (!failedKeys.has(`${key}|${code}`)) {
+          failedKeys.add(`${key}|${code}`);
+          this.ledger.append({ event: 'task_event_failed', at: this.nowIso(), task_id: /^T-\d{4}$/.test(taskId ?? '') ? taskId : null, detail: { key, code, ledger_seq: x.seq } });
+        }
+      }
+    }
     return res;
   }
 
