@@ -39,7 +39,7 @@ proposal_if_authorized:
     mandatory:
       - "F-T9-12: j4 close відмовляє (exit 3, escalation-source-unreadable), якщо J4_HOME не є текою, файла J4_LEDGER немає або readAll().partial не null; closeTask вимагає ledgerEntries явно (без значення за замовчуванням)"
       - "F-T9-11: CLI-тест j4 close — J4_HOME на порожню теку, J4_LEDGER із escalation_raised цієї задачі → exit 3 open-escalation; той самий журнал з escalation_resolved → 0; неіснуючий/обірваний журнал → escalation-source-unreadable; перевірка мутантами m1/m2 на тимчасовій копії"
-    cheap_recommended: ["F-T9-13 result: pass без //", "F-T9-14 кілька ключів verify: → order-verify-unreadable", "F-T9-17 повідомлення для escalation без id"]
+    cheap_recommended: ["F-T9-13 evidence result: pass не приймає 'not passed', '0 passed', '0 pass'", "F-T9-14 кілька ключів verify: → order-verify-unreadable", "F-T9-17 повідомлення для escalation без id"]
     documented_not_fixed: ["F-T9-15 бар'єр поза замком (вікно мілісекунд) — розкрити в DESIGN", "F-T9-16 acceptance.mjs поза T-0009 — окреме завдання або прийняте обмеження"]
   files: "bridge/src/close.mjs, bridge/bin/j4.mjs (case close), bridge/test/t0009.test.mjs, bridge/docs/DESIGN.md, bridge/README.md; CONTRACT, bridge/config, acceptance.mjs, .github не змінюються"
   checks_before_regression: "відфільтровані тести T-0009 (E|C|H) + нові CLI-тести — 0 викликів адаптера (лічильник підтверджує)"
