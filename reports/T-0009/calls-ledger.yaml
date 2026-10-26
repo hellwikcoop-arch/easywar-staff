@@ -20,3 +20,37 @@ entries:
     what: "єдиний повний запуск bridge/test/t0009.test.mjs після реалізації (тест Q1: 2 виклики stub-адаптера); запуск з фільтром «T-0009 E2» адаптера не викликає"
     basis: "перелік команд сеансу: після початку T-0009 повний файл запускався один раз; рішення JE-T9-01 п. 3 підтверджує базу 2"
     cumulative_after: {local: 2, c3: 0, ci: 0, total: 2, remaining: 248}
+
+  - id: L-002
+    kind: actual
+    category: local
+    calls: 0
+    accuracy: exact
+    what: "локальні запуски тестів T-0009 без адаптера: E1–E4, C1–C4 (фільтр --test-name-pattern 'T-0009 (C|E)')"
+    basis: "у цих тестах makeJ4(..., {adapters: {}}) або прямі виклики функцій: dispatch_attempt без адаптера неможливий (router.mjs:303–336, ad.name); E1 це перевіряє assert adapterCalls == 0"
+    cumulative_after: {local: 2, c3: 0, ci: 0, total: 2, remaining: 248}
+
+  - id: L-003
+    kind: calibration
+    category: local
+    calls: 0
+    accuracy: exact
+    what: "калібрування лічильника tasks/T-0009/tools/call-counter.mjs на синтетичному журналі в тимчасовій теці: 3 події dispatch_attempt у 2 процесах дали total 3, подія message_accepted не рахується, verifyLedger ok, без змінної J4_CALL_COUNT_FILE файл не пишеться"
+    basis: "це записи в тимчасовий журнал, адаптер не викликався; у ліміт не входить"
+    cumulative_after: {local: 2, c3: 0, ci: 0, total: 2, remaining: 248}
+
+  - id: P-001
+    kind: plan
+    category: local
+    run: "J3-1 (повний регресійний прогін, перший із ≤3)"
+    subject: 9a3048cd65e07dd45be74048b9d437b831d83351   # контрольний SHA-кандидат; bridge/ незмінний у наступних журнальних комітах
+    command: "node --test 'bridge/test/*.test.mjs' з лічильником call-counter.mjs"
+    estimate: {low: 44, high: 54, accuracy: estimate}
+    basis: "68 базових тестів — 35–45 (оцінка з аналізу коду, reports/T-0007/004.yaml, точне значення невідоме) + 7 (T-0007) + 2 (T-0009 Q1, exact); у цьому прогоні N вимірюється точно"
+    cumulative_if_high: {local: 56, c3: 0, ci: 0, total: 56, remaining: 194}
+    forecast: |
+      Прогноз на найгірше N=54: J3-1 (≤54) → ≤56; C3-1 (≤54) → ≤110; CI при відкритті PR (1 прогін, ≤54) → ≤164;
+      залишок ≥86 дозволяє ще один повний прогін (J3-2 після виправлень C3 або другий CI) → ≤218; два додаткові
+      прогони (≤272) перевищили б 250 — тоді зупинка й доповідь JE (п. 6). Після вимірювання N прогноз уточнюється.
+      CI: workflow j4-bridge.yml, job test — один прогін набору на кожну подію PR (opened/synchronize/reopened),
+      без матриці; лічильника в CI немає, тож CI-значення — estimate = N × кількість прогонів CI.
