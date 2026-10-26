@@ -1,0 +1,23 @@
+# Висновки C3 (окремий запуск Claude, лише читання) за T-0007. Стислий запис; повний текст — у сеансі J3.
+- seq: 1
+  subject: {kind: commit, ref: e4b8d213832bab4bd2ce3f2d3b2eeafd57f54f1b}
+  review: {review_status: complete, verdict: changes_requested}
+  tests: {tests: 76, pass: 76, fail: 0}
+  findings:
+    - {id: F-T7-1, mandatory: true, description: "назва S3 перебільшувала покриття: --human не автентифікований (T-0006 F-3), тест доводить лише відмову без --human", location: "bridge/test/t0007.test.mjs S3"}
+    - {id: F-T7-2, mandatory: false, description: "S5 заявляв «хопи» без перевірки loop-max-hops (покрито limits.test.mjs)", location: "t0007.test.mjs S5"}
+    - {id: F-T7-3, mandatory: false, description: "S2 — самозавершення процесу після спулу; збій до спулу (dispatch_outcome_unknown) не покрито в T-0007 (покрито recovery.test.mjs)", location: "t0007.test.mjs S2"}
+    - {id: F-T7-4, mandatory: false, description: "staffRoot CLI = репозиторій (bridge/HALT зупинить тести); без timeout у spawnSync; тимчасові каталоги не прибираються", location: "t0007.test.mjs sandbox()"}
+    - {id: F-T7-5, mandatory: false, description: "ліміт 20 перевірено як значення конфігурації; блокування — на штучному ліміті 1", location: "t0007.test.mjs S4"}
+    - {id: F-T7-6, mandatory: false, description: "order.yaml відхиляється від шаблону розд. 3 (base_sha, reporting, одиниця max_attempts)", location: "tasks/T-0007/order.yaml"}
+    - {id: F-T7-7, mandatory: false, description: "конфлікт номера T-0007 з t-0007/draft; немає review_requested", location: "tasks/T-0007/events.jsonl"}
+- seq: 2
+  subject: {kind: commit, ref: 071bf148efc5aca1a29643d58e860a9019087c60}
+  review: {review_status: complete, verdict: passed}
+  tests: "C3 не запускав: diff змінює лише назви, коментарі, timeout і order.yaml; J3 — 76/76 на цьому дереві"
+  closed: [F-T7-1, F-T7-2, F-T7-6]
+  partially_closed: [F-T7-4]
+  open_advisory: [F-T7-3, F-T7-5, F-T7-7]
+  new:
+    - {id: F-T7-8, mandatory: false, description: "картку змінено після task_accepted без поправки (обсяг і ліміти не змінено)", remedy: "events seq 6; погодження J5"}
+    - {id: F-T7-9, mandatory: false, description: "посилання F-3 у коментарі тесту без джерела → reports/T-0006/c3-reviews.yaml seq 1; tasks/T-0006/je-security-decisions.md"}

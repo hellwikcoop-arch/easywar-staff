@@ -1,0 +1,65 @@
+task_id: T-0007
+task_version: 1
+seq: 1
+author: J3
+to: J5
+kind: milestone
+at: 2026-10-26T12:52:00+00:00
+subject: {kind: commit, ref: 071bf148efc5aca1a29643d58e860a9019087c60}   # КОНТРОЛЬНИЙ SHA
+base: {branch: setup/staff-bootstrap, sha: bfeb82d7928e528b8097247e472732d4e3c190f2}
+branch: t-0007/autonomy-check
+result: technical_accepted_awaiting_J5   # не done: бар'єр чекає змістового приймання J5
+
+changed:
+  - "bridge/test/t0007.test.mjs (новий, 8 сценаріїв)"
+  - "tasks/T-0007/** , reports/T-0007/**"
+unchanged_verified: "bridge/src, bridge/config, CONTRACT_v0_4.md (sha256 2fdc2f9d…5de), tasks/T-0002, tasks/T-0004 — git diff bfeb82d..071bf14 порожній"
+
+checks:
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 071bf148efc5aca1a29643d58e860a9019087c60, result: "76/76 pass (68 базових + 8 T-0007)", by: J3}
+  - {cmd: "j4 acceptance --task T-0007 --subject 071bf14…", result: "ready:false, missing: acceptance-J5-content-missing (exit 3)", by: J3}
+
+scenarios:   # усі — stub, synthetic, кожен крок CLI окремим процесом
+  S1: {claim: "маршрут J3→J5→J3→J5→J3 без ручного пересилання", evidence: "10 подій журналу; task/thread/SHA/body_sha256 на кожному переході; mode=stub, model_id=null; j4 verify ok", result: pass}
+  S2: {claim: "перезапуск після загибелі процесу (exit 137 після спулу)", evidence: "lock_recovered; 1 виклик адаптера; calls=1", result: pass, limit: "збій до спулу не покрито в T-0007 (F-T7-3), є в recovery.test.mjs"}
+  S3: {claim: "рівень C утримується; без --human і з CLI агента рішення не приймається", evidence: "status held, 0 викликів J5, ескалація decision_level_c; resolve без --human відхилено; JE з agent_cli → origin-denied; нитка awaiting_founder", result: pass, limit: "--human не автентифікований (T-0006 F-3)"}
+  S3b: {claim: "відповідь J5 з decision_needed утримується", result: pass}
+  S4: {claim: "ліміти", evidence: "конфіг max_calls_per_task=20, max_attempts=2, max_cost_usd=0; 2 тимчасові помилки → attempts-exhausted; ліміт викликів (1 у тесті) → limit-calls-task", result: pass, limit: "блок на значенні 20 не відтворювався (F-T7-5)"}
+  S5: {claim: "захист від циклів", evidence: "loop-ping-pong з ескалацією; loop-wait-cycle", result: pass}
+  S6: {claim: "бар'єр приймання на одному SHA", evidence: "без C3/J5 — missing; інший SHA не зараховано; done лише ADM; пізніший changes_requested закриває бар'єр; повідомлення з task_state=done → done-forbidden", result: pass}
+  S7: {claim: "підміна запису журналу виявляється", result: pass}
+
+review: {by: C3, rounds: 2, final: "passed на 071bf14 (events seq 8)", ref: reports/T-0007/c3-reviews.yaml}
+
+resources:
+  stub_adapter_calls:
+    T-0007_J4_counter_max_per_sandbox: {value: 2, limit: 20, accuracy: exact}
+    cumulative_all_runs: {value: 29, accuracy: exact, breakdown: "J3: 1 пробний CLI + 3 прогони × 7 = 22; C3: 1 прогін × 7 = 7"}
+    deviation: "Якщо ліміт 20 розуміти як сукупну кількість stub-викликів за всі прогони, його перевищено (29). У межах лічильника J4 для T-0007 — 2 з 20. Вартість 0, платних викликів 0. Тлумачення ліміту — на рішення J5."
+  paid_api_calls: 0
+  attempts: {S3_test: "2 з 2 (виправлено intent у тесті)", C3_review: "2 з 2 (changes_requested → passed)"}
+  C3_tool_calls: {value: 14, accuracy: exact}
+
+manual_routes_remaining:
+  - {id: M-1, route: "J5 (справжній)", why: "адаптер J5 лише stub; live — рівень C, заборонено", manual: "змістове приймання J5 і відповіді J5 передає людина"}
+  - {id: M-2, route: "J3 → C3", why: "C3 має адаптер inbox (deposit); J4 рецензію не запускає", manual: "J3 запускає C3 сам і вносить review_* в events.jsonl"}
+  - {id: M-3, route: "J4 → events.jsonl", why: "A-T5-04: J4 мав би додавати report_filed/escalation з ref на seq журналу — не реалізовано", manual: "J3 веде events.jsonl вручну"}
+  - {id: M-4, route: "запуск черги", why: "немає планувальника/спостерігача для j4 run і для inbox J3", manual: "кожен крок ініціює людина або сеанс J3"}
+  - {id: M-5, route: "JE → рішення ескалацій", why: "--human не автентифікований (F-3)", manual: "JE виконує resolve сам; безпека лише організаційна"}
+  - {id: M-6, route: "ADM → done", why: "немає команди переходу в done; acceptance лише перевіряє", manual: "state_changed пише J3 від імені ADM вручну (як у T-0006)"}
+  - {id: M-7, route: "J5 → C5.1, J3 → C5.1", why: "A-T5-08 відкладено; маршруту J3→C5.1 у routes.json немає; F-20", manual: "—"}
+
+proposals_minimal:   # без зміни контракту; кожна — окрема задача з C3
+  - {id: P-1, level: A, what: "j4 run --once у запланованому завданні (stub) + j4 inbox --since", closes: M-4}
+  - {id: P-2, level: A, what: "J4 додає report_filed/escalation у tasks/<id>/events.jsonl з ref на файл і seq журналу (A-T5-04 вже затверджено)", closes: M-3}
+  - {id: P-3, level: A, what: "j4 close --task --subject: пише state_changed=done від ADM лише якщо requestDone(ADM).allowed", closes: M-6}
+  - {id: P-4, level: C, what: "автентифікація JE: варіант (в) з je-security-decisions.md — рішення лише через CI environment з рецензентом JE", closes: M-5}
+  - {id: P-5, level: C, what: "адаптер C3 (окремий read-only запуск) — вимагає рішення щодо Claude CLI (F-14) і обліку", closes: M-2}
+  - {id: P-6, level: C, what: "погодження live J5 (провайдер, модель, ліміти, строк) — лише після P-4 і F-2", closes: M-1}
+
+open_for_decision:
+  - "J5: змістове приймання на 071bf148efc5aca1a29643d58e860a9019087c60"
+  - "J5: погодити уточнення картки (events seq 6, F-T7-8) і тлумачення ліміту 20"
+  - "J5 / JE: конфлікт номера — гілка t-0007/draft (стабілізація F-16…F-19) має інший T-0007"
+  - "JE: F-2, F-3, F-9 (рівень C, з T-0006)"
+restrictions: "PR не зливати; live і платні виклики заборонені до окремого рішення JE"
