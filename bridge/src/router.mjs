@@ -474,6 +474,7 @@ export class J4 {
       const taskId = x.task_id ?? x.detail?.task_id ?? null;
       if (x.subject?.kind === 'commit') ev.subject = x.subject.ref;
       ev.ref = `j4-ledger#seq=${x.seq}`;
+      ev.ledger_file = path.basename(this.ledger.file); // CONTRACT 9а.3: файл і seq; повний шлях не пишемо
       ev.ledger_hash = x.hash;
       const key = `j4:${x.hash.slice(0, 32)}`;
       try {

@@ -8,12 +8,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync, spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { BRIDGE_DIR } from '../src/policy.mjs';
 import { appendAdmEvent, readTaskEvents } from '../src/events.mjs';
 import { closeTask, orderGate } from '../src/close.mjs';
 import { Store } from '../src/store.mjs';
-import { tmpStaff, draft, makeJ4, events as ledgerEvents, SHA_A, SHA_B } from './helpers.mjs';
+import { Ledger } from '../src/ledger.mjs';
+import { tmpStaff, draft, makeJ4, openEscalations, events as ledgerEvents, SHA_A, SHA_B } from './helpers.mjs';
 
 const CLI = path.join(BRIDGE_DIR, 'bin', 'j4.mjs');
 const TICK = path.join(BRIDGE_DIR, 'bin', 'j4-tick.sh');
@@ -77,6 +79,7 @@ test('T-0009 E1: J4 пише report_filed і escalation з ref на журнал
   for (const e of ev.slice(1)) {
     assert.equal(e.subject, SHA_A);
     assert.match(e.ref, /^j4-ledger#seq=\d+$/);
+    assert.equal(e.ledger_file, 'ledger.jsonl'); // файл і seq (CONTRACT 9а.3), без повного шляху
     const led = JSON.parse(fs.readFileSync(path.join(root, 'ledger.jsonl'), 'utf8').split('\n')[Number(e.ref.split('=')[1]) - 1]);
     assert.equal(led.hash, e.ledger_hash);
   }
@@ -124,7 +127,7 @@ test('T-0009 E3: пошкоджений журнал задачі не пере�
   const mod = JSON.stringify(pathToFileURL(path.join(BRIDGE_DIR, 'src', 'events.mjs')).href);
   const kids = [0, 1, 2, 3].map((w) => new Promise((resolve) => {
     const p = spawn(process.execPath, ['--input-type=module', '-e',
-      `const { appendAdmEvent } = await import(${mod}); for (let i = 0; i < 5; i++) appendAdmEvent(${JSON.stringify(root)}, 'T-0900', { event: 'report_filed' }, { key: 'w${w}-' + i });`]);
+      `const { appendAdmEvent } = await import(${mod}); for (let i = 0; i < 5; i++) appendAdmEvent(${JSON.stringify(root)}, 'T-0900', { event: 'report_filed' }, { key: 'w${w}-' + i });`], { signal: AbortSignal.timeout(60000) });
     p.on('exit', resolve);
   }));
   assert.deepEqual(await Promise.all(kids), [0, 0, 0, 0]);
@@ -148,6 +151,37 @@ test('T-0009 E4: збій під час синхронізації — наст�
   const r = await j4b.process();
   assert.deepEqual(r.events, { written: 1, duplicate: 1, failed: 0 });
   assert.deepEqual(taskEvents(root).map((e) => e.event), ['task_accepted', 'escalation', 'report_filed']);
+});
+
+test('T-0009 E5: ручний допис не губиться; службові поля не підміняються; null-рядок і done без subject відхиляються', () => {
+  const root = tmpStaff();
+  const f = path.join(root, 'tasks', T, 'events.jsonl');
+  const manual = (n) => fs.appendFileSync(f, `${JSON.stringify({ seq: n, event: 'command', task_id: T, by: 'JE', note: 'ручний запис' })}\n`);
+  // ручний `>>` у вікні між читанням і записом ADM: запис ADM перечитує файл, чужий рядок лишається, seq продовжується
+  let reads = 0;
+  const res = appendAdmEvent(root, T, { event: 'report_filed' }, { key: 'm1', hooks: { afterRead: () => { reads += 1; if (reads === 1) manual(2); } } });
+  assert.equal(reads, 2, 'після зміни файлу — перечитування');
+  assert.deepEqual(taskEvents(root).map((e) => [e.seq, e.event, e.by]), [[1, 'task_accepted', 'J3'], [2, 'command', 'JE'], [3, 'report_filed', 'ADM']]);
+  assert.equal(res.entry.seq, 3);
+  // файл змінюють щоразу — після 5 спроб events-busy, нічого не затерто
+  let n = 3;
+  assert.throws(() => appendAdmEvent(root, T, { event: 'report_filed' }, { key: 'm2', hooks: { afterRead: () => manual(++n) } }), { code: 'events-busy' });
+  assert.equal(taskEvents(root).length, 3 + 5);
+  assert.equal(taskEvents(root).filter((e) => e.j4_key === 'm2').length, 0);
+
+  // службові поля подія від викликача підмінити не може
+  const root2 = tmpStaff();
+  const e = appendAdmEvent(root2, T, { event: 'report_filed', seq: 99, task_id: 'T-0001', at: 'x', j4_key: 'evil', by: 'ADM' }, { key: 'k1', now: Date.UTC(2026, 9, 26) }).entry;
+  assert.deepEqual([e.seq, e.task_id, e.by, e.j4_key, e.at], [2, T, 'ADM', 'k1', '2026-10-26T00:00:00.000Z']);
+
+  // рядок JSON `null` — пошкодження, а не TypeError; close це теж бачить
+  const root3 = tmpStaff();
+  fs.appendFileSync(path.join(root3, 'tasks', T, 'events.jsonl'), 'null\n');
+  assert.throws(() => appendAdmEvent(root3, T, { event: 'report_filed' }, { key: 'n1' }), { code: 'events-corrupt' });
+  assert.equal(closeTask({ staffRoot: root3, taskId: T, subject: SHA_A, checksRef: null }).code, 'events-corrupt');
+
+  // done без контрольного SHA неможливий навіть через allowDone
+  assert.throws(() => appendAdmEvent(root2, T, { event: 'state_changed', state: 'done' }, { key: 'd1', allowDone: true }), { code: 'subject-invalid' });
 });
 
 // ---------- C. j4 close ----------
@@ -227,55 +261,146 @@ test('T-0009 C2: відкрита ескалація JE, key_decision і піз�
   assert.equal(orderGate(root5, T).error, 'order-acceptance-unreadable');
 });
 
-test('T-0009 C3: j4 close через CLI на копії сховища; повтор не пише другий done; ескалація без JE не знімається', () => {
+test('T-0009 C3: j4 close через CLI — повтор ідемпотентний, стоп-кран 4, відкрита ескалація блокує, resolved знімає, без J4_HOME/J4_LEDGER — відмова', () => {
   const root = tmpStaff();
   order(root);
   const ref = evidence(root);
   fullAcceptance(root);
-  const a = cli(root, ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref]);
+  const args = ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref];
+  // без явних J4_HOME і J4_LEDGER close не знає, де шукати ескалації, — відмова до будь-якого запису
+  const env = cliEnv(root);
+  delete env.J4_HOME;
+  delete env.J4_LEDGER;
+  const blind = spawnSync(process.execPath, [CLI, ...args], { env, encoding: 'utf8', timeout: 60000 });
+  assert.equal(blind.status, 3);
+  assert.equal(JSON.parse(blind.stdout).code, 'escalation-source-unknown');
+  assert.equal(taskEvents(root).filter((e) => e.event === 'state_changed').length, 0);
+
+  const a = cli(root, args);
   assert.equal(a.code, 0, a.stderr);
   assert.equal(a.json.entry.state, 'done');
-  const b = cli(root, ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref]);
+  assert.match(a.json.entry.evidence_sha256, /^[0-9a-f]{64}$/);
+  const b = cli(root, args);
   assert.equal(b.code, 0);
   assert.equal(b.json.already, true);
   assert.equal(taskEvents(root).filter((e) => e.event === 'state_changed').length, 1);
-  const halted = cli(root, ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref], { J4_HALT: '1' });
-  assert.equal(halted.code, 4);
+  assert.equal(cli(root, args, { J4_HALT: '1' }).code, 4);
+
+  // відкрита ескалація JE (сховище й журнал J4 цього сховища) блокує; після resolve (origin human_cli) — дозволено
+  const root2 = tmpStaff();
+  order(root2);
+  const ref2 = evidence(root2);
+  fullAcceptance(root2);
+  const j4 = makeJ4(root2, { adapters: {} });
+  j4.submit(draft(root2, { decision_level: 'C' }), { origin: 'agent_cli' });
+  const args2 = ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref2];
+  const blocked = cli(root2, args2);
+  assert.equal(blocked.code, 3);
+  assert.equal(blocked.json.code, 'open-escalation');
+  const esc = openEscalations(root2)[0];
+  assert.equal(j4.resolve(esc.escalation_id, { decision: 'release' }, { origin: 'agent_cli' }).code, 'origin-denied');
+  assert.equal(cli(root2, args2).code, 3, 'агент ескалацію не знімає');
+  assert.equal(j4.resolve(esc.escalation_id, { decision: 'release' }, { origin: 'human_cli' }).ok, true);
+  assert.equal(cli(root2, args2).code, 0);
+  assert.equal(adapterCalls(root2), 0);
 });
 
-test('T-0009 C4: checks — не згадка SHA, а рядок result: pass на subject і команди verify з наказу', () => {
-  const root = tmpStaff();
-  fullAcceptance(root);
+test('T-0009 C4: checks — не згадка SHA, а рядок result: pass на subject і команди verify з наказу; симлінки, fail до result, # у verify', () => {
   const CMD = "node --test 'bridge/test/*.test.mjs'";
-  const orderWith = (dir, verifyLine) => fs.writeFileSync(path.join(dir, 'tasks', T, 'order.yaml'), [
-    `id: ${T}`, 'acceptance: {technical: J3, content: J5, key_decision: false}', 'checks:', '  subject_kind: commit', verifyLine, '  review_kind: code', '',
-  ].join('\n'));
-  const evidenceFile = (name, text) => {
+  const setup = (verifyLine) => {
+    const root = tmpStaff();
+    fullAcceptance(root);
+    fs.writeFileSync(path.join(root, 'tasks', T, 'order.yaml'), [
+      `id: ${T}`, 'acceptance: {technical: J3, content: J5, key_decision: false}', 'checks:', '  subject_kind: commit', verifyLine, '  review_kind: code', '',
+    ].join('\n'));
     fs.mkdirSync(path.join(root, 'reports'), { recursive: true });
-    fs.writeFileSync(path.join(root, 'reports', name), text);
-    return `reports/${name}`;
+    const file = (name, text) => {
+      fs.writeFileSync(path.join(root, 'reports', name), text);
+      return `reports/${name}`;
+    };
+    const close = (ref) => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref });
+    return { root, file, close };
   };
-  const close = (ref) => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref });
-  orderWith(root, `  verify: ["${CMD}"]`);
-  const refused = (ref) => assert.deepEqual(close(ref).missing, ['checks-not-on-subject-or-failed']);
+  const NOT = ['checks-not-on-subject-or-failed'];
 
-  refused(evidenceFile('mention.yaml', `note: контрольний SHA ${SHA_A}\n`));                                          // лише згадка
-  refused(evidenceFile('nopass.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "75/76 pass, 1 fail"}\n`));       // є fail
-  refused(evidenceFile('othercmd.yaml', `- {cmd: "інша команда", subject: ${SHA_A}, result: "pass"}\n`));             // немає команди verify
-  refused(evidenceFile('othersha.yaml', `- {cmd: "${CMD}", subject: ${SHA_B}, result: "pass"}\n`));                    // інший SHA
-  assert.equal(taskEvents(root).filter((e) => e.event === 'state_changed').length, 0);
-
-  const good = close(evidenceFile('good.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass, fail 0", by: J3}\n`));
+  const a = setup(`  verify: ["${CMD}"]`);
+  assert.deepEqual(a.close(a.file('mention.yaml', `note: контрольний SHA ${SHA_A}\n`)).missing, NOT);                                       // лише згадка
+  assert.deepEqual(a.close(a.file('nopass.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "75/76 pass, 1 fail"}\n`)).missing, NOT);    // є fail
+  assert.deepEqual(a.close(a.file('failfirst.yaml', `- {fail: 3, cmd: "${CMD}", subject: ${SHA_A}, result: pass}\n`)).missing, NOT);         // fail до result
+  assert.deepEqual(a.close(a.file('othercmd.yaml', `- {cmd: "інша команда", subject: ${SHA_A}, result: "pass"}\n`)).missing, NOT);          // немає команди verify
+  assert.deepEqual(a.close(a.file('othersha.yaml', `- {cmd: "${CMD}", subject: ${SHA_B}, result: "pass"}\n`)).missing, NOT);                 // інший SHA
+  // симлінк на файл поза сховищем і файл у каталозі-симлінку поза сховищем — відмова, хоч вміст «ідеальний»
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'j4-outside-'));
+  fs.writeFileSync(path.join(outside, 'good.yaml'), `- {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass"}\n`);
+  fs.symlinkSync(path.join(outside, 'good.yaml'), path.join(a.root, 'reports', 'link.yaml'));
+  fs.symlinkSync(outside, path.join(a.root, 'reports', 'dirlink'));
+  assert.deepEqual(a.close('reports/link.yaml').missing, NOT);
+  assert.deepEqual(a.close('reports/dirlink/good.yaml').missing, NOT);
+  assert.equal(taskEvents(a.root).filter((e) => e.event === 'state_changed').length, 0);
+  const text = `- {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass, fail 0", by: J3}\n`;
+  const good = a.close(a.file('good.yaml', text));
   assert.equal(good.ok, true, JSON.stringify(good));
   assert.equal(good.entry.ref, 'reports/good.yaml');
+  assert.equal(good.entry.evidence_sha256, createHash('sha256').update(text).digest('hex'));
 
-  // verify є, але не розібраний — безпечна відмова
+  // слово fail у значенні cmd провалом не є
+  const b = setup(`  verify: ["${CMD}"]`);
+  assert.equal(b.close(b.file('c.yaml', `- {cmd: "${CMD} --test-name-pattern failover", subject: ${SHA_A}, result: "76/76 pass"}\n`)).ok, true);
+
+  // `#` усередині лапок — не коментар: друга команда verify не губиться; коментар після значення прибирається
+  const c = setup('  verify: ["echo A", "echo B # x"]   # коментар');
+  assert.deepEqual(orderGate(c.root, T).verify, ['echo A', 'echo B # x']);
+  assert.deepEqual(c.close(c.file('onlyA.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n`)).missing, NOT);
+  assert.equal(c.close(c.file('both.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n- {cmd: "echo B # x", subject: ${SHA_A}, result: pass}\n`)).ok, true);
+
+  // verify без відступу діє; нечитаний (блоковий) verify і порожній ключ — безпечна відмова
+  const d = setup('verify: ["echo A"]');
+  assert.deepEqual(d.close(d.file('x.yaml', `- {cmd: "echo B", subject: ${SHA_A}, result: pass}\n`)).missing, NOT);
+  for (const bad of ['  verify:\n    - "echo A"', '  verify: [echo A]', '  verify: ["echo A", ]', '  verify: null']) {
+    const e = setup(bad);
+    assert.equal(e.close(e.file('y.yaml', `{subject: ${SHA_A}, result: pass}\n`)).code, 'order-verify-unreadable', bad);
+  }
+  // явно порожній список — команд не вимагається, але рядок із pass на subject усе одно потрібен
+  const f = setup('  verify: []');
+  assert.deepEqual(f.close(f.file('z.yaml', `note: ${SHA_A}\n`)).missing, NOT);
+  assert.equal(f.close(f.file('w.yaml', `{subject: ${SHA_A}, result: pass}\n`)).ok, true);
+});
+
+test('T-0009 C5: ескалація з журналу J4 видна при порожньому сховищі J4; resolved у журналі її знімає; гонка двох close дає один done', async () => {
+  const root = tmpStaff();
+  order(root);
+  const ref = evidence(root);
+  fullAcceptance(root);
+  const j4 = makeJ4(root, { adapters: {} });
+  j4.submit(draft(root, { decision_level: 'C' }), { origin: 'agent_cli' });
+  const ledgerEntries = () => new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries;
+  const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'j4-clone-'));
+  fs.cpSync(root, clone, { recursive: true });   // контроль на копії: без журналу J4 ескалація невидима
+  const elsewhere = new Store(path.join(root, 'other-home'));   // «інший J4_HOME»: ескалацій у ньому немає
+  const close = () => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref, store: elsewhere, ledgerEntries: ledgerEntries() });
+  assert.equal(close().code, 'open-escalation');
+  assert.equal(closeTask({ staffRoot: clone, taskId: T, subject: SHA_A, checksRef: ref, store: new Store(path.join(clone, 'other-home')) }).ok, true, 'без журналу J4 така ескалація невидима — тому CLI вимагає J4_LEDGER');
+  const esc = openEscalations(root)[0];
+  assert.equal(j4.resolve(esc.escalation_id, { decision: 'release' }, { origin: 'human_cli' }).ok, true);
+  assert.equal(close().ok, true);
+
+  // гонка: два процеси close з різними subject одночасно — рівно один done
   const root2 = tmpStaff();
-  fullAcceptance(root2);
-  orderWith(root2, '  verify: [node --test]');
-  fs.mkdirSync(path.join(root2, 'reports'), { recursive: true });
-  fs.writeFileSync(path.join(root2, 'reports', 'c.yaml'), `{subject: ${SHA_A}, result: pass}\n`);
-  assert.equal(closeTask({ staffRoot: root2, taskId: T, subject: SHA_A, checksRef: 'reports/c.yaml' }).code, 'order-verify-unreadable');
+  order(root2);
+  const ref2 = evidence(root2);
+  fs.writeFileSync(path.join(root2, ref2), `checks: {subject: ${SHA_A}, result: pass}\nchecks: {subject: ${SHA_B}, result: pass}\n`);
+  fullAcceptance(root2, SHA_A);
+  fullAcceptance(root2, SHA_B);
+  const run = (subject) => new Promise((resolve) => {
+    const p = spawn(process.execPath, [CLI, 'close', '--task', T, '--subject', subject, '--checks-ref', ref2], { env: cliEnv(root2), signal: AbortSignal.timeout(60000) });
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('close', (code) => resolve({ code, json: JSON.parse(out) }));
+  });
+  const [x, y] = await Promise.all([run(SHA_A), run(SHA_B)]);
+  assert.deepEqual([x.code, y.code].sort(), [0, 3]);
+  assert.match([x, y].find((r) => r.code === 3).json.code, /^done-exists/);
+  assert.equal(taskEvents(root2).filter((e) => e.event === 'state_changed').length, 1);
 });
 
 // ---------- A. Черга: run --once і j4-tick.sh ----------
@@ -287,13 +412,16 @@ test('T-0009 Q1: один такт обробляє всю чергу, підх�
   assert.equal(send('T-0009 Q1: запит 1').code, 0);
   assert.equal(send('T-0009 Q1: запит 2').code, 0);
   assert.equal(send('T-0009 Q1: рівень C', ['--level', 'C']).json.status, 'held');
-  // замок загиблого обробника
-  fs.writeFileSync(path.join(root, '.j4', 'lock'), JSON.stringify({ pid: 999999, at: 0 }));
+  // замок загиблого обробника: pid справді завершеного процесу, час свіжий — замок прострочений лише через мертвий pid
+  const dead = spawnSync(process.execPath, ['-e', '0']).pid;
+  assert.throws(() => process.kill(dead, 0), { code: 'ESRCH' });
+  fs.writeFileSync(path.join(root, '.j4', 'lock'), JSON.stringify({ pid: dead, at: Date.now() }));
   const t1 = cli(root, ['run', '--once'], env);
   assert.equal(t1.code, 0, t1.stderr);
   assert.equal(t1.json.steps, 4); // 2 запити до J5 + 2 відповіді в скриньку J3
   assert.equal(adapterCalls(root), 2);
   assert.equal(ledgerEvents(root, 'lock_recovered').length, 1);
+  assert.equal(ledgerEvents(root, 'lock_recovered')[0].detail.stale_pid, dead);
   assert.equal(cli(root, ['inbox', '--role', 'J3']).json.length, 2);
   assert.deepEqual(taskEvents(root).map((e) => e.event), ['task_accepted', 'escalation']);
   // другий такт — порожня черга, нуль викликів, нуль нових подій; повідомлення рівня C утримане
@@ -304,7 +432,7 @@ test('T-0009 Q1: один такт обробляє всю чергу, підх�
   assert.equal(JSON.parse(fs.readFileSync(path.join(root, '.j4', 'messages', 'M-T-0900-0003.json'), 'utf8')).status, 'held');
 });
 
-test('T-0009 Q2: такт — замок живого обробника (75), стоп-кран (4), live заборонено, скрипт розкладу', () => {
+test('T-0009 Q2: такт — замок живого обробника (75), стоп-кран (4), live заборонено; скрипт розкладу знімає змінні живого режиму й викликає run --once --mode stub', () => {
   const root = tmpStaff();
   fs.mkdirSync(path.join(root, '.j4'), { recursive: true });
   fs.writeFileSync(path.join(root, '.j4', 'lock'), JSON.stringify({ pid: process.pid, at: Date.now() }));
@@ -319,11 +447,57 @@ test('T-0009 Q2: такт — замок живого обробника (75), �
   assert.equal(live.code, 1);
   assert.match(live.stderr, /лише в режимі stub/);
 
-  // скрипт розкладу: знімає змінні живого режиму, пише журнал такту, код виходу проходить
+  // скрипт розкладу, крок 1: підміна node в PATH показує, які змінні й аргументи реально отримує j4.mjs
+  const shim = fs.mkdtempSync(path.join(os.tmpdir(), 'j4-shim-'));
+  const shimOut = path.join(shim, 'out.txt');
+  fs.writeFileSync(path.join(shim, 'node'), '#!/bin/sh\n{ echo "ARGS: $*"; env | grep -E \'^(J4_ALLOW_LIVE|J4_APPROVAL|OPENAI_API_KEY|CODEX_API_KEY|J4_HOME|J4_LEDGER)=\' | sed \'s/=.*/=<set>/\'; } > "$SHIM_OUT"\nexit 0\n', { mode: 0o755 });
+  const liveEnv = { J4_ALLOW_LIVE: '1', J4_APPROVAL: '/nonexistent', OPENAI_API_KEY: 'not-a-real-key', CODEX_API_KEY: 'not-a-real-key', SHIM_OUT: shimOut };
+  const sh = spawnSync('sh', [TICK], { env: { ...cliEnv(root, liveEnv), PATH: `${shim}${path.delimiter}${process.env.PATH}` }, encoding: 'utf8', timeout: 60000 });
+  assert.equal(sh.status, 0, sh.stderr);
+  const seen = fs.readFileSync(shimOut, 'utf8');
+  assert.match(seen, /ARGS: .*j4\.mjs run --once --mode stub --task-events --max-steps 10/);
+  assert.match(seen, /J4_HOME=<set>/);
+  assert.match(seen, /J4_LEDGER=<set>/);
+  for (const v of ['J4_ALLOW_LIVE', 'J4_APPROVAL', 'OPENAI_API_KEY', 'CODEX_API_KEY']) assert.doesNotMatch(seen, new RegExp(v), `${v} має бути знято`);
+  fs.rmSync(shim, { recursive: true, force: true });
+
+  // крок 2: справжній такт — пише журнал такту, код виходу проходить
   const r = spawnSync('sh', [TICK], { env: cliEnv(root, { J4_ALLOW_LIVE: '1', J4_APPROVAL: '/nonexistent' }), encoding: 'utf8', timeout: 60000 });
   assert.equal(r.status, 0, r.stderr);
   const log = fs.readFileSync(path.join(root, '.j4', 'tick.log'), 'utf8');
   assert.match(log, /"ok": true/);
   assert.match(log, /exit=0/);
   assert.equal(adapterCalls(root), 0);
+});
+
+test('T-0009 Q3: невдалий запис події ADM — код виходу 6, один task_event_failed на ключ; черга не ламається', () => {
+  const root = tmpStaff();
+  fs.appendFileSync(path.join(root, 'tasks', T, 'events.jsonl'), '{"seq":2,"event":"x"');   // обірваний рядок
+  assert.equal(cli(root, ['send', '--from', 'J3', '--to', 'J5', '--task', T, '--subject', SHA_A, '--intent', 'question', '--summary', 'T-0009 Q3: рівень C', '--level', 'C']).json.status, 'held');
+  const env = { J4_TASK_EVENTS: '1' };
+  const t1 = cli(root, ['run', '--once'], env);
+  assert.equal(t1.code, 6);
+  assert.deepEqual(t1.json.events, { written: 0, duplicate: 0, failed: 1 });
+  assert.equal(cli(root, ['run', '--once'], env).code, 6);
+  const failed = ledgerEvents(root, 'task_event_failed');
+  assert.equal(failed.length, 1, 'повторний такт не множить записи про той самий збій');
+  assert.equal(failed[0].detail.code, 'events-corrupt');
+  assert.equal(adapterCalls(root), 0);
+  // без --task-events такт з тим самим журналом задачі проходить із кодом 0
+  assert.equal(cli(root, ['run', '--once']).code, 0);
+});
+
+test('T-0009 H1: канонічний bridge/HALT зупиняє run --once і close, навіть коли J4_STAFF_ROOT вказує на інше сховище', () => {
+  const canon = fs.mkdtempSync(path.join(os.tmpdir(), 'j4-canon-'));
+  for (const d of ['bin', 'src', 'config', 'roles', 'schema']) fs.cpSync(path.join(BRIDGE_DIR, d), path.join(canon, 'bridge', d), { recursive: true });
+  const root = tmpStaff();
+  const run = (...args) => spawnSync(process.execPath, [path.join(canon, 'bridge', 'bin', 'j4.mjs'), ...args], { env: cliEnv(root), encoding: 'utf8', timeout: 60000 });
+  fs.writeFileSync(path.join(canon, 'bridge', 'HALT'), '');
+  assert.equal(run('run', '--once').status, 4);
+  assert.equal(run('close', '--task', T, '--subject', SHA_A).status, 4);
+  // контроль: без HALT той самий каталог працює (порожня черга, нуль викликів)
+  fs.rmSync(path.join(canon, 'bridge', 'HALT'));
+  assert.equal(run('run', '--once').status, 0);
+  assert.equal(adapterCalls(root), 0);
+  fs.rmSync(canon, { recursive: true, force: true });
 });

@@ -26,8 +26,8 @@ node bridge/bin/j4.mjs verify
 
 ```sh
 bridge/bin/j4-tick.sh                       # один такт за розкладом: run --once --mode stub --task-events
-node bridge/bin/j4.mjs run --once           # один прохід черги; 75 — інший обробник працює, 4 — стоп-кран
-node bridge/bin/j4.mjs close --task T-XXXX --subject <SHA> --checks-ref reports/T-XXXX/001.yaml
+node bridge/bin/j4.mjs run --once           # один прохід черги; 75 — інший обробник працює, 4 — стоп-кран, 6 — подію ADM не записано
+J4_HOME=… J4_LEDGER=… node bridge/bin/j4.mjs close --task T-XXXX --subject <SHA> --checks-ref reports/T-XXXX/001.yaml   # J4_HOME і J4_LEDGER обов'язкові
 ```
 
 Розклад кодом не вмикається (приклади cron/launchd — [DESIGN.md](docs/DESIGN.md), розд. 17).

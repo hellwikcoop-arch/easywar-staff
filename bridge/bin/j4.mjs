@@ -5,7 +5,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { J4 } from '../src/router.mjs';
 import { loadConfig, BRIDGE_DIR } from '../src/policy.mjs';
-import { verifyLedger } from '../src/ledger.mjs';
+import { verifyLedger, Ledger } from '../src/ledger.mjs';
 import { sha256, PROTOCOL } from '../src/protocol.mjs';
 import { stubAdapter } from '../src/adapters/stub.mjs';
 import { MonthlyBudget } from '../src/monthly.mjs';
@@ -106,7 +106,8 @@ async function main() {
       if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 50) throw new Error('--max-steps 1..50');
       const r = await j4().process({ maxSteps });
       out(r);
-      if (r.ok) process.exitCode = 0;
+      // 6 — черга пройдена, але подію ADM у журнал задачі не записано (деталі: task_event_failed у журналі J4)
+      if (r.ok) process.exitCode = o.once && r.events?.failed > 0 ? 6 : 0;
       else if (o.once && r.code === 'locked') process.exitCode = 75;
       else if (o.once && r.code === 'halted') process.exitCode = 4;
       else process.exitCode = 2;
@@ -120,7 +121,22 @@ async function main() {
         process.exitCode = 4;
         break;
       }
-      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: new Store(home) });
+      // Відкриті ескалації беруться зі сховища J4 і журналу J4: обидва місця треба вказати явно, інакше close міг би
+      // не побачити ескалацію, створену в іншому J4_HOME (C3 F-T9-2).
+      if (!(o.home ?? process.env.J4_HOME) || !(o.ledger ?? process.env.J4_LEDGER)) {
+        out({ ok: false, code: 'escalation-source-unknown', missing: ['J4_HOME', 'J4_LEDGER'] });
+        process.exitCode = 3;
+        break;
+      }
+      let ledgerEntries = [];
+      try {
+        if (fs.existsSync(ledgerFile)) ledgerEntries = new Ledger(ledgerFile).readAll().entries;
+      } catch {
+        out({ ok: false, code: 'escalation-source-unreadable', missing: ['ledger'] });
+        process.exitCode = 3;
+        break;
+      }
+      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: new Store(home), ledgerEntries });
       out(r);
       process.exitCode = r.ok ? 0 : 3;
       break;
