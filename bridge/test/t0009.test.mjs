@@ -243,6 +243,41 @@ test('T-0009 C3: j4 close через CLI на копії сховища; пов�
   assert.equal(halted.code, 4);
 });
 
+test('T-0009 C4: checks — не згадка SHA, а рядок result: pass на subject і команди verify з наказу', () => {
+  const root = tmpStaff();
+  fullAcceptance(root);
+  const CMD = "node --test 'bridge/test/*.test.mjs'";
+  const orderWith = (dir, verifyLine) => fs.writeFileSync(path.join(dir, 'tasks', T, 'order.yaml'), [
+    `id: ${T}`, 'acceptance: {technical: J3, content: J5, key_decision: false}', 'checks:', '  subject_kind: commit', verifyLine, '  review_kind: code', '',
+  ].join('\n'));
+  const evidenceFile = (name, text) => {
+    fs.mkdirSync(path.join(root, 'reports'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'reports', name), text);
+    return `reports/${name}`;
+  };
+  const close = (ref) => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref });
+  orderWith(root, `  verify: ["${CMD}"]`);
+  const refused = (ref) => assert.deepEqual(close(ref).missing, ['checks-not-on-subject-or-failed']);
+
+  refused(evidenceFile('mention.yaml', `note: контрольний SHA ${SHA_A}\n`));                                          // лише згадка
+  refused(evidenceFile('nopass.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "75/76 pass, 1 fail"}\n`));       // є fail
+  refused(evidenceFile('othercmd.yaml', `- {cmd: "інша команда", subject: ${SHA_A}, result: "pass"}\n`));             // немає команди verify
+  refused(evidenceFile('othersha.yaml', `- {cmd: "${CMD}", subject: ${SHA_B}, result: "pass"}\n`));                    // інший SHA
+  assert.equal(taskEvents(root).filter((e) => e.event === 'state_changed').length, 0);
+
+  const good = close(evidenceFile('good.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass, fail 0", by: J3}\n`));
+  assert.equal(good.ok, true, JSON.stringify(good));
+  assert.equal(good.entry.ref, 'reports/good.yaml');
+
+  // verify є, але не розібраний — безпечна відмова
+  const root2 = tmpStaff();
+  fullAcceptance(root2);
+  orderWith(root2, '  verify: [node --test]');
+  fs.mkdirSync(path.join(root2, 'reports'), { recursive: true });
+  fs.writeFileSync(path.join(root2, 'reports', 'c.yaml'), `{subject: ${SHA_A}, result: pass}\n`);
+  assert.equal(closeTask({ staffRoot: root2, taskId: T, subject: SHA_A, checksRef: 'reports/c.yaml' }).code, 'order-verify-unreadable');
+});
+
 // ---------- A. Черга: run --once і j4-tick.sh ----------
 
 test('T-0009 Q1: один такт обробляє всю чергу, підхоплює мертвий замок і пише події; рівень C не рухається (2 виклики stub)', () => {

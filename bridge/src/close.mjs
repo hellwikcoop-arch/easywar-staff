@@ -1,7 +1,8 @@
 // Завершення задачі через ADM (T-0009): `j4 close --task T-XXXX --subject <SHA> --checks-ref <файл>`.
 // Перехід у done — лише після бар'єра CONTRACT_v0_4.md, розд. 6, на ОДНОМУ subject (acceptance.mjs, без змін).
 // Що перевіряється:
-//   - перевірки (checks): файл доказів у сховищі штабу, який містить повний subject;
+//   - перевірки (checks): файл доказів у сховищі штабу з записом на одному рядку, що містить повний subject і
+//     `result:` з `pass` без `fail`/`error`; якщо наказ має `verify`, кожна його команда — у такому ж рядку;
 //   - рецензія виду checks.review_kind і приймання кожної ролі з acceptance наказу (+ JE для key_decision);
 //   - відсутність відкритих ескалацій JE за задачею (у стані J4 і в events.jsonl); невідома ескалація = відкрита;
 //   - ідемпотентність: повторний close на тому ж subject не пише нічого; done на іншому subject — відмова.
@@ -27,7 +28,11 @@ export function orderGate(staffRoot, taskId) {
   const reviewKind = one(/^[ \t]+review_kind:\s*([a-z]+)/m) ?? 'code';
   if (!technical || !content || !['true', 'false'].includes(key)) return { error: 'order-acceptance-unreadable' };
   if (!['code', 'logic', 'none'].includes(reviewKind)) return { error: 'order-review-kind-invalid' };
-  return { requiredRoles: [[technical, 'technical'], [content, 'content']], keyDecision: key === 'true', reviewKind };
+  // verify: ["команда", ...] в один рядок; ключ є, а команд не розібрано — відмова (безпечний бік)
+  const verifyLine = text.match(/^[ \t]+verify:[ \t]*(.*)$/m);
+  const verify = verifyLine ? [...verifyLine[1].matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((m) => m[1]) : [];
+  if (verifyLine && !verify.length) return { error: 'order-verify-unreadable' };
+  return { requiredRoles: [[technical, 'technical'], [content, 'content']], keyDecision: key === 'true', reviewKind, verify };
 }
 
 function openEscalations({ store, taskId, entries }) {
@@ -50,14 +55,25 @@ function openEscalations({ store, taskId, entries }) {
   return [...new Set(open)];
 }
 
-function checksFrom(staffRoot, subject, checksRef) {
+// Доказ перевірок — запис на одному рядку (як у reports/T-0007/001.yaml): `{cmd: ..., subject: <SHA>, result: "... pass ..."}`.
+// Достатньо не згадки SHA, а рядка, де цей SHA стоїть поруч із result: pass і немає fail/error;
+// команди verify наказу мають бути в рядках, що пройшли. Інакше checks вважаються не пройденими на subject.
+function checksFrom(staffRoot, subject, checksRef, verify = []) {
+  const bad = [{ subject, passed: false, evidence_ref: null }];
   if (!checksRef || typeof checksRef !== 'string') return [];
   const rel = path.normalize(checksRef);
-  if (path.isAbsolute(rel) || rel.startsWith('..')) return [{ subject, passed: false, evidence_ref: null }];
+  if (path.isAbsolute(rel) || rel.startsWith('..')) return bad;
   const f = path.join(staffRoot, rel);
-  if (!fs.existsSync(f) || !fs.statSync(f).isFile()) return [{ subject, passed: false, evidence_ref: null }];
-  // доказ має називати саме цей subject; інакше перевірки не на контрольному SHA
-  const ok = fs.readFileSync(f, 'utf8').includes(subject);
+  if (!fs.existsSync(f) || !fs.statSync(f).isFile()) return bad;
+  const passing = fs.readFileSync(f, 'utf8').split('\n').filter((line) => {
+    if (!line.includes(subject)) return false;
+    const i = line.search(/\bresult:/);
+    if (i < 0) return false;
+    // «fail 0», «0 fail», «errors: 0» — звичайний підсумок успішного прогону, провалом не вважається
+    const result = line.slice(i).replace(/\b(fail\w*|errors?)[ :=]*0\b/gi, '').replace(/\b0[ ]+(fail\w*|errors?)\b/gi, '');
+    return /\bpass(ed)?\b/i.test(result) && !/\b(fail\w*|not ok|errors?)\b/i.test(result);
+  });
+  const ok = passing.length > 0 && verify.every((cmd) => passing.some((line) => line.includes(cmd)));
   return [{ subject, passed: ok, evidence_ref: ok ? rel : null }];
 }
 
@@ -83,7 +99,7 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store = null,
   if (esc.length) return refuse('open-escalation', esc.map((x) => `escalation:${x}`));
 
   const ev = evidenceFromEvents(staffRoot, taskId);
-  const checks = checksFrom(staffRoot, subject, checksRef);
+  const checks = checksFrom(staffRoot, subject, checksRef, gate.verify);
   const r = requestDone({ by: 'ADM', subject, checks, reviews: ev.reviews, acceptances: ev.acceptances, keyDecision: gate.keyDecision, reviewKind: gate.reviewKind, requiredRoles: gate.requiredRoles });
   if (!r.allowed) return refuse('barrier-not-passed', r.missing);
 
