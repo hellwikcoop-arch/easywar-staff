@@ -54,3 +54,36 @@ entries:
       прогони (≤272) перевищили б 250 — тоді зупинка й доповідь JE (п. 6). Після вимірювання N прогноз уточнюється.
       CI: workflow j4-bridge.yml, job test — один прогін набору на кожну подію PR (opened/synchronize/reopened),
       без матриці; лічильника в CI немає, тож CI-значення — estimate = N × кількість прогонів CI.
+
+  - id: A-001
+    kind: actual
+    category: local
+    run: "J3-1 (повний регресійний прогін №1 із ≤3)"
+    subject: 9a3048cd65e07dd45be74048b9d437b831d83351   # bridge/ на HEAD b8f6e68 ідентичний
+    command: "node --test 'bridge/test/*.test.mjs' (Node v22.23.4)"
+    calls: 44
+    accuracy: exact
+    method: "J4_CALL_COUNT_FILE + NODE_OPTIONS=--import tasks/T-0009/tools/call-counter.mjs: рахується кожен dispatch_attempt у журналах J4 усіх процесів; усі spawn у тестах успадковують process.env (перевірено grep по bridge/test)"
+    breakdown:
+      by_mode: {stub: 33, live_path_with_fake_fetch: 11}   # режим live у журналі = гілка воріт платних викликів; fetchImpl підмінено, мережі немає
+      by_adapter: {stub: 33, openai_with_fetchImpl_fake: 11}
+      processes: 12
+    paid_api_calls: 0
+    network_calls: 0
+    paid_basis: "кожен openaiAdapter у bridge/test створено з fetchImpl: fake і синтетичним ключем; OPENAI_API_KEY, CODEX_API_KEY, J4_ALLOW_LIVE, J4_APPROVAL у середовищі не задано"
+    tests: {tests: 86, pass: 86, fail: 0, duration_ms: 5188}   # 68 базових + 8 T-0007 + 10 T-0009
+    derived: "базові 68 тестів ≈ 44 − 7 (T-0007) − 2 (T-0009 Q1) = 35; 7 і 2 — з аналізу коду, окремо не вимірювались; це уточнює оцінку 35–45 з reports/T-0007/004.yaml"
+    cumulative_after: {local: 46, c3: 0, ci: 0, total: 46, remaining: 204}
+
+  - id: P-002
+    kind: plan
+    category: c3
+    run: "C3-1 (єдиний прогін C3, ліміт JE-T9-01 п. 4)"
+    subject: 9a3048cd65e07dd45be74048b9d437b831d83351
+    estimate: {calls: 44, accuracy: estimate}   # набір детермінований, N виміряно в A-001; C3 повідомить власне число з лічильником
+    cumulative_if_done: {local: 46, c3: 44, ci: 0, total: 90, remaining: 160}
+    forecast: |
+      Далі при N=44: CI при відкритті PR (1 прогін, estimate) → 134, залишок 116. Понад цей план влізають ще два
+      повні прогони (J3-2/J3-3 або другий CI) → ≤222; третій додатковий дав би 266 > 250 — зупинка й доповідь JE (п. 6).
+      Обмеження JE: J3 ≤3 повні прогони (використано 1), C3 — 1 (другий прогін C3 потребує рішення JE).
+      Щоб не витрачати CI даремно: PR відкривається, лише коли код і журнал остаточні; кожен push у відкритий PR = ще один CI-прогін.
