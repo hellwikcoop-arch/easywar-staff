@@ -124,3 +124,17 @@ entries:
       без прогону набору, лише diff — 0 викликів, як у T-0007 раунд 2; з прогоном — 44 → 222, залишок 28). Третій
       прогін J3 (J3-3, 44) вміщується лише без прогону в C3-2 (178+44=222) і без другого CI; прогін J3-3 разом із
       прогоном в C3-2 і одним CI дав би 266 > 250 — тоді зупинка й доповідь JE (п. 6).
+
+  - id: A-003
+    kind: actual
+    category: local
+    run: "J3-2 (повний регресійний прогін №2 із ≤3, після виправлень за C3 раунд 1)"
+    subject: d05dc5aaf449fc9c5be03a0869035e2871d6b57a   # bridge/ на HEAD журнальних комітів ідентичний
+    command: "node --test 'bridge/test/*.test.mjs' (Node v22.23.4)"
+    calls: 44
+    accuracy: exact
+    method: "call-counter.mjs: total 44, stub 33, live_path_with_fake_fetch 11, процесів 12 — збіг із прогнозом P-003 і з A-001/A-002"
+    paid_api_calls: 0
+    network_calls: 0
+    tests: {tests: 90, pass: 90, fail: 0, duration_ms: 5857}   # 68 базових + 8 T-0007 + 14 T-0009
+    cumulative_after: {local: 90, c3: 44, ci: 0, total: 134, remaining: 116}
