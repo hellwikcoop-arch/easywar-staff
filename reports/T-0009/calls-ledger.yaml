@@ -171,3 +171,15 @@ entries:
     estimate: {calls: 0, accuracy: estimate}
     basis: "лише читання diff і точкові експерименти в тимчасовій теці без адаптерів; тести з адаптером (Q1…) і повний набір не запускаються; C3 запускає лічильник і повідомляє total (очікується 0)"
     cumulative_if_done: {local: 98, c3: 48, ci: 0, total: 146, remaining: 104}
+
+  - id: A-004
+    kind: actual
+    category: c3
+    run: "C3-2 (другий раунд, дозволено JE-T9-02; D-1а)"
+    subject: d05dc5aaf449fc9c5be03a0869035e2871d6b57a
+    calls: 0
+    accuracy: "exact за лічильником C3 (total 0 у 7 прогонах: d05dc5a, 9a3048c з новими тестами, мутанти m1–m5); власні скрипти C3 адаптерів не викликають; прямі adapter.call() — 0 (gate.test.mjs не запускався)"
+    paid_api_calls: 0
+    network_calls: 0
+    verdict: changes_requested   # reports/T-0009/c3-reviews.yaml#seq=2
+    cumulative_after: {local: 98, c3: 48, ci: 0, total: 146, remaining: 104}

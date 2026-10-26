@@ -19,3 +19,32 @@
     - {id: F-T9-9, mandatory: false, location: "order.yaml, events.jsonl, calls-ledger.yaml, DESIGN 17", description: "order.yaml version 1/20 vs журнал 2/250; at у seq 3 пізніший за seq 4–5; paid/network 0 без мітки точності та прямі adapter.call поза dispatch; «ключі провайдерів», код виходу 2"}
     - {id: F-T9-10, mandatory: false, location: "events.mjs:66,38-45; close.mjs:103", description: "seq у події перекриває обчислений; рядок JSON `null` дає TypeError; done без subject; відкриті обов'язкові зауваження не рахуються (розкрито в DESIGN)"}
   verified_by_J3: "F-T9-1…4 і F-T9-10 відтворено експериментами C3 без викликів адаптера (exp1.mjs, exp2.mjs); F-T9-5 підтверджено читанням t0009.test.mjs і store.mjs"
+- seq: 2
+  round: 2
+  authorized_by: "JE-T9-02 п. 1–2 (D-1а): лише git diff 9a3048c..d05dc5a, без прогону набору"
+  subject: {kind: commit, ref: d05dc5aaf449fc9c5be03a0869035e2871d6b57a}
+  review: {review_status: complete, verdict: changes_requested}
+  confirmed: "git diff d05dc5a HEAD -- bridge порожній; репозиторій у ході рецензії не змінювався (git status порожній, HEAD незмінний); повний набір, gate/t0007, Q1–Q3 не запускались"
+  tests: "відфільтровано 'T-0009 (E|C|H)' на d05dc5a: 11/11 pass; той самий новий файл тестів на старому коді 9a3048c: 6 pass, 5 fail (E1, E5, C3, C4, C5)"
+  counter: {total: 0, runs: 7, note: "лічильник C3 у кожному прогоні (new, old, мутанти m1–m5); власні скрипти адаптерів не викликають"}
+  paid_api_calls: 0
+  network_calls: 0
+  files_read: 14
+  files_read_note: "C3 повідомив: order.yaml T-0006, T-0007, T-0009 не читав як текст, а лише розібрав скриптом orderGate; якщо це рахувати читанням — reviewer.max_read_files 15 перевищено на 2; питання на рішення JE"
+  findings_round1_status:
+    F-T9-1: fixed
+    F-T9-2: partial   # бібліотека виправлена; CLI-шлях без тесту (F-T9-11) і хибні/неіснуючі джерела приймаються мовчки (F-T9-12)
+    F-T9-3: fixed
+    F-T9-4: fixed
+    F-T9-5: fixed   # за читанням Q1/Q2; C3 їх не запускав
+  findings:
+    - {id: F-T9-11, mandatory: true, location: "bridge/bin/j4.mjs:131-139 (case 'close'); bridge/test/t0009.test.mjs C3, C5", description: "передача журналу J4 у closeTask через CLI не покрита жодним тестом; C3 бачить ескалацію й через сховище, C5 перевіряє бібліотеку з готовим ledgerEntries", failure_scenario: "мутанти m1 (CLI не передає ledgerEntries) і m2 (CLI не читає журнал) — усі 11 тестів E/C/H проходять; правка тихо поверне F-T9-2"}
+    - {id: F-T9-12, mandatory: true, location: "bridge/bin/j4.mjs:133; bridge/src/close.mjs (ledgerEntries = null); j4.mjs:131-133 (readAll().partial ігнорується)", description: "escalation-source-unknown лише вимагає, щоб J4_HOME/J4_LEDGER були задані: неіснуючий журнал дає порожній список, обірваний останній рядок відкидається, бібліотечний closeTask без ledgerEntries пропускає журнал", failure_scenario: "ескалація створена в інших типових місцях, close запущено з хибним J4_HOME/J4_LEDGER (друкарська помилка, приклад cron) → done при відкритій ескалації JE; closeTask зі Store на неіснуючу теку й ledgerEntries=[] → CLOSED"}
+    - {id: F-T9-13, mandatory: false, location: "close.mjs checksFrom", description: "евристика result: pass пропускає `not passed`, `0 passed`, `0 pass, 0 fail` (порожній відбір тестів), SHA лише всередині cmd; доказом може бути будь-який звичайний файл у сховищі"}
+    - {id: F-T9-14, mandatory: false, location: "close.mjs orderGate", description: "береться лише перший `verify:` у наказі (другий ключ ігнорується)"}
+    - {id: F-T9-15, mandatory: false, location: "close.mjs closeTask → appendAdmEvent", description: "бар'єр обчислюється поза файловим замком; подія changes_requested/escalation між перевіркою й записом не врахується (вікно від мілісекунд, не відтворено)"}
+    - {id: F-T9-16, mandatory: false, location: "bridge/src/acceptance.mjs (поза diff, незмінений відносно бази) + F-9", description: "review_finished by C3 з verdict passed без review_status бар'єр пропускає (partial відхиляється); `by` не автентифіковано"}
+    - {id: F-T9-17, mandatory: false, location: "close.mjs openEscalations", description: "косметика: ручний рядок escalation без escalation_id → `escalation:seq undefined`"}
+  recommended_round1_status: "F-T9-6, 7, 8, 10 — fixed; F-T9-9 — addressed (за diff); негерметичність при наявному bridge/HALT лише задокументована"
+  not_confirmed_by_C3: "(1) Q1–Q3 проходять на d05dc5a; (2) повний набір 90/90 (заява J3, A-003); (3) CLI `j4 close` end-to-end з ескалацією лише в журналі J4"
+  verified_by_J3: "F-T9-12 підтверджено читанням bin/j4.mjs (`if (fs.existsSync(ledgerFile)) … else ledgerEntries = []`, readAll().partial не перевіряється); F-T9-11 — за описом мутантів C3 і структурою тестів C3/C5, незалежно не відтворювалось (нові тести поза межами JE-T9-02)"
