@@ -1,0 +1,61 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ J5 (ініціатор), рішення JE щодо доступу від 26.10.2026 14:41 (Київ).
+# Лише синтетичні дані. Увага: гілка t-0007/draft містить інший, незатверджений проєкт під тим самим номером
+# (стабілізація F-16…F-19); його перенумерування — рішення J5 / JE, ця картка його не змінює.
+
+id: T-0007
+version: 1
+parent_task_id: T-0006
+title: "Перевірка автономного циклу штабу EasyWAR через ADM / J4 Bridge"
+
+intent:
+  purpose: "Підтвердити наскрізну роботу J4 Bridge без ручного пересилання повідомлень між агентами та без платних API"
+  end_state:
+    - "відтворюваний синтетичний маршрут J3 → J5 → J3 через J4 (stub)"
+    - "перевірено блокування несанкціонованих дій: рівень C, походження JE, done, обхід утримання"
+    - "збережено докази кожного переходу: журнал J4 з ланцюгом хешів, хеші тіл"
+    - "перевірено відновлення після перезапуску, ліміти викликів і спроб, захист від циклів"
+    - "перевірено бар'єр приймання: без C3, J3 і J5 на одному SHA done неможливий"
+    - "усі обов'язкові тести успішні; незалежна рецензія C3 на контрольному SHA"
+    - "донесення J3 із переліком маршрутів, що ще потребують ручної участі, і мінімальними змінами"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "платні виклики — 0; live-режим заборонено"
+    - "не змінювати CONTRACT_v0_4.md без JE"
+    - "не змінювати CSP, Tauri capabilities, міграції, секрети"
+    - "не зливати PR"
+    - "не змінювати T-0002 і T-0004"
+
+mission: "Виконати синтетичні сценарії через CLI J4 окремими процесами й тестами; зафіксувати докази й залишкові ручні маршрути"
+scope:
+  in: ["bridge/test/t0007.test.mjs (новий)", "tasks/T-0007/**", "reports/T-0007/**"]
+  out: ["bridge/src/**", "bridge/config/**", "CONTRACT_v0_4.md", "tasks/T-0002/**", "tasks/T-0004/**", "застосунок EasyWAR"]
+context_refs: ["CONTRACT_v0_4.md розд. 2, 6, 8, 9а", "tasks/T-0006/events.jsonl", "reports/T-0006/002.yaml"]
+materials: []
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: false}
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: 20                # запропонований ліміт T-0007 (виклики адаптера J4, stub); глобальні ліміти не змінюються
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2              # на тестовий сценарій
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: exact
+
+base: {branch: setup/staff-bootstrap, sha: bfeb82d7928e528b8097247e472732d4e3c190f2}
+branch: t-0007/autonomy-check
+
+amendments: []
