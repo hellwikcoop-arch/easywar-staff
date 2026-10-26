@@ -49,13 +49,16 @@ resources:
   max_calls: 20                # запропонований ліміт T-0007 (виклики адаптера J4, stub); глобальні ліміти не змінюються
   max_tokens: null
   max_cost_usd: 0
-  max_attempts: 2              # на тестовий сценарій
+  max_attempts: 2              # на крок (розділ 2); у T-0007 крок — тестовий сценарій
   max_delegation_depth: 1
   reviewer: {max_read_files: 15}
   reserve_pct: 0
   accuracy: exact
 
-base: {branch: setup/staff-bootstrap, sha: bfeb82d7928e528b8097247e472732d4e3c190f2}
-branch: t-0007/autonomy-check
+reporting:
+  milestones: ["контрольний SHA і рецензія C3", "донесення J3 для J5"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: bfeb82d7928e528b8097247e472732d4e3c190f2   # setup/staff-bootstrap; робоча гілка t-0007/autonomy-check
 
 amendments: []

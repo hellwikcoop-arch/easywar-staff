@@ -1,6 +1,7 @@
 // T-0007: перевірка автономного циклу штабу через J4 без ручного пересилання і без платних викликів.
 // Кожен крок маршруту — окремий процес CLI (bin/j4.mjs), тож стан між кроками переживає перезапуск.
 // Лише режим stub і синтетичні дані; JE-рішень від імені JE тест не ухвалює (resolve без --human).
+// staffRoot CLI — це репозиторій: файл bridge/HALT у ньому зупинить S1, S2, S7 (F-T7-4).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -27,7 +28,7 @@ function sandbox() {
   delete env.J4_ALLOW_LIVE;
   delete env.J4_APPROVAL;
   const j4 = (...args) => {
-    const r = spawnSync(process.execPath, [CLI, ...args], { env, encoding: 'utf8' });
+    const r = spawnSync(process.execPath, [CLI, ...args], { env, encoding: 'utf8', timeout: 60000 });
     let json = null;
     try {
       json = JSON.parse(r.stdout);
@@ -105,7 +106,7 @@ test('T-0007 S2: перезапуск — процес J4 загинув піс�
     '  hooks: { afterSpool: () => process.exit(137) } });',
     'await j4.process();',
   ].join('\n'));
-  const crash = spawnSync(process.execPath, [driver], { env: sb.env, encoding: 'utf8' });
+  const crash = spawnSync(process.execPath, [driver], { env: sb.env, encoding: 'utf8', timeout: 60000 });
   assert.equal(crash.status, 137, crash.stderr);
   assert.equal(sb.ledger().filter((e) => e.event === 'reply_received').length, 0);
   assert.ok(fs.existsSync(path.join(sb.env.J4_HOME, 'lock')), 'замок загиблого процесу лишився');
@@ -121,7 +122,9 @@ test('T-0007 S2: перезапуск — процес J4 загинув піс�
   assert.equal(sb.j4('verify').json.ok, true);
 });
 
-test('T-0007 S3: рівень C утримується до JE; агент не може схвалити рішення', () => {
+// Обмеження (F-T7-1, F-3): прапорець --human не автентифікований — будь-який процес із shell може його передати.
+// Тест доводить лише відмову без --human і без людського походження, а не автентифікацію JE.
+test('T-0007 S3: рівень C утримується до JE; без --human і з CLI агента рішення не приймається', () => {
   const sb = sandbox();
   const c = send(sb, ['--from', 'J3', '--to', 'J5', '--intent', 'question', '--level', 'C', '--summary', 'T-0007 S3: синтетичне питання рівня C']);
   assert.equal(c.code, 0, c.stderr);
@@ -186,7 +189,7 @@ test('T-0007 S4: ліміти — 20 викликів і 2 спроби в ко�
   assert.equal(events(root2, 'dispatch_blocked')[0].detail.code, 'limit-calls-task');
 });
 
-test('T-0007 S5: захист від циклів — повтор, цикл очікування, хопи', () => {
+test('T-0007 S5: захист від циклів — повтор і цикл очікування', () => {
   const sb = sandbox();
   const args = ['--from', 'J3', '--to', 'J5', '--intent', 'question', '--summary', 'T-0007 S5: однакове тіло'];
   const first = send(sb, args);
