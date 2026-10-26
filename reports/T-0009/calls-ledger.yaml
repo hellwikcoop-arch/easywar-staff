@@ -138,3 +138,36 @@ entries:
     network_calls: 0
     tests: {tests: 90, pass: 90, fail: 0, duration_ms: 5857}   # 68 базових + 8 T-0007 + 14 T-0009
     cumulative_after: {local: 90, c3: 44, ci: 0, total: 134, remaining: 116}
+
+  - id: K-001
+    kind: correction
+    category: all
+    supersedes: "N-001 (рішення не рахувати прямі adapter.call()); cumulative_after у A-001, A-002, A-003 — лише за кількістю dispatch_attempt"
+    source: "JE-T9-02 п. 4 (tasks/T-0009/je-decision-T9-02.md; events seq 9)"
+    rule: "виклик = dispatch_attempt у журналі J4 + прямий adapter.call() із fake fetch/spawn у тестах; платних і мережевих викликів немає"
+    direct_calls:
+      per_full_run: 4
+      accuracy: "derived (статичний аналіз коду; exact за побудовою, окремим прогоном не вимірювався — вимір коштував би ще 4 виклики резерву)"
+      sites: "bridge/test/gate.test.mjs:121 — цикл по 3 парам [429, 503, 400], по одному ad.call() (openaiAdapter, fake fetchImpl) = 3; :154 — codexAdapter, fake spawnImpl = 1; інших прямих .call( у bridge/test немає (grep), router.mjs:340 — dispatch, уже в лічильнику"
+      not_in_single_file_runs: "t0009.test.mjs і filtered-запуски T-0009 (C|E|H) прямих викликів не містять"
+    recomputed:   # dispatch + прямі
+      A-001: {dispatch: 44, direct: 4, calls: 48}
+      A-002: {dispatch: 44, direct: 4, calls: 48}
+      A-003: {dispatch: 44, direct: 4, calls: 48}
+      L-001: {calls: 2, note: "прогін лише t0009.test.mjs — прямих викликів немає"}
+    cumulative_after: {local: 98, c3: 48, ci: 0, total: 146, remaining: 104}   # було 90/44/0/134/116; різниця +12 (3 прогони × 4)
+    forecast: |
+      CI на кожну подію PR (набір цілком): estimate 48 (44 dispatch + 4 direct). Резерв під CI — 2 прогони (відкриття PR і
+      push із записом результату першого): 96 → 146+96 = 242, запас 8. Третій CI-прогін (146+144 = 290) або будь-який додатковий
+      повний прогін (J3-3: +48) перевищили б ліміт, зупинка й доповідь JE (JE-T9-01 п. 6). C3 раунд 2 (diff, без набору): 0.
+    side_effect_T0007: "за тим самим правилом сукупний облік T-0007 (reports/T-0007/005.yaml, 218, derived) зріс би на 5 повних прогонів × 4 = 20, тобто ≈238 (derived); запис T-0007 не змінено, питання на рішення J5/JE"
+
+  - id: P-004
+    kind: plan
+    category: c3
+    run: "C3-2 (другий раунд, дозволено JE-T9-02 п. 1–2; D-1а)"
+    subject: d05dc5aaf449fc9c5be03a0869035e2871d6b57a
+    scope: "git diff 9a3048c..d05dc5a; повторна оцінка F-T9-1…5; без прогону набору; ≤15 файлів"
+    estimate: {calls: 0, accuracy: estimate}
+    basis: "лише читання diff і точкові експерименти в тимчасовій теці без адаптерів; тести з адаптером (Q1…) і повний набір не запускаються; C3 запускає лічильник і повідомляє total (очікується 0)"
+    cumulative_if_done: {local: 98, c3: 48, ci: 0, total: 146, remaining: 104}
