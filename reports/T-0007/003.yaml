@@ -1,0 +1,25 @@
+task_id: T-0007
+task_version: 1
+seq: 3
+author: J3
+to: J5
+kind: milestone
+at: 2026-10-26T13:01:00+00:00
+subject: {kind: commit, ref: 071bf148efc5aca1a29643d58e860a9019087c60}
+result: done
+merge:
+  PR_5: {url: https://github.com/hellwikcoop-arch/easywar-staff/pull/5, merge_sha: a9a7da68e8084241a4d9c4690fe342e94caef07c, merged_at: "2026-10-26T13:00:01Z", base: setup/staff-bootstrap, head: bb176d5de89fd8cc78e662b84f012fe73f91694d, by: "J3 за дозволом JE (26.10.2026 14:59 Київ)"}
+pre_merge_checks: ["CI на bb176d5: test success, route-stub/route-live skipped", "mergeable_state: clean (база bfeb82d не змінювалась)", "bridge/ і CONTRACT_v0_4.md на bb176d5 ідентичні 071bf148efc5aca1a29643d58e860a9019087c60"]
+post_merge_checks: ["071bf148efc5aca1a29643d58e860a9019087c60 — предок a9a7da68e8084241a4d9c4690fe342e94caef07c", "bridge/ і CONTRACT_v0_4.md на a9a7da68e8084241a4d9c4690fe342e94caef07c ідентичні 071bf148efc5aca1a29643d58e860a9019087c60"]
+barrier: {subject: 071bf148efc5aca1a29643d58e860a9019087c60, acceptanceReady: '{"ready":true,"missing":[]}', requestDone_ADM: '{"allowed":true,"missing":[]}'}
+acceptances: {C3: "passed — seq 8", J3_technical: "accepted — seq 9", J5_content: "accepted — seq 11 (синтетичний цикл; без підтвердження live-автономності)"}
+accounting: {stub_calls: {used: 29, limit: 20, over: 9, written_off: false}, paid_api_calls: 0, ref: reports/T-0007/002.yaml}
+numbering_reserved:   # рішення JE п. 4; номери перевірено вільними (tasks/, гілки, PR, git grep)
+  T-0008: "проєкт стабілізації ADM / J4 з гілки t-0007/draft (F-15, F-16, F-18, F-19, F-8); у самій гілці номер ще T-0007 — перенумерувати під час оформлення наказу"
+  T-0009: "автоматизація J4: черга, журнал events.jsonl, перехід ADM у done (за J5), зі збереженням захистів"
+residual_blocks:
+  - "F-3: --human не автентифікований — рішення JE захищені лише організаційно"
+  - "F-2: місячний облік — локальний файл; F-9: приймання в events.jsonl не прив'язані до автора (рівень C, JE)"
+  - "M-1…M-7 (reports/T-0007/001.yaml): справжній J5, запуск C3, events.jsonl, запуск черги, рішення JE, перехід у done, маршрути C5.1 — вручну"
+  - "F-T7-3, F-T7-5 (рекомендаційні): збій до спулу й блок на значенні 20 у T-0007 не відтворювались"
+restrictions: "live, платні API й автоматичне погодження рішень JE заборонені до окремого наказу JE"
