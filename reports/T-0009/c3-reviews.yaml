@@ -1,0 +1,21 @@
+# Висновки C3 (окремий read-only запуск, лише читання) за T-0009. Стислий запис; повний текст — у сеансі J3.
+# Одиничний прогін C3 дозволено JE-T9-01; другий прогін потребує окремого рішення JE.
+- seq: 1
+  subject: {kind: commit, ref: 9a3048cd65e07dd45be74048b9d437b831d83351}
+  review: {review_status: complete, verdict: changes_requested}
+  tests: {tests: 86, pass: 86, fail: 0}
+  counter: {total: 44, by_mode: {stub: 33, live_path_with_fake_fetch: 11}, processes: 12}   # збігається з A-001
+  files_read: 15
+  confirmed: "diff 9a3048c..HEAD для bridge/, CONTRACT_v0_4.md, .github порожній; CONTRACT, bridge/config/**, bridge/src/acceptance.mjs, .github/** відносно бази не змінені; CSP, Tauri, міграції, секрети не торкнуті; арифметика обліку вірна; події журналу 3–6 відповідають CONTRACT розд. 4"
+  findings:
+    - {id: F-T9-1, mandatory: true, location: "bridge/src/events.mjs:59-77", description: "запис читає весь файл і замінює його через rename: ручний `>>` між читанням і rename безслідно губиться, ручний запис зі старим seq дає дублікат seq; суперечить «журнал лише додається»"}
+    - {id: F-T9-2, mandatory: true, location: "bridge/src/close.mjs:38-56; bridge/bin/j4.mjs:38,123", description: "відкрита ескалація JE невидима для close, якщо його J4_HOME не той, де її створено, а журнал задачі ще не синхронізовано"}
+    - {id: F-T9-3, mandatory: true, location: "bridge/src/close.mjs:21,32-34", description: "прибирання `#.*$` по всьому тексту ріже лапки (команда verify зникає); verify без відступу ігнорується — перевірка команд fail-open"}
+    - {id: F-T9-4, mandatory: true, location: "bridge/src/close.mjs:64-76", description: "симлінк на файл поза сховищем приймається; `fail: N` до result: ігнорується; вміст файла доказів не прив'язано хешем"}
+    - {id: F-T9-5, mandatory: true, location: "bridge/test/t0009.test.mjs C3, Q1, Q2", description: "назви тестів обіцяють більше, ніж доведено: C3 (ескалація), Q1 (at:0 робить замок застарілим незалежно від pid), Q2 (зняття змінних не спостерігається)"}
+    - {id: F-T9-6, mandatory: false, location: "bridge/test/t0009.test.mjs", description: "прогалини покриття: канонічний bridge/HALT при J4_STAFF_ROOT, resolved-ескалація, паралельний close, симлінк, `#` у verify; негерметичність при наявному bridge/HALT; spawn в E3 без таймауту"}
+    - {id: F-T9-7, mandatory: false, location: "router.mjs:240; bin/j4.mjs:99-113", description: "process() повертає ok при events.failed>0 (exit 0); exit 1 проти 2 у DESIGN; перше ввімкнення --task-events відтворює всю історію; tick.sh без PATH і ротації tick.log"}
+    - {id: F-T9-8, mandatory: false, location: "router.mjs syncTaskEvents", description: "ref без ідентифікації файла журналу (CONTRACT 9а.3 — файл і seq)"}
+    - {id: F-T9-9, mandatory: false, location: "order.yaml, events.jsonl, calls-ledger.yaml, DESIGN 17", description: "order.yaml version 1/20 vs журнал 2/250; at у seq 3 пізніший за seq 4–5; paid/network 0 без мітки точності та прямі adapter.call поза dispatch; «ключі провайдерів», код виходу 2"}
+    - {id: F-T9-10, mandatory: false, location: "events.mjs:66,38-45; close.mjs:103", description: "seq у події перекриває обчислений; рядок JSON `null` дає TypeError; done без subject; відкриті обов'язкові зауваження не рахуються (розкрито в DESIGN)"}
+  verified_by_J3: "F-T9-1…4 і F-T9-10 відтворено експериментами C3 без викликів адаптера (exp1.mjs, exp2.mjs); F-T9-5 підтверджено читанням t0009.test.mjs і store.mjs"
