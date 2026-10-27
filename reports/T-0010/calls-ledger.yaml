@@ -126,4 +126,14 @@ actuals_round2:
     cumulative: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
     forecast_next: "CI-1 48 → 144 ≤ 150; запас 6; будь-який подальший повний прогін (J3 чи CI) понад це — HALT і доповідь JE"
     c3_round1: {calls: 0, accuracy: exact, basis: "лічильник C3 total 0 у всіх прогонах"}
+  - id: A-005
+    kind: actual
+    category: c3
+    plan_ref: P-007
+    run: "C3-2: дельта-рецензія 38c9f8e..96ff45a (bridge/): t0010 12 тестів (від root 10 pass, 2 skipped; від nobody 12/12), T-0009 C1,C3,C4,C6,C7,C8 6/6, 31 мутант, експерименти з парсером і run --once на копіях; повний набір не запускався"
+    measured: {calls: 0, accuracy: "exact для запусків від root (лічильник total 0); для запусків від nobody — непрямий доказ: жодного dispatch_attempt у 2331 файлі ledger.jsonl, створеному в /tmp після старту раунду"}
+    paid_api_calls: 0
+    network_calls: 0
+    cumulative: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
+    forecast_next: "CI-1 48 → 144 ≤ 150; запас 6; виправлення F-T10-10…12 вимагало б J3-3 (48) + CI (48) → 192 > 150 — не вміщується, відкладено (див. c3-reviews.yaml seq 2)"
 
