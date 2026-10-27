@@ -8,7 +8,14 @@ mission: "Прибрати default-значення review_status і result у �
 scope:
   in: ["bridge/src/acceptance.mjs", "bridge/test/t0012.test.mjs (новий)", "bridge/test/t0006.test.mjs", "bridge/test/t0007.test.mjs", "bridge/test/t0009.test.mjs", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0012/**", "reports/T-0012/**", "CONTRACT_v0_4.md розд. 6 — лише за рішенням G1"]
   out: ["bridge/src/close.mjs і store.mjs (T-0010/T-0011)", "автентифікація by (F-9)", ".github/**", "bridge/config/**"]
-gates: ["G1 дозвіл на acceptance.mjs і CONTRACT розд. 6", "G2 варіант SCOPE-1", "G3 зворотна сумісність events.jsonl"]
+gates: ["G1 дозвіл на acceptance.mjs і CONTRACT розд. 6", "G2 варіант SCOPE-1", "G3 зворотна сумісність events.jsonl", "G4 scope і бюджет P1 (R-11 / F-T10-11): не затверджено; оцінює J5, затверджує JE"]
+priority_items:   # JE-T10-04 п. 8; чернетка; scope.in/out і ліміт вище НЕ змінено
+  - id: P1
+    risk: R-11
+    finding: F-T10-11
+    title: "бар'єр доказів: пізніший збій варіантною командою має скасовувати раніший успіх"
+    candidate_files: ["bridge/src/close.mjs", "bridge/test/t0010.test.mjs (або новий тест)", "bridge/docs/DESIGN.md"]
+    status: "не затверджено; реалізувати лише після окремого рішення JE щодо scope і бюджету (G4)"
 data_class: synthetic
 requester: J5
 assignee: J3
