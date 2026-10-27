@@ -145,3 +145,9 @@ forecast_before_CI1:
   conditions: "після відкриття PR заборонені: push (synchronize), close/reopen (reopened), ручний workflow_dispatch, повторний прогін — кожне ≈ ще 48 → 192 > 150 → HALT"
   risk: "CI-1 — лише estimate (лічильника в CI немає); збій CI (середовище, версія Node, не-root тести A4/A5) без push і без запасу бюджету не виправити в межах T-0010 → потрібне нове рішення JE"
 
+reservation_CI1_JE_T10_04:
+  authorization: "JE-T10-04 п. 2 (tasks/T-0010/je-decision-T10-04.md; подія 16): один автоматичний CI-прогін, спричинений відкриттям PR, у межах ліміту 150"
+  reserved: {category: ci, calls: 48, accuracy: estimate}
+  cumulative_if_done: {local: 96, c3: 0, ci: 48, total: 144, remaining: 6}
+  note: "фактичний результат CI і підсумок обліку — коментарем у PR (після відкриття PR жодних push, тож у журнал репозиторію не записується); джерело оцінки 48 — baseline T-0009 A-005"
+
