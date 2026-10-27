@@ -204,3 +204,31 @@ entries:
     cumulative_if_done: {local: 146, c3: 48, ci: 48, total: 242, remaining: 8}
     rules: "після відкриття PR жодних push (кожен = ще ≈48, 290 > 250); результат CI — у коментарі PR і звіті J5, у репозиторій не пишеться; другий CI або повтор — лише за новим рішенням JE; зміна прогнозу в бік перевищення — зупинка"
     c3_round_3: {calls: 0, scope: "git diff d05dc5a..<новий SHA>, без повного набору"}
+
+  - id: A-005
+    kind: actual
+    category: local
+    run: "J3-3 (третій і останній дозволений повний прогін J3; V1 з JE-T9-03 D-5)"
+    subject: 67eb3310db5f69f2451ce748d72722c614409425   # bridge/ на HEAD журнальних комітів ідентичний
+    command: "node --test 'bridge/test/*.test.mjs' (Node v22.23.4)"
+    dispatch_calls: 44
+    direct_calls: 4
+    direct_accuracy: "derived (gate.test.mjs:121 ×3 + :154 ×1; K-001)"
+    calls: 48
+    accuracy: "dispatch exact (call-counter.mjs: total 44, stub 33, live-гілка з fake fetch 11, процесів 12); прямі derived; збіг із планом P-005"
+    paid_api_calls: 0
+    network_calls: 0
+    tests: {tests: 93, pass: 93, fail: 0, duration_ms: 6680}   # 68 базових + 8 T-0007 + 17 T-0009
+    pre_run_filtered: "відфільтровані T-0009 (E|C|H) 14/14 і (Q2|Q3) 2/2 на цьому ж коді: лічильник 0 викликів; мутації m1…m9 ловляться, лічильник 0 (reports/T-0009/003.yaml)"
+    cumulative_after: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
+    remaining_plan: "C3-3 за diff (0) → 194; CI-1 після PR (P-006, 48) → 242, залишок 8; повторні повні прогони й CI заборонені (JE-T9-03 D-5)"
+
+  - id: P-007
+    kind: plan
+    category: c3
+    run: "C3-3 (третій раунд; JE-T9-03 D-4)"
+    subject: 67eb3310db5f69f2451ce748d72722c614409425
+    scope: "git diff d05dc5aaf449fc9c5be03a0869035e2871d6b57a..67eb3310db5f69f2451ce748d72722c614409425, включно з негативними сценаріями F-T9-11/12; без повного набору; ліміт 15 файлів не обнуляється, розбір order.yaml скриптом рахується читанням"
+    estimate: {calls: 0, accuracy: estimate}
+    basis: "лише читання diff і відфільтровані тести без адаптера з лічильником; тести з адаптером (Q1) і повний набір не запускаються"
+    cumulative_if_done: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
