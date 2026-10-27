@@ -137,3 +137,11 @@ actuals_round2:
     cumulative: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
     forecast_next: "CI-1 48 → 144 ≤ 150; запас 6; виправлення F-T10-10…12 вимагало б J3-3 (48) + CI (48) → 192 > 150 — не вміщується, відкладено (див. c3-reviews.yaml seq 2)"
 
+forecast_before_CI1:
+  rule: "cumulative_after.total + оцінка наступних запланованих прогонів ≤ 150"
+  computation: "96 (використано: J3 96, C3 0, CI 0) + 48 (CI-1, одна подія відкриття PR, estimate) = 144 ≤ 150"
+  verdict: "в межах ліміту; запас 6; перевірено J3 2026-10-27 за п. 6 висновку J5; відкриття PR — лише за окремим дозволом JE"
+  workflow_facts: "j4-bridge.yml: on pull_request (типи за замовчуванням: opened, synchronize, reopened) з paths bridge/** і файл workflow; фільтра draft немає, тож чернетка PR теж запускає CI; ready_for_review прогону не запускає; workflow_dispatch — окремий ручний режим"
+  conditions: "після відкриття PR заборонені: push (synchronize), close/reopen (reopened), ручний workflow_dispatch, повторний прогін — кожне ≈ ще 48 → 192 > 150 → HALT"
+  risk: "CI-1 — лише estimate (лічильника в CI немає); збій CI (середовище, версія Node, не-root тести A4/A5) без push і без запасу бюджету не виправити в межах T-0010 → потрібне нове рішення JE"
+
