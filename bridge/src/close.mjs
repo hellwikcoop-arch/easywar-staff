@@ -8,12 +8,16 @@
 //   - рецензія виду checks.review_kind і приймання кожної ролі з acceptance наказу (+ JE для key_decision);
 //   - відсутність відкритих ескалацій JE за задачею: у сховищі J4, у журналі J4 (escalation_raised без
 //     escalation_resolved) і в events.jsonl; ескалація, невідома сховищу, але є в журналі, вважається відкритою;
+//     closeTask вимагає ОБИДВА джерела J4 явно (store і ledgerEntries): без них перевірка мовчки пропустила б ескалацію.
+//     Журнал J4 читає readLedgerStrict: відсутній, обірваний, пошкоджений (ланцюг хешів) чи змінений під час читання
+//     журнал — відмова, а не порожній список (JE-T9-03 D-3, C3 F-T9-11/12);
 //   - ідемпотентність: повторний close на тому ж subject не пише нічого; done на іншому subject — відмова.
 // Відкриті обов'язкові зауваження окремим джерелом не рахуються: вимога «C3 passed» на тому ж SHA (наказ T-0009).
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { requestDone, evidenceFromEvents } from './acceptance.mjs';
+import { verifyLedger } from './ledger.mjs';
 import { appendAdmEvent, readTaskEvents, TaskEventsError } from './events.mjs';
 
 const SHA40 = /^[0-9a-f]{40}$/;
@@ -49,7 +53,9 @@ export function orderGate(staffRoot, taskId) {
   if (!technical || !content || !['true', 'false'].includes(key)) return { error: 'order-acceptance-unreadable' };
   if (!['code', 'logic', 'none'].includes(reviewKind)) return { error: 'order-review-kind-invalid' };
   // verify: ["команда", ...] в один рядок, з будь-яким відступом. Ключ є, а список не розібрано до кінця — відмова.
-  const verifyLine = text.match(/^[ \t]*verify:[ \t]*(.*)$/m);
+  const verifyLines = [...text.matchAll(/^[ \t]*verify:[ \t]*(.*)$/gm)];
+  if (verifyLines.length > 1) return { error: 'order-verify-unreadable' }; // кілька ключів verify: який із них діє — невідомо
+  const verifyLine = verifyLines[0] ?? null;
   let verify = [];
   if (verifyLine) {
     const q = '"(?:[^"\\\\]|\\\\.)*"';
@@ -85,12 +91,12 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
   }
   for (const id of raised) if (!resolved.has(id) && status.get(id) !== 'resolved') open.add(id);
   // ескалація, записана в журнал задачі, але невідома жодному джерелу J4 (інший J4_HOME) — консервативно відкрита
-  for (const e of entries) {
-    if (e.event !== 'escalation') continue;
+  entries.forEach((e, i) => {
+    if (e.event !== 'escalation') return;
     const id = e.escalation_id ?? null;
-    if (!id) open.add(`seq ${e.seq}`);
+    if (!id) open.add(e.seq === undefined ? `entry ${i + 1}` : `seq ${e.seq}`);
     else if (!status.has(id) && !raised.has(id)) open.add(id);
-  }
+  });
   return [...open];
 }
 
@@ -113,20 +119,58 @@ function checksFrom(staffRoot, subject, checksRef, verify = []) {
   }
   const buf = fs.readFileSync(real);
   const passing = buf.toString('utf8').split('\n').filter((line) => {
-    if (!line.includes(subject)) return false;
     const rest = line.replace(/\bcmd:\s*"(?:[^"\\]|\\.)*"/g, '');
+    if (!rest.includes(subject)) return false; // SHA має стояти поза значенням cmd (поле subject), а не лише в тексті команди
     if (rest.search(/\bresult:/) < 0) return false;
     // «fail 0», «0 fail», «errors: 0» — звичайний підсумок успішного прогону, провалом не вважається
     const cleaned = rest.replace(/\b(fail\w*|errors?)[ :=]*0\b/gi, '').replace(/\b0[ ]+(fail\w*|errors?)\b/gi, '');
-    return /\bpass(ed)?\b/i.test(cleaned.slice(cleaned.search(/\bresult:/))) && !/\b(fail\w*|not ok|errors?)\b/i.test(cleaned);
+    const res = cleaned.slice(cleaned.search(/\bresult:/));
+    // порожній відбір тестів («0 pass», «0/76 pass», «pass: 0») і заперечення («not passed») успіхом не є
+    return /\bpass(ed)?\b/i.test(res) && !/\bnot[ ]+pass(ed)?\b/i.test(res) && !/\b0[ ]*(\/[ ]*\d+[ ]*)?pass(ed)?\b/i.test(res) && !/\bpass(ed)?[ :=]+0\b/i.test(res) && !/\b(fail\w*|not ok|errors?)\b/i.test(cleaned);
   });
   const ok = passing.length > 0 && verify.every((cmd) => passing.some((line) => line.includes(cmd)));
   return { checks: [{ subject, passed: ok, evidence_ref: ok ? rel : null }], sha256: ok ? createHash('sha256').update(buf).digest('hex') : null };
 }
 
-export function closeTask({ staffRoot, taskId, subject, checksRef, store = null, ledgerEntries = null, now = Date.now() }) {
+// Журнал J4 для перевірки відкритих ескалацій: читається лише достовірний. Відсутній файл, не файл, обірваний останній
+// рядок, порушений ланцюг хешів/seq/витік чи зміна журналу між двома читаннями — відмова з причиною, а не порожній список.
+export function readLedgerStrict(file) {
+  let st;
+  try {
+    st = fs.statSync(file);
+  } catch (e) {
+    return { ok: false, reason: e.code === 'ENOENT' ? 'ledger-missing' : 'ledger-unreadable' };
+  }
+  if (!st.isFile()) return { ok: false, reason: 'ledger-unreadable' };
+  let v;
+  let raw;
+  try {
+    v = verifyLedger(file);
+    raw = fs.readFileSync(file, 'utf8');
+  } catch {
+    return { ok: false, reason: 'ledger-unreadable' };
+  }
+  if (!v.ok) {
+    const onlyPartial = v.problems.length === 1 && v.problems[0].code === 'partial-line';
+    return { ok: false, reason: onlyPartial ? 'ledger-partial' : 'ledger-corrupt', problems: v.problems.slice(0, 3).map((p) => p.code) };
+  }
+  let entries;
+  try {
+    entries = raw.split('\n').filter(Boolean).map((l) => JSON.parse(l));
+  } catch {
+    return { ok: false, reason: 'ledger-unreadable' };
+  }
+  // файл змінився між перевіркою і читанням (дописав інший процес) — перевірене й прочитане не збігаються
+  if (entries.length !== v.entries || (entries.length ? entries[entries.length - 1].hash : v.head) !== v.head) return { ok: false, reason: 'ledger-changed-during-read' };
+  return { ok: true, entries };
+}
+
+export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledgerEntries, now = Date.now() }) {
   const refuse = (code, missing = []) => ({ ok: false, code, missing });
   if (!SHA40.test(subject ?? '')) return refuse('subject-invalid');
+  // обидва джерела ескалацій J4 обов'язкові: без них перевірка «немає відкритої ескалації JE» мовчки б пропускалась
+  if (!store || typeof store.list !== 'function' || typeof store.readJson !== 'function') return refuse('escalation-source-unknown', ['store']);
+  if (!Array.isArray(ledgerEntries)) return refuse('escalation-source-unknown', ['ledgerEntries']);
   let entries;
   try {
     entries = readTaskEvents(staffRoot, taskId).entries;

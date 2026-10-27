@@ -5,14 +5,14 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { J4 } from '../src/router.mjs';
 import { loadConfig, BRIDGE_DIR } from '../src/policy.mjs';
-import { verifyLedger, Ledger } from '../src/ledger.mjs';
+import { verifyLedger } from '../src/ledger.mjs';
 import { sha256, PROTOCOL } from '../src/protocol.mjs';
 import { stubAdapter } from '../src/adapters/stub.mjs';
 import { MonthlyBudget } from '../src/monthly.mjs';
 import { acceptanceReady, evidenceFromEvents } from '../src/acceptance.mjs';
 import { openaiAdapter } from '../src/adapters/openai.mjs';
 import { codexAdapter } from '../src/adapters/cli.mjs';
-import { closeTask } from '../src/close.mjs';
+import { closeTask, readLedgerStrict } from '../src/close.mjs';
 import { Store } from '../src/store.mjs';
 
 // Корінь сховища штабу. J4_STAFF_ROOT — лише для тестів на копії сховища; стоп-кран bridge/HALT
@@ -128,15 +128,28 @@ async function main() {
         process.exitCode = 3;
         break;
       }
-      let ledgerEntries = [];
-      try {
-        if (fs.existsSync(ledgerFile)) ledgerEntries = new Ledger(ledgerFile).readAll().entries;
-      } catch {
-        out({ ok: false, code: 'escalation-source-unreadable', missing: ['ledger'] });
+      // Обидва місця мають існувати й бути читними (JE-T9-03 D-3, C3 F-T9-11/12): J4_HOME — наявна тека зі сховищем J4
+      // (new Store створив би її мовчки), J4_LEDGER — наявний цілий журнал. Інакше ескалація, створена деінде, лишилась би невидимою.
+      const sourceUnreadable = (reason, extra = {}) => {
+        out({ ok: false, code: 'escalation-source-unreadable', missing: [reason], ...extra });
         process.exitCode = 3;
+      };
+      let homeOk = false;
+      try {
+        homeOk = fs.statSync(path.join(home, 'escalations')).isDirectory();
+      } catch {
+        homeOk = false;
+      }
+      if (!homeOk) {
+        sourceUnreadable('home-not-j4-store');
         break;
       }
-      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: new Store(home), ledgerEntries });
+      const led = readLedgerStrict(ledgerFile);
+      if (!led.ok) {
+        sourceUnreadable(led.reason, led.problems ? { problems: led.problems } : {});
+        break;
+      }
+      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: new Store(home), ledgerEntries: led.entries });
       out(r);
       process.exitCode = r.ok ? 0 : 3;
       break;
