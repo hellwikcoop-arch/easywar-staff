@@ -183,3 +183,24 @@ entries:
     network_calls: 0
     verdict: changes_requested   # reports/T-0009/c3-reviews.yaml#seq=2
     cumulative_after: {local: 98, c3: 48, ci: 0, total: 146, remaining: 104}
+
+  - id: P-005
+    kind: plan
+    category: local
+    run: "J3-3 (третій і останній дозволений повний прогін J3; V1 з JE-T9-03 D-5)"
+    subject: "новий контрольний SHA після виправлення F-T9-11/12 (+13/14/17); буде вказано в A-005"
+    command: "node --test 'bridge/test/*.test.mjs' з лічильником call-counter.mjs"
+    estimate: {dispatch: 44, direct: 4, calls: 48, accuracy: estimate}
+    basis: "набір детермінований: 44 dispatch за A-001/A-002/A-003; нові тести (CLI close, негативні) адаптера не викликають, перевіряється відфільтрованим прогоном із лічильником до повного прогону; 4 прямих adapter.call() у gate.test.mjs (K-001)"
+    cumulative_if_done: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
+    guard: "якщо відфільтровані тести з лічильником покажуть dispatch > 0 для нових тестів, або прогноз сумарно перевищує 250 — зупинка й доповідь JE до повного прогону; повторний повний прогін без рішення JE заборонений"
+
+  - id: P-006
+    kind: plan
+    category: ci
+    run: "CI-1 (єдиний CI після відкриття PR; резерв за JE-T9-03 D-5, п. 6 JE-T9-02)"
+    estimate: {calls: 48, accuracy: estimate}   # лічильника в CI немає: 44 dispatch + 4 прямих, набір той самий
+    basis: "workflow j4-bridge.yml, job test: один прогін набору на подію PR (opened/synchronize/reopened), без матриці; лічильника в CI немає"
+    cumulative_if_done: {local: 146, c3: 48, ci: 48, total: 242, remaining: 8}
+    rules: "після відкриття PR жодних push (кожен = ще ≈48, 290 > 250); результат CI — у коментарі PR і звіті J5, у репозиторій не пишеться; другий CI або повтор — лише за новим рішенням JE; зміна прогнозу в бік перевищення — зупинка"
+    c3_round_3: {calls: 0, scope: "git diff d05dc5a..<новий SHA>, без повного набору"}
