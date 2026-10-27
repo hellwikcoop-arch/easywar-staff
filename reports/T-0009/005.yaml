@@ -1,0 +1,102 @@
+task_id: T-0009
+task_version: 2
+seq: 5
+author: J3
+to: JE
+cc: J5
+kind: decision_request   # запит рішення JE щодо F-T9-18 за HOLD J5 (reports/T-0009/j5-hold.md)
+at: 2026-10-27T07:25:28+00:00
+subject: {kind: commit, ref: 67eb3310db5f69f2451ce748d72722c614409425}   # контрольний SHA bridge/; не змінювався
+result: awaiting_JE_decision   # done не встановлено; acceptance J5 не записано; PR не відкрито; CI не запускався
+
+frozen_until_JE_decision:   # за HOLD J5 і JE-T9-02 п. 5
+  - "acceptance від J5 не записується"
+  - "PR до setup/staff-bootstrap не відкривається, CI не запускається"
+  - "done не встановлюється; PR не зливається"
+  - "планувальник і live не активуються; платні API 0; код bridge/ не змінюється"
+
+finding:
+  id: F-T9-18
+  source: "C3 раунд 3 (non-mandatory, reports/T-0009/c3-reviews.yaml#seq=3); відтворено J3 (0 викликів)"
+  statement: >-
+    j4 close бере відкриті ескалації з трьох джерел: сховище J4_HOME, журнал J4_LEDGER і журнал завдання
+    tasks/T-XXXX/events.jsonl. Перші два задає той, хто запускає команду. close перевіряє, що пара існує,
+    є сховищем J4 (тека escalations) і журнал цілий, але не перевіряє, що це ТА САМА установка J4, яка
+    створила ескалацію. Якщо ескалація є лише в справжньому J4 і ще не синхронізована в events.jsonl,
+    хибна, але наявна й ціла пара дає done при відкритій ескалації JE.
+  reproduction:   # тимчасові копії в scratchpad; репозиторій не змінювався; лічильник: dispatch 0
+    A_wrong_pair: "інший наявний порожній J4_HOME + порожній цілий J4_LEDGER, ескалація лише в справжньому J4 → j4 close exit 0 (done записується). Та сама ескалація, правильна пара → exit 3, open-escalation E-T-0900-001"
+    B_synced_escalation: "ескалація синхронізована в events.jsonl (J4 з task-events, process() → written: 1) → j4 close блокується (exit 3 open-escalation) навіть із хибною парою: журнал завдання діє як запасний захист"
+    window: "вразливе вікно — між створенням ескалації в J4 і першою синхронізацією в events.jsonl (синхронізує лише j4 run --task-events / J4_TASK_EVENTS=1; без цього вікно не закривається); синхронізуються лише escalation_raised і report-повідомлення, що мають task_id"
+  what_is_already_blocked: "відсутній, обірваний, пошкоджений, змінений під час читання або нерегулярний журнал; J4_HOME без теки escalations; пустий J4_HOME/J4_LEDGER (escalation-source-unknown); ескалація в events.jsonl"
+  trust_boundary_note: >-
+    Той, хто задає J4_HOME/J4_LEDGER, має право запису в репозиторій і може вписати запис done у events.jsonl
+    напряму (F-9: поле by не автентифіковано; --human не доказ особи, F-3). Тому жоден код у close не зупинить
+    навмисну підміну. Виправлення знижує ризик ПОМИЛКОВОГО вибору сховища (і ускладнює підміну), але не
+    усуває її. Це межа рівня C, а не дефект реалізації close.
+
+options:
+  A_accept_with_docs:
+    what: "прийняти F-T9-18 як відоме обмеження рівня C; зафіксувати в реєстрі (reports/T-0009/risk-register.yaml) і в звіті; без змін коду й процедур"
+    bridge_changed: false
+    budget: {now: 194, ci_reserve: 48, total_estimate: 242, spare: 8}
+    J5: "повторний розгляд на 67eb3310 без нового SHA"
+    residual: "помилковий вибір і підміна сховища лишаються без жодного захисту, окрім events.jsonl після синхронізації"
+  C_procedural_rule:
+    what: >-
+      обов'язкова процедура перед кожним j4 close (runbook поза bridge/, напр. tasks/T-0009/runbook-close.md):
+      (1) пара J4_HOME/J4_LEDGER — канонічна, її шляхи й ledger_head записані в рішенні JE;
+      (2) безпосередньо перед close виконати j4 run --once --task-events на цій парі й переконатися, що
+      tasks/T-XXXX/events.jsonl містить усі ескалації завдання; (3) у записі checks вказати home і ledger_head.
+    bridge_changed: false   # SHA контролю лишається 67eb3310
+    budget: {now: 194, ci_reserve: 48, total_estimate: 242, spare: 8}
+    J5: "повторний розгляд на 67eb3310 разом із runbook (звичайний коміт у tasks/)"
+    residual: "тримається на дисципліні виконавця (ручна ланка M-5); підміна не усунена (див. trust_boundary_note)"
+  B_code_fix:
+    what: >-
+      звірка наданого журналу з подіями J4 у events.jsonl: кожна подія з ref j4-ledger#seq=N і ledger_hash має
+      збігатися з записом seq=N наданого журналу (інакше відмова escalation-source-mismatch); голова журналу не
+      менша за найбільший згаданий seq. Варіант B2 (потребує рішення JE щодо моделі довіри): закріплення
+      ідентичності установки J4 (marker у сховищі й запис у рішенні/налаштуванні, обраних JE).
+    limit_of_B: "працює лише коли для завдання вже є хоча б одна подія J4 у events.jsonl; для ескалації до першої синхронізації нічого звіряти — вікно не закривається повністю"
+    bridge_changed: true   # close.mjs, bin/j4.mjs, тести, DESIGN; новий контрольний SHA
+    needs: ["рішення JE на зміну bridge/ і на нову модель довіри (B2)", "новий повний прогін J3 (3/3 використано) або відмова від нього", "четвертий раунд C3 лише за diff (0 викликів)", "нове змістове приймання J5 на новому SHA"]
+    budget:
+      with_full_J3_run: {now: 194, J3_full_run: 48, ci_reserve: 48, total_estimate: 290, over_limit: 40, requires: "підняти ліміт до ≥ 300 (поправка на кшталт A-3)"}
+      without_full_J3_run: {now: 194, ci_reserve: 48, total_estimate: 242, spare: 8, drawback: "повна регресія нового SHA — лише в CI після відкриття PR; порушує порядок JE-T9-01 п. 7 (регресія → C3 → PR)"}
+    residual: "підміна не усунена (trust_boundary_note); додається складність і нові відмови (ризик хибних відмов при ротації журналу)"
+
+recommendation:   # рекомендація J3, не рішення
+  choice: "C (процедура) зараз; B/B2 — окремим завданням з власним бюджетом (за зразком JE-T9-03 D-6 для F-T9-16)"
+  reasons:
+    - "T-0009 на 194 із 250 і CI-резерв 48 лишають 8; повний цикл нового SHA (прогін, C3, CI) у ліміт не вміщується без його підняття"
+    - "F-T9-18 лежить на межі довіри F-9/F-3: код зменшує помилку, але не підміну; відкладена ціна B не знімає блокувань T-0009"
+    - "C закриває вікно синхронізації для чесного виконавця без зміни bridge/ і без нового SHA, тож J5 може розглянути приймання на вже перевіреному 67eb3310"
+  if_J5_rejects_C: "тоді B: з підняттям ліміту до ≥ 300 і повним прогоном, або без прогону з регресією в CI (242) — за рішенням JE"
+
+decisions_needed_from_JE:
+  - {id: D-7, question: "Варіант щодо F-T9-18: A (прийняти), C (процедура, рекомендую) чи B/B2 (виправлення коду)?"}
+  - {id: D-8, question: "Якщо C: чи затверджує JE канонічну пару J4_HOME/J4_LEDGER (шляхи і ledger_head), які записати в runbook?"}
+  - {id: D-9, question: "Якщо B/B2: дозвіл змінити bridge/, модель довіри (B2), новий повний прогін J3, раунд C3 за diff, і бюджет (підняти ліміт ≥ 300 або регресія лише в CI)"}
+  - {id: D-10, question: "Чи відкривати окреме завдання для F-T9-16, 19–23 і двох неточностей DESIGN §17 (реєстр: reports/T-0009/risk-register.yaml)?"}
+
+after_decision:
+  - "C або A: записую рішення JE дослівно (je-decision-T9-04.md), runbook (для C), повідомляю J5 для повторного змістового розгляду на 67eb3310; після acceptance J5 — PR через REST без злиття, один CI (резерв P-006), результат у коментар PR і звіт J5"
+  - "B/B2: працюю лише в межах дозволеного; новий SHA, відфільтровані тести й мутації, C3 за diff, приймання J3 і J5 заново"
+  - "у будь-якому випадку: done не встановлюю, PR не зливаю, планувальник і live не активую"
+
+accounting:   # reports/T-0009/calls-ledger.yaml, A-007
+  limit: 250
+  used: {local_J3: 146, C3: 48, CI: 0, total: 194, remaining: 56}
+  this_HOLD_handling_calls: 0
+  ci_reserve_P006: 48
+  total_estimate_with_reserve: 242
+  accuracy: "local/C3 exact (+direct derived K-001); CI estimate"
+  paid_api_calls: 0
+  network_calls: 0
+
+residual_blocks:
+  - "F-T9-18: рішення JE (D-7) — підстава HOLD J5"
+  - "змістове приймання J5 не записано; PR і CI не виконувались; done неможливий до приймання і окремого рішення JE"
+  - "M-1, M-2, M-5, M-7 ручні; M-4 скрипт є, планувальник не активовано; F-9 і F-3 — межа рівня C"
+  - "інші ризики: reports/T-0009/risk-register.yaml (F-T9-15, 16, 19–23, DOC-1)"

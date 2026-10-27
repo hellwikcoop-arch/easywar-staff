@@ -1,0 +1,53 @@
+# Реєстр залишкових ризиків T-0009 (J5: «інші залишкові ризики зберегти в реєстрі для окремого усунення»).
+# Лише додавання/зміна статусу новими рядками з датою; вихід — C3 (reports/T-0009/c3-reviews.yaml), J3 (звіти 001–005).
+task_id: T-0009
+control_subject: 67eb3310db5f69f2451ce748d72722c614409425
+blocks_content_acceptance: [F-T9-18]   # J5 HOLD (reports/T-0009/j5-hold.md); до рішення JE по F-T9-18 приймання не записується
+risks:
+  - id: F-T9-18
+    title: "close не відрізняє «правильну» пару J4_HOME/J4_LEDGER від іншої наявної й цілої"
+    source: "C3 раунд 3 (non-mandatory); J3 відтворив: reports/T-0009/005.yaml"
+    status: decision_requested_from_JE
+    impact: "хибна, але наявна й ціла пара (інший J4_HOME, знімок, обрізаний/обнулений журнал) → done при відкритій ескалації JE, якщо вона не синхронізована в events.jsonl"
+    mitigations_now: "ескалація, синхронізована в events.jsonl (J4 --task-events), блокує close і при хибній парі (відтворено); відсутній/обірваний/пошкоджений журнал і J4_HOME не сховище — відмова"
+    options: "reports/T-0009/005.yaml (V-A прийняти з процедурою, V-B звірка з подіями J4, V-C закріплення установки JE)"
+  - id: F-T9-16
+    title: "acceptance.mjs: review_finished без review_status і acceptance без result зараховуються за замовчуванням"
+    status: separate_order_proposed   # JE-T9-03 D-6; acceptance.mjs не змінювати в T-0009
+    remediation: "reports/T-0009/f-t9-16-proposal.md"
+  - id: F-T9-15
+    title: "бар'єр обчислюється поза файловим замком (вікно від мілісекунд)"
+    status: documented
+    remediation: "відокремлена дрібна правка (повторна перевірка бар'єра під замком перед записом done)"
+  - id: F-T9-19
+    title: "Store.list ковтає помилки читання; перевірка J4_HOME — лише stat теки escalations"
+    status: open_for_separate_fix
+    remediation: "readdirSync у перевірці J4_HOME і/або не ковтати помилки в list"
+  - id: F-T9-20
+    title: "J4_HOME із підтекою escalations визнається сховищем; new Store створює в ньому ще 6 тек"
+    status: open_for_separate_fix
+    remediation: "вимагати кілька підтек (queue, messages, escalations) або не створювати теки в close"
+  - id: F-T9-21
+    title: "повторний close після done залежить від читності джерел (exit 3 замість already:true); DESIGN каже «нічого не пише»"
+    status: open_for_separate_fix
+    remediation: "перевіряти done до джерел або уточнити DESIGN"
+  - id: F-T9-22
+    title: "евристика result: pass у крайніх формах (SHA у note, cmd в одинарних лапках, коментар, 'never passed', 'pass: false', '0 of 76 pass')"
+    status: open_for_separate_fix
+    remediation: "вимагати поле subject: <SHA> і розбирати запис YAML"
+  - id: F-T9-23
+    title: "прогалини тестів: ledger-changed-during-read не ловиться; J4_HOME/escalations як файл, null-рядок, витік не покрито"
+    status: open_for_separate_fix
+  - id: DOC-1
+    title: "DESIGN §17: «відхиляє лише partial» і «повтор нічого не пише (already: true)» вужчі за факт"
+    status: open_for_separate_fix   # правильний опис — c3-reviews seq 3 і f-t9-16-proposal.md; bridge/docs не змінювався після C3 passed
+  - id: F-9
+    title: "поле by у events.jsonl не автентифіковано; приймання вписує будь-хто з правом запису в репозиторій"
+    status: known_limit_level_C   # P-4 з reports/T-0007/001.yaml
+  - id: F-3
+    title: "--human не доказ особи JE"
+    status: known_limit_level_C
+  - id: MANUAL
+    title: "ручні ланки M-1 (справжній J5), M-2 (запуск C3 і review_* вручну), M-5 (рішення JE), M-7 (маршрути C5.1); M-4 — скрипт є, планувальник НЕ активовано"
+    status: unchanged
+    reference: "reports/T-0007/001.yaml; reports/T-0009/004.yaml"
