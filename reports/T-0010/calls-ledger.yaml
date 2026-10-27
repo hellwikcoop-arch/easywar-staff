@@ -1,0 +1,59 @@
+# Єдиний накопичувальний облік викликів адаптера J4 (stub/fake, без мережі) за T-0010.
+# Джерело ліміту: JE-T10-01 п. 1 і JE-T10-02 п. 4 (tasks/T-0010/events.jsonl seq 1–2). Лише додавання рядків:
+# виправлення — новим рядком із supersedes, старі рядки не редагуються. Облік T-0009 (194 із 250) окремий і сюди не входить.
+task_id: T-0010
+unit: "виклик адаптера J4 (stub/fake); платних і мережевих викликів немає"
+limit: {value: 150, source: "JE-T10-01 п. 1; JE-T10-02 п. 4"}
+caps: {full_runs_J3_plan: 2, C3: "за diff, 0 викликів", CI_runs_plan: 1, note: "caps — план J3, не рішення JE; рішення JE — лише ліміт 150"}
+rules:
+  - "перед кожним прогоном — рядок plan з оцінкою; після — рядок actual"
+  - "виклик = dispatch_attempt у журналі J4 (лічильник tasks/T-0009/tools/call-counter.mjs) + прямий adapter.call() у тестах (джерела: gate.test.mjs :121 ×3 + :154 ×1 = 4, derived)"
+  - "CI: accuracy exact лише якщо число підтверджено журналом прогону CI; інакше estimate"
+  - "ризик перевищення 150 (cumulative_after.total + оцінка наступних запланованих прогонів > 150) — HALT і доповідь JE"
+categories: {local: "прогони J3 у цьому сховищі", c3: "незалежні прогони C3", ci: "GitHub Actions CI"}
+baseline: {tests: 93, per_full_run: 48, basis: "reports/T-0009/calls-ledger.yaml#A-005 (44 dispatch exact + 4 прямих derived); CI на efe03c9: success, прогін 40502892802"}
+
+entries:
+  - id: P-001
+    kind: plan
+    category: local
+    run: "відфільтровані тести T-0010 і мутації (тимчасові копії) з лічильником"
+    estimate: {calls: 0, accuracy: estimate}
+    basis: "нові тести не викликають адаптер; лічильник підтверджує dispatch 0"
+    cumulative_if_done: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+
+  - id: P-002
+    kind: plan
+    category: local
+    run: "J3-1: повний прогін node --test 'bridge/test/*.test.mjs' після фільтрованих"
+    estimate: {calls: 48, accuracy: estimate}
+    basis: "baseline: 44 dispatch + 4 прямих; перерахувати, якщо нові тести викликають адаптер"
+    cumulative_if_done: {local: 48, c3: 0, ci: 0, total: 48, remaining: 102}
+
+  - id: P-003
+    kind: plan
+    category: c3
+    run: "C3-1: незалежна рецензія за diff від efe03c959107856f2536771ae5c023f1e007e7be до контрольного SHA, без повного набору"
+    estimate: {calls: 0, accuracy: estimate}
+    cumulative_if_done: {local: 48, c3: 0, ci: 0, total: 48, remaining: 102}
+
+  - id: P-004
+    kind: plan
+    category: ci
+    run: "CI-1: єдиний прогін на подію відкриття PR (лише за окремим дозволом JE після C3 passed, приймання J3 і J5)"
+    estimate: {calls: 48, accuracy: estimate}
+    basis: "workflow j4-bridge: pull_request, paths bridge/** — кожна подія PR = один прогін; після відкриття PR push заборонений"
+    cumulative_if_done: {local: 48, c3: 0, ci: 48, total: 96, remaining: 54}
+
+  - id: P-005
+    kind: plan
+    category: local
+    run: "J3-2: резервний повторний повний прогін (лише після C3 changes_requested)"
+    estimate: {calls: 48, accuracy: estimate}
+    cumulative_if_done: {local: 96, c3: 0, ci: 48, total: 144, remaining: 6}
+    note: "другий повтор не вміщується (144 + 48 > 150) → HALT і доповідь JE"
+
+state:   # на момент реєстрації
+  cumulative: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+  paid_api_calls: 0
+  network_calls: 0
