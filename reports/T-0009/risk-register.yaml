@@ -2,18 +2,19 @@
 # Лише додавання/зміна статусу новими рядками з датою; вихід — C3 (reports/T-0009/c3-reviews.yaml), J3 (звіти 001–005).
 task_id: T-0009
 control_subject: 67eb3310db5f69f2451ce748d72722c614409425
-blocks_content_acceptance: [F-T9-18]   # J5 HOLD (reports/T-0009/j5-hold.md); до рішення JE по F-T9-18 приймання не записується
+blocks_content_acceptance: [F-T9-18]   # J5 HOLD (reports/T-0009/j5-hold.md); JE-T9-04 (проєкт): повторний розгляд лише A/B, C не приймається
 risks:
   - id: F-T9-18
     title: "close не відрізняє «правильну» пару J4_HOME/J4_LEDGER від іншої наявної й цілої"
     source: "C3 раунд 3 (non-mandatory); J3 відтворив: reports/T-0009/005.yaml"
-    status: decision_requested_from_JE
+    status: procedural_control_C_draft   # JE-T9-04 D-7 (проєкт, чекає підтвердження JE): tasks/T-0009/runbook-close.md; F-T9-18 НЕ усунено; постійне рішення — B2
+    follow_up_order: "reports/T-0009/follow-up-orders.md, наказ 1 (B2)"
     impact: "хибна, але наявна й ціла пара (інший J4_HOME, знімок, обрізаний/обнулений журнал) → done при відкритій ескалації JE, якщо вона не синхронізована в events.jsonl"
     mitigations_now: "ескалація, синхронізована в events.jsonl (J4 --task-events), блокує close і при хибній парі (відтворено); відсутній/обірваний/пошкоджений журнал і J4_HOME не сховище — відмова"
     options: "reports/T-0009/005.yaml (V-A прийняти з процедурою, V-B звірка з подіями J4, V-C закріплення установки JE)"
   - id: F-T9-16
     title: "acceptance.mjs: review_finished без review_status і acceptance без result зараховуються за замовчуванням"
-    status: separate_order_proposed   # JE-T9-03 D-6; acceptance.mjs не змінювати в T-0009
+    status: separate_order_proposed   # JE-T9-03 D-6, JE-T9-04 D-10; наказ 2 у follow-up-orders.md
     remediation: "reports/T-0009/f-t9-16-proposal.md"
   - id: F-T9-15
     title: "бар'єр обчислюється поза файловим замком (вікно від мілісекунд)"

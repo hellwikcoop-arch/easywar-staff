@@ -258,3 +258,15 @@ entries:
     network_calls: 0
     cumulative_after: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
     next: "рішення JE щодо F-T9-18 (reports/T-0009/005.yaml); PR і CI заблоковані HOLD J5; резерв CI-1 (P-006) 48 збережено: 242, залишок 8"
+
+  - id: A-008
+    kind: actual
+    category: local
+    run: "Допоміжний інструмент reconcile-close.mjs: 12 синтетичних тестів і 9 запусків на мутантах (JE-T9-04 D-8); повні прогони не запускались"
+    subject: 67eb3310db5f69f2451ce748d72722c614409425
+    calls: 0
+    accuracy: "exact за конструкцією: інструмент і тести імпортують лише Ledger/verifyLedger; Router, адаптери й мережа не використовуються"
+    paid_api_calls: 0
+    network_calls: 0
+    cumulative_after: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
+    next: "підтвердження JE-T9-04; PR і CI заблоковані до змістового приймання J5; резерв CI-1 (P-006) 48 збережено: 242, залишок 8"
