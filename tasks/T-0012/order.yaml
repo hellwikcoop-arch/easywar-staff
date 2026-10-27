@@ -1,0 +1,19 @@
+# ПРОЄКТ-ВОРОТА, не зареєстровано. Реалізація — лише за окремим рішенням JE (JE-T10-02 п. 6). Наказ: tasks/T-0012/order-j5.md.
+id: T-0012
+version: 0            # проєкт; 1 присвоюється при реєстрації
+status: draft_gated
+parent_task_id: T-0009
+title: "F-T9-16 і SCOPE-1: бар'єр приймання без значень за замовчуванням і з межами приймання"
+mission: "Прибрати default-значення review_status і result у бар'єрі приймання; врахувати межі приймання"
+scope:
+  in: ["bridge/src/acceptance.mjs", "bridge/test/t0012.test.mjs (новий)", "bridge/test/t0006.test.mjs", "bridge/test/t0007.test.mjs", "bridge/test/t0009.test.mjs", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0012/**", "reports/T-0012/**", "CONTRACT_v0_4.md розд. 6 — лише за рішенням G1"]
+  out: ["bridge/src/close.mjs і store.mjs (T-0010/T-0011)", "автентифікація by (F-9)", ".github/**", "bridge/config/**"]
+gates: ["G1 дозвіл на acceptance.mjs і CONTRACT розд. 6", "G2 варіант SCOPE-1", "G3 зворотна сумісність events.jsonl"]
+data_class: synthetic
+requester: J5
+assignee: J3
+acceptance: {technical: J3, content: J5, key_decision: true}   # бар'єр приймання і контракт: остаточно приймає JE
+checks: {subject_kind: commit, verify: ["node --test 'bridge/test/*.test.mjs'"], review_kind: code}
+resources: {max_calls: 150, max_tokens: null, max_cost_usd: 0, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 15}, reserve_pct: 0, accuracy: exact}
+base_sha: null        # визначає JE
+amendments: []
