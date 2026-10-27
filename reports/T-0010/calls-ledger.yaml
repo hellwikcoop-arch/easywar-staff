@@ -67,6 +67,21 @@ actuals:
     run: "відфільтровані тести T-0010 (старий код: 8 впало, 2 пройшли, 1 пропущено; новий код: 10 пройшли, 1 пропущено), T-0009 E|C|H|Q2|Q3 (16/16), 29 мутантів на тимчасових копіях (tasks/T-0010/tools/mutate.mjs; 29/29 убито)"
     measured: {calls: 0, accuracy: exact, basis: "лічильник tasks/T-0009/tools/call-counter.mjs: total 0 у кожному прогоні; mutate.mjs сумує adapter_calls = 0 (reports/T-0010/mutants.yaml)"}
     cumulative: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+  - id: A-002
+    kind: actual
+    category: local
+    plan_ref: P-002
+    run: "J3-1: повний прогін node --test 'bridge/test/*.test.mjs' на контрольному SHA 38c9f8edf21002a00cfdfb1f6db32d423714d941 (104 тести: 93 базових + 11 T-0010; 103 пройшли, 1 пропущено — A4 лише не-root; 0 впало; 9,4 с)"
+    measured:
+      dispatch_attempt: {calls: 44, accuracy: exact, by_mode: {stub: 33, live_path_with_fake_fetch: 11}, by_adapter: {stub: 33, openai_with_fetchImpl_fake: 11}, processes: 12, basis: "лічильник call-counter.mjs, J4_CALL_COUNT_FILE; збіг із baseline A-005 T-0009"}
+      direct_adapter_call: {calls: 4, accuracy: derived, basis: "gate.test.mjs :121 ×3 + :154 ×1; файл не змінювався"}
+      new_tests_t0010: {calls: 0, accuracy: exact}
+    total_this_run: 48
+    paid_api_calls: 0
+    network_calls: 0
+    paid_basis: "кожен openaiAdapter у bridge/test створено з fetchImpl: fake; OPENAI_API_KEY, CODEX_API_KEY, J4_ALLOW_LIVE, J4_APPROVAL у середовищі не задано (перевірено)"
+    cumulative: {local: 48, c3: 0, ci: 0, total: 48, remaining: 102}
+    forecast_next: "48 (CI-1) + 48 (резерв J3-2) = 96 → 144 ≤ 150"
 forecast_before_P002:
   rule: "cumulative_after.total + оцінка наступних запланованих прогонів ≤ 150"
   computation: "0 (використано) + 48 (J3-1, P-002) + 48 (CI-1, P-004) + 48 (резерв J3-2, P-005) = 144 ≤ 150"
