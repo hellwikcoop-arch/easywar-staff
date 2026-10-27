@@ -1,0 +1,60 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ J5: tasks/T-0010/order-j5.md (текст підготовлено J3 за дозволом JE, JE-T10-01 п. 2).
+# Лише синтетичні дані. Номер T-0010 запропоновано J5 (2026-10-27 14:23), затверджено JE (JE-T10-01, JE-T10-02).
+
+id: T-0010
+version: 1
+parent_task_id: T-0009
+title: "Стабілізація J4 Bridge: F-T9-19…23 і DESIGN §17"
+
+intent:
+  purpose: "Усунути дефекти й прогалини тестів bridge/ з рецензії C3 T-0009 без зміни моделі довіри, контракту й бар'єра приймання"
+  end_state:
+    - "кожен пункт F-T9-19, F-T9-20, F-T9-22, F-T9-23 і DOC-1 має тест, що падає на старому коді, і мутант, який тест знаходить"
+    - "F-T9-21: опис повторного close виправлено за фактом; поведінку j4 close не змінено"
+    - "j4 close не створює файлів і тек у J4_HOME"
+    - "наявні 93 тести проходять; C3 незалежно перевіряє контрольний SHA за diff від efe03c9"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "live і платні API — заборонено"
+    - "не змінювати CONTRACT_v0_4.md, bridge/src/acceptance.mjs, bridge/config/**, .github/**, CSP, Tauri, міграції, секрети"
+    - "не зливати PR; не встановлювати done; реальний j4 close заборонено; планувальник не активувати"
+    - "F-T9-15 і ідентичність установки (T-0011) не входять"
+    - "зміна моделі довіри чи автентифікації — зупинитися й передати JE"
+
+mission: "Виправити F-T9-19, 20 (без marker), 22, 23; описати F-T9-21 за фактом; узгодити DESIGN §17; тести й мутації"
+scope:
+  in: ["bridge/src/store.mjs", "bridge/src/close.mjs", "bridge/bin/j4.mjs", "bridge/test/t0010.test.mjs (новий)", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0010/**", "reports/T-0010/**"]
+  out: ["CONTRACT_v0_4.md", "bridge/config/**", "bridge/src/acceptance.mjs", ".github/**", "F-T9-15", "ідентичність установки J4 (T-0011)", "зміна поведінки j4 close щодо F-T9-21", "застосунок EasyWAR"]
+context_refs: ["reports/T-0009/risk-register.yaml", "reports/T-0009/c3-reviews.yaml#seq=3", "reports/T-0009/follow-up-orders.md", "tasks/T-0010/je-decision-T10-01.md", "tasks/T-0010/je-decision-T10-02.md"]
+materials: ["tasks/T-0010/order-j5.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: false}
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: 150               # stub/fake-виклики сукупно: прогони J3, C3 і CI (JE-T10-01 п. 1, JE-T10-02 п. 4)
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2              # на сценарій
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}   # розбір order.yaml скриптом читанням не рахується
+  reserve_pct: 0
+  accuracy: exact
+
+reporting:
+  milestones: ["контрольний SHA і рецензія C3", "донесення J3 для J5"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: efe03c959107856f2536771ae5c023f1e007e7be   # t-0009/j4-automation (PR №6, чернетка); bridge/ == 67eb3310db5f69f2451ce748d72722c614409425; гілка виконання t-0010/stabilization
+
+amendments: []
