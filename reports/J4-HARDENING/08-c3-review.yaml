@@ -1,0 +1,52 @@
+# Етап E — незалежна рецензія C3 пакета J4 AUTONOMY HARDENING і реакція J3.
+# C3 працював лише на читання (≤ 15 файлів, без запуску повних тестів bridge/, без записів); відповідь збережена дослівно в розділі c3_report,
+# реакція J3 — у j3_response. Вердикт C3 на момент рецензії: changes_requested; після виправлень J3 повторного прогону C3 не було
+# (лімітів читання вдруге не витрачали) — пакет подається JE зі статусом «зауваження C3 опрацьовано J3, повторна рецензія — за рішенням JE».
+reviewed_at: 2026-10-27
+package_state_reviewed: "reports/J4-HARDENING/ до правок за C3 (гілка plan/j4-autonomy-hardening на 0f2cd0b, незакомічена)"
+c3_report:
+  reviewer: C3
+  mode: read-only
+  files_read: [reports/J4-HARDENING/04-spec-T-0012.md, reports/J4-HARDENING/poc/t0012-poc.patch, bridge/src/acceptance.mjs, bridge/src/close.mjs, reports/J4-HARDENING/03-spec-T-0011.md, reports/J4-HARDENING/poc/t0011-poc.patch, reports/J4-HARDENING/06-defects-risks.yaml, reports/J4-HARDENING/11-je-decisions-draft.md, reports/J4-HARDENING/02-threats.md, reports/J4-HARDENING/09-plan-T-0011.md, reports/J4-HARDENING/10-plan-T-0012.md, reports/J4-HARDENING/05-experiments.md, reports/J4-HARDENING/07-draft-tests/t0012.draft.test.mjs, reports/J4-HARDENING/07-draft-tests/t0011.draft.test.mjs, "CONTRACT_v0_4.md (grep заголовків і рядки 184-224, 339-359, 368-381)"]
+  commands_run: ["git status --short; git branch --show-current; git diff --stat", "find reports/J4-HARDENING -type f; wc -l", "git log --oneline -3; git rev-parse @{u}; git diff --stat origin/t-0010/stabilization...HEAD", "git status --short -- bridge CONTRACT_v0_4.md .github tasks", "ls -la (розміри)", "cat/sed/grep прочитаних файлів (без запису; node не запускався)"]
+  verdict: changes_requested
+  mandatory_findings:
+    - {id: C3H-1, where: "04-spec §4.4 R11-7; poc/t0012-poc.patch:65", what: "виправлення R11-7 лише для cmd: \"\"; cmd з пробілів або не-надрядок вимоги (інші лапки, подвійний пробіл, регістр) «не стосується» жодної вимоги — пізніший збій такою командою не скасовує успіх", why: "нова форма обходу для сумлінної помилки; потрібна нормалізація (trim → порожній = null) і чесний residual про не-надрядкові варіанти"}
+    - {id: C3H-2, where: "04-spec §4.2; 05 SC1-1; чернетка t0012 без сценарію full+limits", what: "acceptance {result: accepted, scope: full, limits: [...]} суперечливий, але відкриває done; fail-closed перевірка не запропонована й не відхилена", why: "SCOPE-1 лишається на дисципліні автора; додати в G2 як пункт рішення і тест SC1-6"}
+    - {id: C3H-3, where: "03-spec M11 vs poc/t0011-poc.patch:124-133,145-147", what: "PoC звіряє події ADM до already; специфікація — після; повтор close закритої задачі з подією без/з іншим ledger_hash дасть відмову замість already; compat T-0011 на реальних events.jsonl не зроблено", why: "хибна відмова + ризик міграції; зафіксувати один порядок, тест «done є + застаріла подія → already», compat-перевірка"}
+    - {id: C3H-4, where: "02-threats T7/T9; 03-spec M3/M5; 06 residual F-T9-18", what: "pinned публічний, ланцюг без ключа, seq 1 детермінований: актор із правом запису в J4_HOME/J4_LEDGER збирає «чисту» пару, що проходить M3/M4/M6; ловить лише M7 за наявності синхронізованої події", why: "таблиця загроз завищує закриття T7/T9; виправити формулювання"}
+    - {id: C3H-5, where: "t0011.draft N13; 05 §5.8", what: "N13 приймає і open-escalation, тому зелений на PoC без правила kind-mismatch", why: "слабкий тест; очікувати саме kind-mismatch або перенести в червоні на PoC"}
+    - {id: C3H-6, where: "09-plan крок 1 vs чернетка t0011", what: "у чернетці немає N6, N7, N9, N12, N17 і негативу «installation_adopted з чужим first_hash»", why: "план посилається на N1–N21 як на готові"}
+    - {id: C3H-7, where: "11 G1 T-0012; 04-spec §4.10; CONTRACT розд. 6 п. 4", what: "варіант B звужує умову §6 п. 4 (acceptance = лише повне), а G1 каже «§6 без змін по суті»", why: "усі зміни контракту мають бути винесені JE явно"}
+  optional_findings:
+    - {id: C3H-8, what: "без verify запис без cmd із pass — достатній доказ (асиметрія з verify)", suggestion: "вимагати запис із cmd або задокументувати"}
+    - {id: C3H-9, what: "ротація/архівація ledger.jsonl не розглянута", suggestion: "задекларувати «не підтримується» або описати процедуру"}
+    - {id: C3H-10, what: "refusedWith у t0012 не перевіряє незмінність events.jsonl", suggestion: "додати порівняння до/після"}
+    - {id: C3H-11, what: "M7 стоїть на ledger_hash, якого CONTRACT 9а.3 не вимагає", suggestion: "закріпити ledger_hash у 9а.3 разом із installation_id (G2)"}
+    - {id: C3H-12, what: "бюджети допускають рівно один раунд changes_requested; не записано як HALT у Р-2", suggestion: "додати фразу в Р-2"}
+    - {id: C3H-13, what: "note: -> / key: -| відкривають «блок» (старий regex так само)", suggestion: "задокументувати fail-closed побічний ефект; тест-контроль"}
+  answers_summary:
+    q1: "F-T9-16, F-T10-10, F-T10-12 — усуваються; SCOPE-1 — у формі B, крім full+limits; F-T10-11 — коректний для надрядкових варіантів, нормалізація не доведена; F-T9-18 — для помилкового вибору усувається, для навмисної підміни тримається на M7 + синхронізації; PG-1…5 чесно перелічені"
+    q2: "7 контрприкладів: whitespace-cmd, cmd в інших лапках, full+limits, «чиста» підроблена пара, звірка подій до already (хибна відмова), ротація журналу, вимоги-підрядки одна одної (прийнятно)"
+    q3: "ролі не підмінюються; модель довіри формально не змінюється; назвати явно, що рішення JE стає вхідним параметром бар'єра, і що захист — від помилки й спрощеної підміни"
+    q4: "потрібні: §4 один рядок (винесено), тлумачення §6 п. 4 (НЕ винесено — C3H-7), §4/9а.3 installation_id (винесено), ledger_hash у 9а.3 (додати); §8, 9а.8 без змін — правильно"
+    q5: "негативне покриття T-0012 добре; прогалини: whitespace-cmd, full+limits, reviewKind logic / changes_requested при complete, незмінність подій після відмови; T-0011: N6/N7/N9/N12/N17, перенесений adopted, слабкий N13, мутант «M7 перед already» не вбивається"
+    q6: "одиниця й ≈48 реалістичні; T-0012 запас 6, T-0011 запас 36 — по одному повтору; HALT повні, крім «другий раунд C3»; умова «фільтри = 0» виміряна лише на копіях"
+    q7: "старі установки й старі events.jsonl враховані; не враховано compat T-0011 на реальних журналах, ротація, зміна API closeTask з ledgerEntries: []"
+    q8: "червоні лінії дотримано: лише ?? reports/J4-HARDENING/, diff порожній, bridge/CONTRACT/.github/tasks без змін, HEAD = origin/t-0010/stabilization, дані синтетичні"
+  not_verified: ["evidence/*.json, tools/*.mjs, calls-ledger.yaml, 01-architecture.md не читались (ліміт 15)", "repro.mjs не запускався", "накази origin/orders/T-0010-12 не читались", "regex R-10 і алгоритм R-11 перевірені лише за текстом", "наявність ledger_hash у реальних подіях ADM", "старі тести на reviewKind logic / changes_requested", "README/DESIGN не читались"]
+j3_response:
+  - {finding: C3H-1, action: "04-spec §4.4: вимога trim() → порожній = null; residual про не-надрядкові варіанти записано чесно (04 §4.4, 06 F-T10-11.residual); чернетка R11-7 розширена ('', '   ', '\\t'), додано R11-14 (характеризація залишку)", status: fixed_in_package}
+  - {finding: C3H-2, action: "04-spec §4.2: fail-closed scope-contradictory запропоновано; 11 G2 T-0012 — пункт рішення JE (рекомендовано вмикати); тест SC1-6; PG-7", status: fixed_in_package}
+  - {finding: C3H-3, action: "03-spec M11 оголошено єдиним нормативним порядком (identity → already → наказ → M7); розбіжність PoC → PG-6; тест N23; compat T-0011 виконано: у реальних tasks/T-0002…T-0010/events.jsonl 0 подій ADM із ref на журнал J4 (124 події) — хибних відмов на реальних журналах нині немає; зафіксовано в 03 M11 і 11 G2", status: fixed_in_package}
+  - {finding: C3H-4, action: "02-threats T7/T9 residual переписано; 03-spec новий §3.8а «Що T-0011 НЕ доводить»; 06 F-T9-18.residual доповнено", status: fixed_in_package}
+  - {finding: C3H-5, action: "N13 очікує саме ledger-events-mismatch[kind-mismatch]; на PoC червоний (так і має бути — правила M7 п. 3 у PoC немає); 05 §5.8 оновлено", status: fixed_in_package}
+  - {finding: C3H-6, action: "додано N6/N7, N9, N12, N17, N22 (перенесений installation_adopted → ledger-not-bound), N23; 09-plan крок 1 перелічує фактичний набір", status: fixed_in_package}
+  - {finding: C3H-7, action: "11 G1 T-0012 і 04 §4.10 G1: один рядок у розд. 6 п. 4 винесено на рішення JE явно", status: fixed_in_package}
+  - {finding: C3H-8, action: "04 §4.11: вимагати запис із cmd і без verify (evidence-no-cmd-record), тест R11-13; PG-8", status: accepted}
+  - {finding: C3H-9, action: "03 §3.8а: ротація не підтримується, один файл на установку; після ротації — adopt + нові закріплені значення", status: accepted}
+  - {finding: C3H-10, action: "refusedWith/closeRefused у t0012 перевіряють незмінність events.jsonl", status: accepted}
+  - {finding: C3H-11, action: "03 G2 і 11 G2 T-0011: ledger_hash закріпити в 9а.3 разом з installation_id", status: accepted}
+  - {finding: C3H-12, action: "11 Р-2: другий раунд C3 = HALT і новий бюджет від JE", status: accepted}
+  - {finding: C3H-13, action: "04 §4.11: задокументувати; тест-контроль R10-8", status: accepted}
+  - {finding: "not_verified C3", action: "твердження про dispatch 0, результати S/I/R і compat лишаються підтвердженими лише J3 (evidence/*.json, 05); C3 їх не перевіряв — JE бачить це тут; повторна рецензія після правок — за рішенням JE (0 викликів адаптера)", status: open}

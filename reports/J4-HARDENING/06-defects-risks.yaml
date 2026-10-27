@@ -1,0 +1,120 @@
+# Реєстр дефектів і ризиків місії J4 AUTONOMY HARDENING (етап D/E). Лише читання коду й синтетичні копії.
+# Статуси: confirmed — відтворено (evidence/*.json); theoretical — лише з читання коду; boundary — межа моделі довіри (не дефект коду).
+# closes_by: яке завдання закриває; residual — що лишається після обох.
+mission: J4-AUTONOMY-HARDENING
+date: 2026-10-27
+base: {branch: t-0010/stabilization, head: 0f2cd0b819f25d386311a9f16e3c78b6e923903f, bridge_control_sha: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3}
+defects:
+  - id: F-T9-16
+    status: confirmed
+    severity: high
+    where: "bridge/src/acceptance.mjs:55 (review_status ?? …), :58 (result ?? 'accepted')"
+    evidence: [S16-1, S16-2, S16-4, S16-5]
+    real_world: "tasks/T-0010/events.jsonl seq 8 без review_status (виправлено seq 10, supersedes 8)"
+    closes_by: T-0012
+    residual: "особа з правом запису може вписати complete/accepted (F-9)"
+  - id: SCOPE-1
+    status: confirmed
+    severity: high
+    where: "bridge/src/acceptance.mjs:34; модель запису acceptance (CONTRACT §4)"
+    evidence: [SC1-0, SC1-1, SC1-2, SC1-2b, SC1-4]
+    closes_by: "T-0012 (варіант B: scope: full opt-in)"
+    residual: "помилково вписаний scope: full — процедура J5/J3, рецензія"
+  - id: F-T10-11
+    alias: R-11
+    status: confirmed
+    severity: medium
+    where: "bridge/src/close.mjs passingCommands/checksFrom (:234-271)"
+    evidence: [R11-1, R11-2, R11-3, R11-6, R11-7, R11-8]
+    closes_by: "T-0012 P1 (G4)"
+    residual: "довіра до автора файла доказів (F-9); cmd, що не є надрядком вимоги (інші лапки/пробіли/регістр), вважається іншою командою — його збій успіху не скасовує (C3H-1)"
+    note: "R11-7 (cmd: \"\") і R11-8 (verify порожній) — знайдено в цій місії, у PoC R11-7 ще не закрито"
+  - id: F-T10-10
+    alias: R-10
+    status: confirmed
+    severity: low
+    where: "bridge/src/close.mjs:243 (заголовок блокового скаляра)"
+    evidence: [R10-1, R10-2, R10-3]
+    closes_by: "T-0012 P1 (пропозиція включити)"
+  - id: F-T10-12
+    alias: R-12
+    status: confirmed_partial
+    severity: low
+    where: "bridge/test/t0010.test.mjs (мутант порожнього рядка в блоці вижив); bridge/README.md (код 1 run --once); A5"
+    evidence: [R12-1]
+    closes_by: "T-0012 P1 (пропозиція включити)"
+  - id: F-T9-18
+    status: confirmed
+    severity: high_in_window
+    where: "bridge/src/close.mjs, bridge/bin/j4.mjs close: пара J4_HOME/J4_LEDGER не прив'язана до установки"
+    evidence: [S18-2, S18-6, I3, I4, I5, I9, I13, I14, I16]
+    closes_by: T-0011
+    residual: "I11 — знімок тієї ж установки до несинхронізованої ескалації; закривається ledger_min_seq (M3) і регулярним --task-events. За C3H-4: актор із правом запису в J4_HOME/J4_LEDGER може зібрати «чисту» пару з публічним закріпленим значенням — виявляється лише M7 за наявності синхронізованих подій (03-spec §3.8а)"
+  - id: F-T9-15
+    status: theoretical
+    severity: low
+    where: "bridge/src/close.mjs closeTask: бар'єр поза замком, під замком лише унікальність done"
+    closes_by: "поза T-0011/T-0012; окрема дрібна правка після T-0011 (той самий файл)"
+  - id: DOD-1
+    status: theoretical
+    severity: info
+    where: "bridge/bin/j4.mjs case 'acceptance': --checks-ref → passed: true без розбору файла"
+    note: "довідкова команда, done не пише; після P1 варто пропускати через checksFrom (R-13, пропозиція до G4) або задокументувати"
+  - id: DOD-2
+    status: theoretical
+    severity: low
+    where: "policy.taskAccepted / acceptance.evidenceFromEvents (поблажливі) vs events.readTaskEvents (суворий, events-corrupt)"
+    note: "closeTask викликає readTaskEvents першим, тож нечитний рядок усе одно зупиняє close; розбіжність — у довідкових командах; не входить до T-0011/T-0012"
+  - id: DOD-3
+    status: theoretical
+    severity: low
+    where: "router.syncTaskEvents: ledger_file лише ім'я файла (CONTRACT 9а.3)"
+    note: "дві установки з ledger.jsonl нерозрізнювані в подіях без T-0011 (G2 поле installation_id або звірка хешу M7)"
+  - id: F-9
+    status: boundary
+    where: "поле by не автентифікується"
+  - id: F-3
+    status: boundary
+    where: "--human не доказ особи JE"
+risks_of_change:
+  - id: RC-1
+    task: T-0012
+    risk: "16 наявних тестів червоні до оновлення фікстур (scope: full, review_status) — спокуса ослабити тести"
+    mitigation: "критерій C3: 0 видалених перевірок; лише додані поля/аргументи й змінені очікування з поясненням"
+  - id: RC-2
+    task: T-0012
+    risk: "missing тепер містить діагностику доказів — тести deepEqual на списках ламаються при зміні порядку"
+    mitigation: "порівнювати як множину; документувати порядок"
+  - id: RC-3
+    task: T-0011
+    risk: "Дизайн 1 зсуває seq на 1 — приховані залежності тестів від номерів записів"
+    mitigation: "4 відомі місця (05-experiments §5.5); повний прогін на новому SHA покаже решту"
+  - id: RC-4
+    task: T-0011
+    risk: "run --once відмовляє на старій установці без marker-а до adopt — зупинка планувальника (нині вимкнений)"
+    mitigation: "adopt --human — перший крок міграції в плані; планувальник і так вимкнений до рішення JE"
+  - id: RC-5
+    task: both
+    risk: "конфлікт у close.mjs і фікстурах close при паралельному виконанні"
+    mitigation: "послідовно: T-0012 → T-0011 (G5)"
+  - id: RC-6
+    task: T-0012
+    risk: "бюджет 150 з P1 — запас 6 після одного повтору"
+    mitigation: "HALT-поріг 144 у calls-ledger; рішення JE про 200 — G4"
+  - id: RC-7
+    task: T-0011
+    risk: "закріплене значення в рішенні JE введено з помилкою → усі close відмовляють (I9)"
+    mitigation: "fail-closed бажаний; adopt друкує значення для копіювання; перевірка reconcile-close --print-fingerprint"
+  - id: RC-8
+    task: T-0011
+    risk: "ledger.mjs не названий у scope.in наказу"
+    mitigation: "уточнити наказ (один рядок) або Дизайн 2"
+poc_gaps:   # розбіжності PoC зі специфікацією, знайдені чернетками тестів; у реалізації — обов'язкові
+  - {id: PG-1, task: T-0012, test: R11-7, what: "cmd: \"\" трактується як наявна команда → пізніший збій ігнорується", fix: "порожній cmd → null (04-spec §4.4)"}
+  - {id: PG-2, task: T-0011, test: N2/N3, what: "store.installation() не ловить SyntaxError/EISDIR → CLI падає з кодом 1 замість installation-mismatch[store-marker-missing]", fix: "try/catch у installation(); fail-closed з діагностикою (03-spec M1)"}
+  - {id: PG-3, task: T-0011, test: N8, what: "ledger_min_seq не реалізовано — I11 відкритий у PoC", fix: "03-spec M3"}
+  - {id: PG-4, task: T-0011, test: N11, what: "run --once не порівнює marker і прив'язку журналу (код 0, журнал чужої установки дописується)", fix: "03-spec M6"}
+  - {id: PG-5, task: T-0011, test: N14, what: "ескалація open у сховищі без escalation_raised у журналі не вважається розбіжністю установки", fix: "03-spec M7 п. 4 (перенос правила з reconcile-close.mjs)"}
+  - {id: PG-6, task: T-0011, test: N23, what: "PoC звіряє події ADM (M7) усередині checkInstallation ДО already → повтор close закритої задачі із застарілою подією дає відмову замість already", fix: "нормативний порядок M11 (03-spec); у реальних журналах подій ADM із ref на журнал немає (0/124), тож міграційного ефекту нині немає"}
+  - {id: PG-7, task: T-0012, test: SC1-6, what: "scope: full із непорожнім limits відкриває done", fix: "fail-closed scope-contradictory (04-spec §4.2, рішення G2)"}
+  - {id: PG-8, task: T-0012, test: "R11-7 (пробіли), R11-13", what: "cmd лише з пробілів не нормалізується; без verify достатньо запису без cmd", fix: "trim → null; вимагати запис із cmd і без verify (04-spec §4.4, §4.11)"}

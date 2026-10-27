@@ -1,0 +1,10 @@
+T-0006 359178c7  old: ready
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-scope-not-full]
+T-0006 1144aea3  old: ready
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-scope-not-full]
+T-0007 071bf148  old: ready
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-scope-not-full]
+T-0009 67eb3310  old: not-ready[acceptance-J5-content-missing]
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-missing]
+T-0010 96ff45a2  old: not-ready[acceptance-J5-content-missing]
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-missing]
