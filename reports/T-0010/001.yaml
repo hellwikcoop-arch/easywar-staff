@@ -45,7 +45,7 @@ ci_triggers:
     - "PR з гілки без змін у bridge/** і workflow-файлі не запускає прогону (фільтр paths за diff PR відносно бази)"
     - "кожна подія PR T-0010 з diff у bridge/** = один прогін test (≈48); push у відкритий PR = ще один; ready_for_review прогону не дає (немає в типах)"
     - "гілка PR №6 не змінюється push-ем іншої гілки"
-  dynamic_check: "заповнюється після пушу orders/T-0010-12 (наступний коміт цієї гілки): кількість прогонів для гілки, стан PR №6"
+  dynamic_check: "перевірено 2026-10-27 після пушу orders/T-0010-12 (коміти 37f3936, ac2e8c8): прогонів workflow для гілки 0 (gh api actions/runs?branch=orders/T-0010-12); для гілки t-0009/j4-automation лишається 1 прогін (success, run 40502892802); PR №6: open, draft, не злитий, head efe03c959107856f2536771ae5c023f1e007e7be, 1 коментар"
 
 initial_accounting:   # reports/T-0010/calls-ledger.yaml
   limit: 150
