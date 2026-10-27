@@ -2,12 +2,12 @@
 # Лише додавання/зміна статусу новими рядками з датою; вихід — C3 (reports/T-0009/c3-reviews.yaml), J3 (звіти 001–005).
 task_id: T-0009
 control_subject: 67eb3310db5f69f2451ce748d72722c614409425
-blocks_content_acceptance: [F-T9-18]   # J5 HOLD (reports/T-0009/j5-hold.md); JE-T9-04 (проєкт): повторний розгляд лише A/B, C не приймається
+blocks_content_acceptance: [F-T9-18]   # J5 HOLD (reports/T-0009/j5-hold.md); JE-T9-04 підтверджено 09:35: повторний розгляд лише A/B; C не приймається і для реального завершення не дозволена
 risks:
   - id: F-T9-18
     title: "close не відрізняє «правильну» пару J4_HOME/J4_LEDGER від іншої наявної й цілої"
     source: "C3 раунд 3 (non-mandatory); J3 відтворив: reports/T-0009/005.yaml"
-    status: procedural_control_C_draft   # JE-T9-04 D-7 (проєкт, чекає підтвердження JE): tasks/T-0009/runbook-close.md; F-T9-18 НЕ усунено; постійне рішення — B2
+    status: not_eliminated_runbook_draft   # JE-T9-04 підтверджено 09:35: runbook лишається чернеткою до значень з фактичного середовища J4; C (j4 close) для реального завершення не дозволена; постійне рішення — B2 (за окремим затвердженням)
     follow_up_order: "reports/T-0009/follow-up-orders.md, наказ 1 (B2)"
     impact: "хибна, але наявна й ціла пара (інший J4_HOME, знімок, обрізаний/обнулений журнал) → done при відкритій ескалації JE, якщо вона не синхронізована в events.jsonl"
     mitigations_now: "ескалація, синхронізована в events.jsonl (J4 --task-events), блокує close і при хибній парі (відтворено); відсутній/обірваний/пошкоджений журнал і J4_HOME не сховище — відмова"
@@ -52,3 +52,9 @@ risks:
     title: "ручні ланки M-1 (справжній J5), M-2 (запуск C3 і review_* вручну), M-5 (рішення JE), M-7 (маршрути C5.1); M-4 — скрипт є, планувальник НЕ активовано"
     status: unchanged
     reference: "reports/T-0007/001.yaml; reports/T-0009/004.yaml"
+  - id: SCOPE-1
+    title: "бар'єр requestDone не знає меж приймання: acceptance J5 з result: accepted (навіть з приміткою «лише A/B») разом з J3 (подія 17) і C3 passed дає повний формальний комплект на SHA"
+    source: "J3, 2026-10-27 (читання acceptance.mjs:34; reports/T-0009/007.yaml)"
+    status: mitigated_by_form_of_record_proposed   # J5/JE обирають форму; JE-T9-04: j4 close для реального завершення не дозволена, done не встановлювати
+    mitigation_now: "приймання J5 записувати з result, відмінним від accepted, і межами в note (бар'єр лишається закритим без змін коду); J3 j4 close не виконує"
+    remediation: "наказ 2 (F-T9-16) або окремий пункт: бар'єр, що враховує межі приймання; потребує рішення JE (acceptance.mjs, CONTRACT розд. 6)"
