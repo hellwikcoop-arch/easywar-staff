@@ -2,16 +2,19 @@
 // Перехід у done — лише після бар'єра CONTRACT_v0_4.md, розд. 6, на ОДНОМУ subject (acceptance.mjs, без змін).
 // Що перевіряється:
 //   - перевірки (checks): звичайний файл у сховищі штабу (не симлінк, realpath усередині сховища) із записом на одному
-//     рядку, що містить повний subject і `result:` з `pass`; на рядку, поза значенням `cmd:`, немає fail/error
-//     (`fail 0` / `0 fail` / `errors: 0` провалом не вважаються); якщо наказ має `verify: ["…", …]`, кожна його команда
-//     — у такому ж рядку; нечитаний `verify` — відмова. sha256 файлу доказів пишеться в подію done;
+//     рядку у вигляді плоского YAML-відображення `{cmd: …, subject: <повний SHA>, result: "N/N pass …", by: …}` (T-0010,
+//     F-T9-22: суворий розбір без залежностей; SHA лише в полі `subject`; `result` починається з `pass`/`N/N pass`, без
+//     fail/error — `fail 0` / `0 fail` / `errors: 0` дозволені); якщо наказ має `verify: ["…", …]`, кожна його команда
+//     — у полі `cmd` такого ж запису; нечитаний `verify` — відмова. sha256 файлу доказів пишеться в подію done;
 //   - рецензія виду checks.review_kind і приймання кожної ролі з acceptance наказу (+ JE для key_decision);
 //   - відсутність відкритих ескалацій JE за задачею: у сховищі J4, у журналі J4 (escalation_raised без
 //     escalation_resolved) і в events.jsonl; ескалація, невідома сховищу, але є в журналі, вважається відкритою;
 //     closeTask вимагає ОБИДВА джерела J4 явно (store і ledgerEntries): без них перевірка мовчки пропустила б ескалацію.
 //     Журнал J4 читає readLedgerStrict: відсутній, обірваний, пошкоджений (ланцюг хешів) чи змінений під час читання
-//     журнал — відмова, а не порожній список (JE-T9-03 D-3, C3 F-T9-11/12);
-//   - ідемпотентність: повторний close на тому ж subject не пише нічого; done на іншому subject — відмова.
+//     журнал — відмова, а не порожній список (JE-T9-03 D-3, C3 F-T9-11/12). Сховище J4 CLI відкриває лише для читання
+//     (Store.open) і перевіряє inspectJ4Home; помилка читання сховища — відмова, а не «ескалацій немає» (T-0010);
+//   - ідемпотентність: повторний close на тому ж subject нічого не пише (`already: true`), але лише коли джерела ескалацій
+//     читні — CLI перевіряє їх ДО розбору done; done на іншому subject — відмова (T-0010, F-T9-21: опис, не поведінка).
 // Відкриті обов'язкові зауваження окремим джерелом не рахуються: вимога «C3 passed» на тому ж SHA (наказ T-0009).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -70,6 +73,27 @@ export function orderGate(staffRoot, taskId) {
   return { requiredRoles: [[technical, 'technical'], [content, 'content']], keyDecision: key === 'true', reviewKind, verify };
 }
 
+// Чи є J4_HOME сховищем J4, яке можна прочитати: тека `escalations` існує, є текою і її вміст читається.
+// Не створює нічого. Ознака сховища лишається слабкою (одна підтека): ідентичність установки — задача T-0011 (F-T9-18).
+//   home-not-j4-store — теки немає, вона не тека або `J4_HOME` її не містить (ENOENT/ENOTDIR);
+//   home-unreadable   — перевірити не вдалося (EACCES, ELOOP, EIO…): «нечитне» не плутаємо з «порожнє» (F-T9-19).
+export function inspectJ4Home(home, fsImpl = fs) {
+  const dir = path.join(home, 'escalations');
+  let st;
+  try {
+    st = fsImpl.statSync(dir);
+  } catch (e) {
+    return { ok: false, reason: e.code === 'ENOENT' || e.code === 'ENOTDIR' ? 'home-not-j4-store' : 'home-unreadable' };
+  }
+  if (!st.isDirectory()) return { ok: false, reason: 'home-not-j4-store' };
+  try {
+    fsImpl.readdirSync(dir);
+  } catch {
+    return { ok: false, reason: 'home-unreadable' };
+  }
+  return { ok: true };
+}
+
 // Відкриті ескалації за задачею з трьох джерел: сховище J4, журнал J4 (ledgerEntries), журнал задачі (entries).
 function openEscalations({ store, ledgerEntries, taskId, entries }) {
   const open = new Set();
@@ -100,9 +124,104 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
   return [...open];
 }
 
-// Доказ перевірок — запис на одному рядку (як у reports/T-0007/001.yaml): `{cmd: ..., subject: <SHA>, result: "... pass ..."}`.
-// Достатньо не згадки SHA, а рядка, де цей SHA стоїть поруч із result: pass і немає fail/error (поза значенням cmd);
-// команди verify наказу мають бути в рядках, що пройшли. Файл — звичайний, не симлінк, realpath усередині сховища.
+// Доказ перевірок (T-0010, F-T9-22) — запис на ОДНОМУ рядку у вигляді плоского YAML-відображення, як у reports/T-0007/001.yaml:
+//   `- {cmd: "…", subject: <повний SHA>, result: "76/76 pass, fail 0", by: J3, calls: 44}`
+// (допустимі префікси `- ` і `ключ: `, коментар `# …` після запису). Розбір суворий і без залежностей:
+//   - дозволені лише ключі cmd, subject, result, by, calls, at; будь-який інший ключ, подвоєний ключ, вкладена структура,
+//     незакриті лапки, зайвий текст чи кома після запису — це не доказ;
+//   - SHA має бути значенням поля `subject` (повний, без регістрових розбіжностей), а не згадкою в note чи cmd;
+//   - `result` починається з `pass`/`passed` або `N/N pass` (N > 0, обидва числа рівні); далі — лише `, … ; … ( …`, без fail/error
+//     (звичайний підсумок `fail 0`, `0 fail`, `errors: 0` дозволений), без not/never/false;
+//   - команди `verify` наказу мають бути підрядками поля `cmd` записів, що пройшли; хоча б один запис має пройти.
+// Файл — звичайний, не симлінк, realpath усередині сховища.
+const EVIDENCE_KEYS = new Set(['cmd', 'subject', 'result', 'by', 'calls', 'at']);
+
+function flowScalar(raw) {
+  if (raw.startsWith('"')) {
+    try {
+      const v = JSON.parse(raw);
+      return typeof v === 'string' ? v : null;
+    } catch {
+      return null;
+    }
+  }
+  if (raw.startsWith("'")) {
+    const m = raw.match(/^'((?:[^']|'')*)'$/);
+    return m ? m[1].replace(/''/g, "'") : null;
+  }
+  if (/^[&*!|>%@`#]/.test(raw) || /: |\s#/.test(raw)) return null;
+  return raw;
+}
+
+// {ключ: значення, …} → Map або null. Значення — скаляр у лапках чи простий скаляр без , [ ] { }.
+function parseFlowMap(text) {
+  if (text.length < 2 || text[0] !== '{' || text[text.length - 1] !== '}') return null;
+  const body = text.slice(1, -1);
+  const items = [];
+  let cur = '';
+  let q = null;
+  for (let i = 0; i < body.length; i += 1) {
+    const c = body[i];
+    if (q) {
+      cur += c;
+      if (q === '"' && c === '\\') {
+        i += 1;
+        if (i >= body.length) return null;
+        cur += body[i];
+      } else if (c === q) {
+        if (q === "'" && body[i + 1] === "'") {
+          i += 1;
+          cur += "'";
+        } else {
+          q = null;
+        }
+      }
+    } else if (c === '"' || c === "'") {
+      q = c;
+      cur += c;
+    } else if (c === '{' || c === '[' || c === ']' || c === '}') {
+      return null;
+    } else if (c === ',') {
+      items.push(cur);
+      cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  if (q) return null;
+  items.push(cur);
+  const map = new Map();
+  for (const item of items) {
+    const m = item.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s+(\S[\s\S]*?)\s*$/);
+    if (!m || map.has(m[1])) return null;
+    const v = flowScalar(m[2]);
+    if (v === null) return null;
+    map.set(m[1], v);
+  }
+  return map;
+}
+
+// Рядок файла доказів → Map із полями запису або null, якщо рядок не є записом доказу за граматикою вище.
+function evidenceRecord(rawLine) {
+  const line = stripComment(rawLine).trim();
+  const m = line.match(/^(?:-[ \t]+|[A-Za-z_][A-Za-z0-9_]*:[ \t]+)?(\{.*\})$/s);
+  if (!m) return null;
+  const map = parseFlowMap(m[1]);
+  if (!map || !map.has('subject') || !map.has('result')) return null;
+  for (const k of map.keys()) if (!EVIDENCE_KEYS.has(k)) return null;
+  return map;
+}
+
+function resultIsPass(res) {
+  const m = res.trim().match(/^(?:(\d+)[ \t]*\/[ \t]*(\d+)[ \t]+)?pass(?:ed)?(?![A-Za-z0-9_])([\s\S]*)$/i);
+  if (!m) return false; // «0 of 76 pass», «never passed», «not passed», «0 passed», «tests 0 pass 0 fail 0»
+  if (m[1] !== undefined && !(m[1] === m[2] && Number(m[1]) > 0)) return false; // порожній чи неповний відбір: «0/76 pass», «75/76 pass»
+  if (!/^[ \t]*(?:$|[,;(])/.test(m[3])) return false; // «pass: false», «pass: 0», «pass 0 fail 0»
+  // «fail 0», «0 fail», «errors: 0» — звичайний підсумок успішного прогону, провалом не вважається
+  const cleaned = m[3].replace(/\b(fail\w*|errors?)[ :=]*0\b/gi, '').replace(/\b0[ ]+(fail\w*|errors?)\b/gi, '');
+  return !/\b(fail\w*|errors?|not|never|false)\b/i.test(cleaned);
+}
+
 function checksFrom(staffRoot, subject, checksRef, verify = []) {
   const bad = { checks: [{ subject, passed: false, evidence_ref: null }], sha256: null };
   if (!checksRef || typeof checksRef !== 'string') return { checks: [], sha256: null };
@@ -118,23 +237,19 @@ function checksFrom(staffRoot, subject, checksRef, verify = []) {
     return bad;
   }
   const buf = fs.readFileSync(real);
-  const passing = buf.toString('utf8').split('\n').filter((line) => {
-    const rest = line.replace(/\bcmd:\s*"(?:[^"\\]|\\.)*"/g, '');
-    if (!rest.includes(subject)) return false; // SHA має стояти поза значенням cmd (поле subject), а не лише в тексті команди
-    if (rest.search(/\bresult:/) < 0) return false;
-    // «fail 0», «0 fail», «errors: 0» — звичайний підсумок успішного прогону, провалом не вважається
-    const cleaned = rest.replace(/\b(fail\w*|errors?)[ :=]*0\b/gi, '').replace(/\b0[ ]+(fail\w*|errors?)\b/gi, '');
-    const res = cleaned.slice(cleaned.search(/\bresult:/));
-    // порожній відбір тестів («0 pass», «0/76 pass», «pass: 0») і заперечення («not passed») успіхом не є
-    return /\bpass(ed)?\b/i.test(res) && !/\bnot[ ]+pass(ed)?\b/i.test(res) && !/\b0[ ]*(\/[ ]*\d+[ ]*)?pass(ed)?\b/i.test(res) && !/\bpass(ed)?[ :=]+0\b/i.test(res) && !/\b(fail\w*|not ok|errors?)\b/i.test(cleaned);
-  });
-  const ok = passing.length > 0 && verify.every((cmd) => passing.some((line) => line.includes(cmd)));
+  const passing = [];
+  for (const line of buf.toString('utf8').split('\n')) {
+    const r = evidenceRecord(line);
+    if (r && r.get('subject') === subject && resultIsPass(r.get('result'))) passing.push(r);
+  }
+  const ok = passing.length > 0 && verify.every((cmd) => passing.some((r) => (r.get('cmd') ?? '').includes(cmd)));
   return { checks: [{ subject, passed: ok, evidence_ref: ok ? rel : null }], sha256: ok ? createHash('sha256').update(buf).digest('hex') : null };
 }
 
 // Журнал J4 для перевірки відкритих ескалацій: читається лише достовірний. Відсутній файл, не файл, обірваний останній
 // рядок, порушений ланцюг хешів/seq/витік чи зміна журналу між двома читаннями — відмова з причиною, а не порожній список.
-export function readLedgerStrict(file) {
+// hooks.afterVerify — для тестів: викликається між перевіркою ланцюга й читанням файла (детермінована зміна журналу).
+export function readLedgerStrict(file, hooks = {}) {
   let st;
   try {
     st = fs.statSync(file);
@@ -146,6 +261,7 @@ export function readLedgerStrict(file) {
   let raw;
   try {
     v = verifyLedger(file);
+    hooks.afterVerify?.();
     raw = fs.readFileSync(file, 'utf8');
   } catch {
     return { ok: false, reason: 'ledger-unreadable' };
@@ -186,7 +302,13 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledger
   if (!gate) return refuse('order-missing');
   if (gate.error) return refuse(gate.error);
 
-  const esc = openEscalations({ store, ledgerEntries, taskId, entries });
+  let esc;
+  try {
+    esc = openEscalations({ store, ledgerEntries, taskId, entries });
+  } catch {
+    // сховище J4 не читається (EIO, зіпсований файл ескалації…): «не вдалося прочитати» ≠ «ескалацій немає» (F-T9-19)
+    return refuse('escalation-source-unreadable', ['store-unreadable']);
+  }
   if (esc.length) return refuse('open-escalation', esc.map((x) => `escalation:${x}`));
 
   const ev = evidenceFromEvents(staffRoot, taskId);

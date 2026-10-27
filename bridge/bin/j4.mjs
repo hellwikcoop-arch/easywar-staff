@@ -12,7 +12,7 @@ import { MonthlyBudget } from '../src/monthly.mjs';
 import { acceptanceReady, evidenceFromEvents } from '../src/acceptance.mjs';
 import { openaiAdapter } from '../src/adapters/openai.mjs';
 import { codexAdapter } from '../src/adapters/cli.mjs';
-import { closeTask, readLedgerStrict } from '../src/close.mjs';
+import { closeTask, readLedgerStrict, inspectJ4Home } from '../src/close.mjs';
 import { Store } from '../src/store.mjs';
 
 // Корінь сховища штабу. J4_STAFF_ROOT — лише для тестів на копії сховища; стоп-кран bridge/HALT
@@ -134,14 +134,11 @@ async function main() {
         out({ ok: false, code: 'escalation-source-unreadable', missing: [reason], ...extra });
         process.exitCode = 3;
       };
-      let homeOk = false;
-      try {
-        homeOk = fs.statSync(path.join(home, 'escalations')).isDirectory();
-      } catch {
-        homeOk = false;
-      }
-      if (!homeOk) {
-        sourceUnreadable('home-not-j4-store');
+      // Сховище лише для читання (Store.open): close не створює підтек у чужому J4_HOME (T-0010, F-T9-20); нечитний вміст
+      // сховища — окрема причина home-unreadable, а не «порожньо» (F-T9-19).
+      const homeState = inspectJ4Home(home);
+      if (!homeState.ok) {
+        sourceUnreadable(homeState.reason);
         break;
       }
       const led = readLedgerStrict(ledgerFile);
@@ -149,7 +146,7 @@ async function main() {
         sourceUnreadable(led.reason, led.problems ? { problems: led.problems } : {});
         break;
       }
-      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: new Store(home), ledgerEntries: led.entries });
+      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: Store.open(home), ledgerEntries: led.entries });
       out(r);
       process.exitCode = r.ok ? 0 : 3;
       break;

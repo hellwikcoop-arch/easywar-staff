@@ -57,3 +57,18 @@ state:   # на момент реєстрації
   cumulative: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
   paid_api_calls: 0
   network_calls: 0
+
+# --- факт і прогноз перед повним прогоном (дописано J3; рядки вище не редаговано) ---
+actuals:
+  - id: A-001
+    kind: actual
+    category: local
+    plan_ref: P-001
+    run: "відфільтровані тести T-0010 (старий код: 8 впало, 2 пройшли, 1 пропущено; новий код: 10 пройшли, 1 пропущено), T-0009 E|C|H|Q2|Q3 (16/16), 29 мутантів на тимчасових копіях (tasks/T-0010/tools/mutate.mjs; 29/29 убито)"
+    measured: {calls: 0, accuracy: exact, basis: "лічильник tasks/T-0009/tools/call-counter.mjs: total 0 у кожному прогоні; mutate.mjs сумує adapter_calls = 0 (reports/T-0010/mutants.yaml)"}
+    cumulative: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+forecast_before_P002:
+  rule: "cumulative_after.total + оцінка наступних запланованих прогонів ≤ 150"
+  computation: "0 (використано) + 48 (J3-1, P-002) + 48 (CI-1, P-004) + 48 (резерв J3-2, P-005) = 144 ≤ 150"
+  verdict: "в межах ліміту; запас 6; другий повтор не вміщується — HALT"
+  new_tests_adapter_calls: 0
