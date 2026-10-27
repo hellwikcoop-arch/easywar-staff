@@ -48,3 +48,27 @@
   recommended_round1_status: "F-T9-6, 7, 8, 10 — fixed; F-T9-9 — addressed (за diff); негерметичність при наявному bridge/HALT лише задокументована"
   not_confirmed_by_C3: "(1) Q1–Q3 проходять на d05dc5a; (2) повний набір 90/90 (заява J3, A-003); (3) CLI `j4 close` end-to-end з ескалацією лише в журналі J4"
   verified_by_J3: "F-T9-12 підтверджено читанням bin/j4.mjs (`if (fs.existsSync(ledgerFile)) … else ledgerEntries = []`, readAll().partial не перевіряється); F-T9-11 — за описом мутантів C3 і структурою тестів C3/C5, незалежно не відтворювалось (нові тести поза межами JE-T9-02)"
+- seq: 3
+  round: 3
+  authorized_by: "JE-T9-03 D-4: лише git diff d05dc5a..67eb331 (bridge і f-t9-16-proposal.md), включно з негативними сценаріями F-T9-11/12; без повного набору"
+  subject: {kind: commit, ref: 67eb3310db5f69f2451ce748d72722c614409425}
+  review: {review_status: complete, verdict: passed}
+  confirmed: "git diff 67eb331 HEAD -- bridge порожній; CONTRACT_v0_4.md, bridge/config/**, bridge/src/acceptance.mjs, .github/** відносно бази не змінені; репозиторій у ході рецензії не змінювався (git status порожній, HEAD незмінний); повний набір, Q1, gate/t0007 не запускались"
+  tests: "відфільтровано 'T-0009 (E|C|H|Q2|Q3)' на 67eb331: 16/16 pass; 21 прогін того ж фільтра на старому коді й мутантах (m1a, m1b, m2, m4–m10, m12a–c, m13–m18)"
+  counter: {total: 0, note: "лічильник dispatch 0 у кожному прогоні тестів; CLI-експерименти — dispatch_attempt 0 за grep журналів"}
+  paid_api_calls: 0
+  network_calls: 0
+  files_read: 14   # з 15; розбір order.yaml скриптом і 6 рядків router.mjs зараховано; перевищення немає
+  findings_status: {F-T9-2: fixed, F-T9-11: fixed, F-T9-12: fixed, F-T9-13: fixed, F-T9-14: fixed, F-T9-17: fixed, F-T9-15: documented_only}
+  mutants: "m1a → C3, C5, C6, C7; m1b → C6; m2 → C6, C7; m4, m5, m9, m10 → C7; m7, m8 → C5; m12a–c, m13–m15 → C8; m16, m17 → C5, C6; m18 → C2; старий код (close.mjs і j4.mjs з d05dc5a + новий файл тестів) → C5, C7, C8; m6 (ledger-changed-during-read) виживає"
+  design_decisions: "(а) store обов'язковий у closeTask — виправдано, модель довіри не розширено, це зміна API понад вимогу JE; (б) порожній справжній журнал читний — прийнятно, але не відрізняється від обнуленого; (в) маркер сховища J4 — підтека escalations — слабкий (F-T9-20); послаблених раніше наявних перевірок немає"
+  new_findings_all_non_mandatory:
+    - {id: F-T9-18, location: "close.mjs:135-166; j4.mjs:126-152; DESIGN (обмеження етапу 1)", description: "close не відрізняє «правильну» пару J4_HOME/J4_LEDGER від іншої наявної й цілої: хибна, але справжня пара (інший J4_HOME, знімок журналу, обрізаний по межі рядка чи обнулений журнал) дає done при відкритій ескалації, якщо її немає в events.jsonl; повністю закрити без закріплення ідентичності (розширення довіри) не можна; пропозиція — фраза в DESIGN, за бажанням голова ланцюга й число записів у подію done, звірка ledger_hash з events.jsonl"}
+    - {id: F-T9-19, location: "store.mjs:43-49; j4.mjs:137-146", description: "Store.list ковтає будь-яку помилку; перевірка J4_HOME лише stat теки escalations; нечитна escalations/ дає done, якщо журнал ескалацій не показує"}
+    - {id: F-T9-20, location: "j4.mjs:137-152", description: "J4_HOME з однією підтекою escalations визнається сховищем; new Store(home) створює в ній ще 6 тек"}
+    - {id: F-T9-21, location: "close.mjs:168-173; DESIGN", description: "повторний close після done залежить від читності джерел ескалацій (exit 3 замість already:true, якщо журнал недоступний); DESIGN каже «повтор нічого не пише»; запису немає, безпека не страждає"}
+    - {id: F-T9-22, location: "close.mjs:122-123; DESIGN", description: "код не вимагає поля subject і знімає cmd лише в подвійних лапках: приймаються SHA в полі note, cmd в одинарних лапках, рядок-коментар, 'result: \"0 of 76 pass\"', 'never passed', 'pass: false', 'no tests ran, pass'; C8 покриває лише подвійні лапки"}
+    - {id: F-T9-23, location: "t0009.test.mjs C7; DESIGN", description: "m6 (ledger-changed-during-read) не ловиться жодним тестом; не покрито J4_HOME як файл, escalations як файл, null-рядок, витік; у DESIGN немає способу усунути ledger-partial"}
+  f_t9_16_description: "точний по суті; дрібно: DESIGN «відхиляє лише partial» вузьке (відхиляється будь-яке явне значення, крім complete і null); проєкт наказу не згадує сусідній default — acceptance без result зараховується як accepted (acceptance.mjs:58); acceptance.mjs не змінено"
+  not_confirmed_by_C3: "заява J3 про 93/93 і прогін gate/t0007/Q1; чи викликають closeTask інші файли тестів; твердження F-T9-15 про замок в events.mjs; вміст журналів T-0007; order.yaml T-0006/T-0007"
+  verified_by_J3: "J3-3 регресія 93/93 (A-005, лічильник 44); F-T9-18…23 J3 окремо не відтворював — за описом C3 і логікою коду; вирішено не міняти bridge/ після C3 passed (новий SHA потребував би нового C3 і рішення JE), ризики записано як залишкові"

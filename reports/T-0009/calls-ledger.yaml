@@ -232,3 +232,17 @@ entries:
     estimate: {calls: 0, accuracy: estimate}
     basis: "лише читання diff і відфільтровані тести без адаптера з лічильником; тести з адаптером (Q1) і повний набір не запускаються"
     cumulative_if_done: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
+
+  - id: A-006
+    kind: actual
+    category: c3
+    run: "C3-3 (третій раунд; JE-T9-03 D-4)"
+    subject: 67eb3310db5f69f2451ce748d72722c614409425
+    calls: 0
+    accuracy: "exact за лічильником C3 (dispatch 0 у кожному прогоні тестів: база, старий код, мутанти); CLI-експерименти — dispatch_attempt 0 за grep журналів; прямі adapter.call() — 0 (gate.test.mjs не запускався)"
+    paid_api_calls: 0
+    network_calls: 0
+    verdict: passed   # reports/T-0009/c3-reviews.yaml#seq=3
+    files_read: "14 з 15"
+    cumulative_after: {local: 146, c3: 48, ci: 0, total: 194, remaining: 56}
+    next: "P-006: CI-1 після відкриття PR (резерв 48) → 242, залишок 8; PR лише після змістового приймання J5; повторні повні прогони й CI без рішення JE заборонені"
