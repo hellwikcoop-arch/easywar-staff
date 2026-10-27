@@ -110,4 +110,20 @@ actuals_round2_filtered:
     category: local
     run: "фільтровані прогони раунду 2: t0010 (root: 10 pass, 2 skipped; nobody: 12/12 pass), T-0009 E|C|H|Q2|Q3 (16/16), мутації 42/42 + контрольний M43 (як nobody)"
     measured: {calls: 0, accuracy: exact, basis: "лічильник call-counter.mjs: total 0; mutate.mjs: adapter_calls 0"}
+actuals_round2:
+  - id: A-004
+    kind: actual
+    category: local
+    plan_ref: P-006
+    run: "J3-2: повний прогін node --test 'bridge/test/*.test.mjs' на контрольному SHA 96ff45a2feafcf0964eda290a2eacca52d3ab2e3 (105 тестів: 93 базових + 12 T-0010; 103 пройшли, 2 пропущено — A4 і A5 лише не-root; 0 впало; 8,6 с)"
+    measured:
+      dispatch_attempt: {calls: 44, accuracy: exact, by_mode: {stub: 33, live_path_with_fake_fetch: 11}, by_adapter: {stub: 33, openai_with_fetchImpl_fake: 11}, processes: 12, basis: "лічильник call-counter.mjs; збіг із A-002 і baseline"}
+      direct_adapter_call: {calls: 4, accuracy: derived, basis: "gate.test.mjs :121 ×3 + :154 ×1; файл не змінювався"}
+      new_tests_t0010: {calls: 0, accuracy: exact}
+    total_this_run: 48
+    paid_api_calls: 0
+    network_calls: 0
+    cumulative: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
+    forecast_next: "CI-1 48 → 144 ≤ 150; запас 6; будь-який подальший повний прогін (J3 чи CI) понад це — HALT і доповідь JE"
+    c3_round1: {calls: 0, accuracy: exact, basis: "лічильник C3 total 0 у всіх прогонах"}
 

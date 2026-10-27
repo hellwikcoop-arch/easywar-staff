@@ -1,0 +1,51 @@
+# T-0010: донесення J3 (раунд 2) — виправлення за рецензією C3 і результати на новому контрольному SHA.
+task_id: T-0010
+from: J3
+to: J5
+cc: [JE]
+stage: "виправлення F-T10-1…9 завершено; дельта-рецензія C3 (раунд 2) запитана; змістове приймання J5 — після C3 passed"
+base_sha: efe03c959107856f2536771ae5c023f1e007e7be
+previous_control_sha: 38c9f8edf21002a00cfdfb1f6db32d423714d941      # C3 раунд 1: passed, 0 обов'язкових, 9 необов'язкових
+control_sha: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3               # коміт, що останнім змінює bridge/; наступні коміти — лише tasks/ і reports/
+execution_branch: t-0010/stabilization
+authorization: "JE-T10-02 п. 5; режим виконання — JE-T10-03"
+
+delta_vs_previous_control: "git diff 38c9f8e..96ff45a -- bridge: bridge/src/close.mjs, bridge/docs/DESIGN.md, bridge/test/t0010.test.mjs"
+changed_files_vs_base: [bridge/README.md, bridge/bin/j4.mjs, bridge/docs/DESIGN.md, bridge/src/close.mjs, bridge/src/store.mjs, bridge/test/t0010.test.mjs]
+outside_bridge: ["tasks/T-0010/**", "reports/T-0010/**"]
+removed_from_branch: "tasks/T-0011/**, tasks/T-0012/** (чернетки-ворота; C3 F-T10-8) — лишаються в гілці orders/T-0010-12"
+untouched_confirmed: "bridge/src/acceptance.mjs, bridge/config/**, CONTRACT_v0_4.md, .github/** — git diff efe03c9..96ff45a порожній"
+
+findings_c3_round1:   # reports/T-0010/c3-reviews.yaml#seq=1
+  F-T10-1: "виправлено — DESIGN §18 + тест A5"
+  F-T10-2: "виправлено — префікс, блокові скаляри, останній запис на cmd"
+  F-T10-3: "виправлено — слова-збої, fail 0.5, 0 fail 3, 0 tests"
+  F-T10-4: "частково — дозволено `N pass`, ключі ref/date/note; решта — свідомий fail-closed вибір для підтвердження J5/JE; діагностика причини відмови не робилась"
+  F-T10-5: "виправлено — без лінивого регулярного виразу"
+  F-T10-6: "виправлено — тести A2/A5/C1, мутанти M40–M42"
+  F-T10-7: "виправлено — опис у DESIGN §17"
+  F-T10-8: "виправлено — чернетки прибрано з гілки виконання"
+  F-T10-9: "виправлено — не-об'єктний файл ескалації, вужчий catch"
+
+checks:
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3, result: "103/103 pass, fail 0, skipped 2 (A4 і A5 пропущено під root); 105 тестів: 93 базових + 12 T-0010", by: J3, calls: "44 dispatch + 4 прямих (derived)"}
+  - {cmd: "node --test bridge/test/t0010.test.mjs (від користувача nobody)", subject: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3, result: "12/12 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+  - {cmd: "node --test --test-name-pattern 'T-0009 (E|C|H|Q2|Q3)' bridge/test/t0009.test.mjs", subject: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3, result: "16/16 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+
+mutants:   # reports/T-0010/mutants.yaml; запуск від nobody (інакше A4/A5 пропускаються)
+  total_non_control: 42
+  killed: 42
+  survived: 0
+  control_equivalent_M43: "SURVIVED, як очікувалось (перевірка самого запуску)"
+  adapter_calls: 0
+
+real_evidence_compat: "reports/T-0007/001.yaml, reports/T-0009/001.yaml (2 SHA), reports/T-0009/003.yaml проходять новий розбір"
+
+accounting:
+  used: {local_J3: 96, C3: 0, CI: 0, total: 96, remaining: 54}
+  paid_api_calls: 0
+  network_calls: 0
+  forecast: "CI-1 (за окремим дозволом JE і після змістового J5) 48 → 144 з 150; запас 6; будь-який подальший повний прогін — HALT"
+
+not_done: ["PR не створено", "CI не запускався", "done не встановлювався; j4 close реально не запускався", "T-0011 і T-0012 не реалізовувались"]
+open_risks_unchanged: "F-T9-15, F-T9-16, F-T9-18, SCOPE-1, F-9, F-3; runbook — чернетка"
