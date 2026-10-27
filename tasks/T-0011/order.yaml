@@ -1,0 +1,20 @@
+# ПРОЄКТ-ВОРОТА, не зареєстровано. Реалізація — лише за окремим рішенням JE (JE-T10-02 п. 6). Наказ: tasks/T-0011/order-j5.md.
+id: T-0011
+version: 0            # проєкт; 1 присвоюється при реєстрації
+status: draft_gated
+parent_task_id: T-0009
+depends_on: [T-0010]
+title: "B2 / F-T9-18: ідентичність сховища J4 і звірка ескалацій"
+mission: "Закріпити ідентичність установки J4 і звіряти ескалації за сховищем, журналом J4 та events.jsonl"
+scope:
+  in: ["bridge/src/store.mjs", "bridge/src/close.mjs", "bridge/src/router.mjs", "bridge/bin/j4.mjs", "bridge/test/t0011.test.mjs (новий)", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0011/**", "reports/T-0011/**"]
+  out: ["bridge/src/acceptance.mjs", "автентифікація by (F-9) і особа JE (F-3)", ".github/**", "CONTRACT_v0_4.md і bridge/config/** — крім меж рішень G2/G3"]
+gates: ["G1 дизайн installation_id", "G2 поле в подіях / CONTRACT §4, 9а.3", "G3 місце закріплення значень", "G4 межі (F-9, F-3)", "G5 T-0010 прийнято", "G6 фактичні значення установки від власника"]
+data_class: synthetic
+requester: J5
+assignee: J3
+acceptance: {technical: J3, content: J5, key_decision: true}   # зміна моделі довіри: остаточно приймає JE
+checks: {subject_kind: commit, verify: ["node --test 'bridge/test/*.test.mjs'"], review_kind: code}
+resources: {max_calls: 180, max_tokens: null, max_cost_usd: 0, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 15}, reserve_pct: 0, accuracy: exact}
+base_sha: null        # вершина прийнятого T-0010 — визначає JE
+amendments: []
