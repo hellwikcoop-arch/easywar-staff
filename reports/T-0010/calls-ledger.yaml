@@ -87,3 +87,27 @@ forecast_before_P002:
   computation: "0 (використано) + 48 (J3-1, P-002) + 48 (CI-1, P-004) + 48 (резерв J3-2, P-005) = 144 ≤ 150"
   verdict: "в межах ліміту; запас 6; другий повтор не вміщується — HALT"
   new_tests_adapter_calls: 0
+
+# --- раунд 2 після рецензії C3 (раунд 1: passed, 0 обов'язкових, 9 необов'язкових; усі виправлення — без викликів адаптера) ---
+plans_round2:
+  - id: P-006
+    kind: plan
+    category: local
+    plan_ref: P-005     # використовується резерв: повторний повний прогін J3-2
+    run: "J3-2: повний прогін node --test 'bridge/test/*.test.mjs' на новому контрольному SHA після виправлень F-T10-1…9"
+    estimate: {calls: 48, accuracy: estimate}
+    basis: "baseline 44 dispatch + 4 прямих; нові/змінені тести t0010 без адаптера (фільтровані прогони: dispatch 0 — лічильник); перерахунок не потрібен"
+    forecast: "48 (використано A-002) + 48 (J3-2) + 48 (CI-1) = 144 ≤ 150; запас 6; третій повний прогін не вміщується — HALT і доповідь JE"
+    cumulative_if_done: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
+  - id: P-007
+    kind: plan
+    category: c3
+    run: "C3-2: рецензія за diff 38c9f8e..<новий контрольний SHA> (bridge/), 0 викликів адаптера; повний набір не запускається"
+    estimate: {calls: 0, accuracy: estimate}
+actuals_round2_filtered:
+  - id: A-003
+    kind: actual
+    category: local
+    run: "фільтровані прогони раунду 2: t0010 (root: 10 pass, 2 skipped; nobody: 12/12 pass), T-0009 E|C|H|Q2|Q3 (16/16), мутації 42/42 + контрольний M43 (як nobody)"
+    measured: {calls: 0, accuracy: exact, basis: "лічильник call-counter.mjs: total 0; mutate.mjs: adapter_calls 0"}
+

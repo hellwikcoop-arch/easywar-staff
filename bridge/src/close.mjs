@@ -101,7 +101,9 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
   if (store) {
     for (const f of store.list('escalations')) {
       const e = store.readJson(`escalations/${f}`);
-      if (e?.task_id !== taskId) continue;
+      // файл ескалації — JSON-об'єкт; інша форма (null, масив, рядок) — пошкодження, а не «чужа задача»
+      if (e === null || typeof e !== 'object' || Array.isArray(e)) throw Object.assign(new Error('escalation-file-malformed'), { code: 'escalation-file-malformed' });
+      if (e.task_id !== taskId) continue;
       status.set(e.escalation_id, e.status);
       if (e.status === 'open') open.add(e.escalation_id);
     }
@@ -134,7 +136,7 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
 //     (звичайний підсумок `fail 0`, `0 fail`, `errors: 0` дозволений), без not/never/false;
 //   - команди `verify` наказу мають бути підрядками поля `cmd` записів, що пройшли; хоча б один запис має пройти.
 // Файл — звичайний, не симлінк, realpath усередині сховища.
-const EVIDENCE_KEYS = new Set(['cmd', 'subject', 'result', 'by', 'calls', 'at']);
+const EVIDENCE_KEYS = new Set(['cmd', 'subject', 'result', 'by', 'calls', 'at', 'ref', 'date', 'note']);
 
 function flowScalar(raw) {
   if (raw.startsWith('"')) {
@@ -192,9 +194,9 @@ function parseFlowMap(text) {
   items.push(cur);
   const map = new Map();
   for (const item of items) {
-    const m = item.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s+(\S[\s\S]*?)\s*$/);
+    const m = item.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*:\s+(\S[\s\S]*)$/);
     if (!m || map.has(m[1])) return null;
-    const v = flowScalar(m[2]);
+    const v = flowScalar(m[2].trim());
     if (v === null) return null;
     map.set(m[1], v);
   }
@@ -204,7 +206,7 @@ function parseFlowMap(text) {
 // Рядок файла доказів → Map із полями запису або null, якщо рядок не є записом доказу за граматикою вище.
 function evidenceRecord(rawLine) {
   const line = stripComment(rawLine).trim();
-  const m = line.match(/^(?:-[ \t]+|[A-Za-z_][A-Za-z0-9_]*:[ \t]+)?(\{.*\})$/s);
+  const m = line.match(/^(?:-[ \t]+|checks:[ \t]+)?(\{.*\})$/s);
   if (!m) return null;
   const map = parseFlowMap(m[1]);
   if (!map || !map.has('subject') || !map.has('result')) return null;
@@ -213,13 +215,39 @@ function evidenceRecord(rawLine) {
 }
 
 function resultIsPass(res) {
-  const m = res.trim().match(/^(?:(\d+)[ \t]*\/[ \t]*(\d+)[ \t]+)?pass(?:ed)?(?![A-Za-z0-9_])([\s\S]*)$/i);
+  const m = res.trim().match(/^(?:(\d+)[ \t]*\/[ \t]*(\d+)[ \t]+|(\d+)[ \t]+)?pass(?:ed)?(?![A-Za-z0-9_])([\s\S]*)$/i);
   if (!m) return false; // «0 of 76 pass», «never passed», «not passed», «0 passed», «tests 0 pass 0 fail 0»
   if (m[1] !== undefined && !(m[1] === m[2] && Number(m[1]) > 0)) return false; // порожній чи неповний відбір: «0/76 pass», «75/76 pass»
-  if (!/^[ \t]*(?:$|[,;(])/.test(m[3])) return false; // «pass: false», «pass: 0», «pass 0 fail 0»
-  // «fail 0», «0 fail», «errors: 0» — звичайний підсумок успішного прогону, провалом не вважається
-  const cleaned = m[3].replace(/\b(fail\w*|errors?)[ :=]*0\b/gi, '').replace(/\b0[ ]+(fail\w*|errors?)\b/gi, '');
-  return !/\b(fail\w*|errors?|not|never|false)\b/i.test(cleaned);
+  if (m[3] !== undefined && Number(m[3]) === 0) return false; // «0 pass»
+  if (!/^[ \t]*(?:$|[,;(])/.test(m[4])) return false; // «pass: false», «pass: 0», «pass 0 fail 0»
+  // «fail 0», «0 fail», «errors: 0», «cancelled 0» — звичайний підсумок успішного прогону; будь-яка інша цифра чи слово — ні
+  const counter = '(?:fail\\w*|errors?|cancel\\w*|time[ -]?outs?|abort\\w*|crash\\w*)';
+  const cleaned = m[4]
+    .replace(new RegExp(`\\b${counter}[ :=]*0(?![\\w.])`, 'gi'), '')
+    .replace(new RegExp(`(?<![\\w.])0[ ]+${counter}\\b(?![ ]*[\\d.])`, 'gi'), '');
+  return !new RegExp(`\\b(?:${counter}|not|never|false|partial|incomplete)\\b`, 'i').test(cleaned) && !/(?<![\w.])0[ ]+tests?\b/i.test(cleaned);
+}
+
+// Записи доказу з тексту файла (T-0010, F-T10-2): пропускаються рядки всередині блокових скалярів YAML (`|`, `>`), де
+// «запис» лише текст; для кожної команди `cmd` діє ОСТАННІЙ запис на цьому subject — пізній збій скасовує ранній успіх,
+// пізній успіх після збою (повторний прогін) приймається.
+function passingCommands(text, subject) {
+  const latest = new Map();
+  let blockIndent = null;
+  for (const raw of text.split('\n')) {
+    const indent = raw.match(/^[ \t]*/)[0].length;
+    if (blockIndent !== null) {
+      if (raw.trim() === '' || indent > blockIndent) continue;
+      blockIndent = null;
+    }
+    if (/(?:^|:|-)[ \t]*[|>][+\-0-9]*$/.test(stripComment(raw).trimEnd())) {
+      blockIndent = indent;
+      continue;
+    }
+    const r = evidenceRecord(raw);
+    if (r && r.get('subject') === subject) latest.set(r.get('cmd') ?? '', resultIsPass(r.get('result')));
+  }
+  return [...latest].filter(([, pass]) => pass).map(([cmd]) => cmd);
 }
 
 function checksFrom(staffRoot, subject, checksRef, verify = []) {
@@ -237,12 +265,8 @@ function checksFrom(staffRoot, subject, checksRef, verify = []) {
     return bad;
   }
   const buf = fs.readFileSync(real);
-  const passing = [];
-  for (const line of buf.toString('utf8').split('\n')) {
-    const r = evidenceRecord(line);
-    if (r && r.get('subject') === subject && resultIsPass(r.get('result'))) passing.push(r);
-  }
-  const ok = passing.length > 0 && verify.every((cmd) => passing.some((r) => (r.get('cmd') ?? '').includes(cmd)));
+  const passing = passingCommands(buf.toString('utf8'), subject);
+  const ok = passing.length > 0 && verify.every((cmd) => passing.some((c) => c.includes(cmd)));
   return { checks: [{ subject, passed: ok, evidence_ref: ok ? rel : null }], sha256: ok ? createHash('sha256').update(buf).digest('hex') : null };
 }
 
@@ -305,9 +329,11 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledger
   let esc;
   try {
     esc = openEscalations({ store, ledgerEntries, taskId, entries });
-  } catch {
-    // сховище J4 не читається (EIO, зіпсований файл ескалації…): «не вдалося прочитати» ≠ «ескалацій немає» (F-T9-19)
-    return refuse('escalation-source-unreadable', ['store-unreadable']);
+  } catch (e) {
+    // сховище J4 не читається (EIO, зіпсований чи не-об'єктний файл ескалації…): «не вдалося прочитати» ≠ «ескалацій немає»
+    // (F-T9-19). Помилки самої програми (TypeError тощо) не маскуються під відмову.
+    if (e instanceof SyntaxError || typeof e?.code === 'string') return refuse('escalation-source-unreadable', ['store-unreadable']);
+    throw e;
   }
   if (esc.length) return refuse('open-escalation', esc.map((x) => `escalation:${x}`));
 

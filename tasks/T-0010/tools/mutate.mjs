@@ -2,6 +2,7 @@
 // Запуск: node tasks/T-0010/tools/mutate.mjs [--out reports/T-0010/mutants.yaml]
 // Для кожного мутанта: копія bridge/ + CONTRACT_v0_4.md у tmp, точна заміна `find` -> `replace` (рівно одне входження),
 // прогін лише bridge/test/t0010.test.mjs (без адаптера: 0 викликів; лічильник викликів підтверджує). Мутант убитий, якщо прогін впав.
+// Під root прогін іде від користувача nobody (setpriv): інакше тести «не root» (A4, A5) пропускаються й мутанти EACCES виживають.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -22,26 +23,41 @@ const MUTANTS = [
   M('M07', 'src/store.mjs', "    this.assertWritable();\n    return withFileLock", "    return withFileLock", 'F-T9-20: locked без захисту'),
   M('M08', 'src/close.mjs', "  try {\n    fsImpl.readdirSync(dir);\n  } catch {\n    return { ok: false, reason: 'home-unreadable' };\n  }", "", 'F-T9-19: inspectJ4Home не читає вміст'),
   M('M09', 'src/close.mjs', "reason: e.code === 'ENOENT' || e.code === 'ENOTDIR' ? 'home-not-j4-store' : 'home-unreadable'", "reason: 'home-not-j4-store'", 'F-T9-19: помилка stat завжди «не сховище»'),
-  M('M10', 'src/close.mjs', "  try {\n    esc = openEscalations({ store, ledgerEntries, taskId, entries });\n  } catch {\n    // сховище J4 не читається (EIO, зіпсований файл ескалації…): «не вдалося прочитати» ≠ «ескалацій немає» (F-T9-19)\n    return refuse('escalation-source-unreadable', ['store-unreadable']);\n  }", "  esc = openEscalations({ store, ledgerEntries, taskId, entries });", 'F-T9-19: виняток замість відмови'),
+  M('M10', 'src/close.mjs', "  try {\n    esc = openEscalations({ store, ledgerEntries, taskId, entries });\n  } catch (e) {", "  esc = openEscalations({ store, ledgerEntries, taskId, entries });\n  if (false) {\n    const e = null;", 'F-T9-19: виняток замість відмови'),
   M('M11', 'src/close.mjs', "    hooks.afterVerify?.();\n", "", 'F-T9-23: хук afterVerify не викликається'),
   M('M12', 'src/close.mjs', "if (entries.length !== v.entries || (entries.length ? entries[entries.length - 1].hash : v.head) !== v.head)", "if ((entries.length ? entries[entries.length - 1].hash : v.head) !== v.head)", 'F-T9-23: немає перевірки кількості'),
   M('M13', 'src/close.mjs', "if (entries.length !== v.entries || (entries.length ? entries[entries.length - 1].hash : v.head) !== v.head)", "if (entries.length !== v.entries)", 'F-T9-23: немає перевірки голови'),
   M('M14', 'src/close.mjs', "  for (const k of map.keys()) if (!EVIDENCE_KEYS.has(k)) return null;\n", "", 'F-T9-22: дозволено будь-які ключі'),
   M('M15', 'src/close.mjs', "if (!m || map.has(m[1])) return null;", "if (!m) return null;", 'F-T9-22: подвоєні ключі'),
-  M('M16', 'src/close.mjs', "r.get('subject') === subject &&", "String(r.get('subject')).includes(subject.slice(0, 12)) &&", 'F-T9-22: subject порівнюється за префіксом'),
+  M('M16', 'src/close.mjs', "if (r && r.get('subject') === subject) latest.set(", "if (r && String(r.get('subject')).includes(subject.slice(0, 12))) latest.set(", 'F-T9-22: subject порівнюється за префіксом'),
   M('M17', 'src/close.mjs', "!(m[1] === m[2] && Number(m[1]) > 0)", "!(m[1] === m[2])", 'F-T9-22: порожній відбір 0/0'),
   M('M18', 'src/close.mjs', "!(m[1] === m[2] && Number(m[1]) > 0)", "!(Number(m[1]) > 0)", 'F-T9-22: неповний відбір N/M'),
-  M('M19', 'src/close.mjs', "  if (!/^[ \\t]*(?:$|[,;(])/.test(m[3])) return false;", "", 'F-T9-22: продовження після pass'),
-  M('M20', 'src/close.mjs', "return !/\\b(fail\\w*|errors?|not|never|false)\\b/i.test(cleaned);", "return !/\\b(fail\\w*|errors?)\\b/i.test(cleaned);", 'F-T9-22: слова not/never/false'),
-  M('M21', 'src/close.mjs', "verify.every((cmd) => passing.some((r) => (r.get('cmd') ?? '').includes(cmd)))", "true", 'F-T9-22: команди verify не вимагаються'),
+  M('M19', 'src/close.mjs', "  if (!/^[ \\t]*(?:$|[,;(])/.test(m[4])) return false;", "", 'F-T9-22: продовження після pass'),
+  M('M20', 'src/close.mjs', "|not|never|false|partial|incomplete)", "|partial|incomplete)", 'F-T9-22: слова not/never/false'),
+  M('M21', 'src/close.mjs', "verify.every((cmd) => passing.some((c) => c.includes(cmd)))", "true", 'F-T9-22: команди verify не вимагаються'),
   M('M22', 'src/close.mjs', "const line = stripComment(rawLine).trim();", "const line = rawLine.trim();", 'F-T9-22: коментар після запису'),
-  M('M23', 'src/close.mjs', "  const m = line.match(/^(?:-[ \\t]+|[A-Za-z_][A-Za-z0-9_]*:[ \\t]+)?(\\{.*\\})$/s);", "  const m = line.match(/(\\{.*\\})/s);", 'F-T9-22: текст навколо запису'),
+  M('M23', 'src/close.mjs', "  const m = line.match(/^(?:-[ \\t]+|checks:[ \\t]+)?(\\{.*\\})$/s);", "  const m = line.match(/(\\{.*\\})/s);", 'F-T9-22: текст навколо запису'),
   M('M24', 'src/close.mjs', "if (/^[&*!|>%@`#]/.test(raw) || /: |\\s#/.test(raw)) return null;", "", 'F-T9-22: службові символи в простому скалярі'),
   M('M25', 'bin/j4.mjs', "store: Store.open(home)", "store: new Store(home)", 'F-T9-20: CLI відкриває сховище для запису'),
   M('M26', 'bin/j4.mjs', "const homeState = inspectJ4Home(home);\n      if (!homeState.ok) {\n        sourceUnreadable(homeState.reason);\n        break;\n      }", "", 'F-T9-23: CLI не перевіряє J4_HOME'),
   M('M27', 'src/close.mjs', "  if (!v.ok) {\n    const onlyPartial", "  if (false) {\n    const onlyPartial", 'F-T9-23: журнал із витоком приймається'),
   M('M28', 'src/close.mjs', "  } catch {\n    return { ok: false, reason: 'ledger-unreadable' };\n  }\n  if (!v.ok) {", "  } catch {\n    return { ok: true, entries: [] };\n  }\n  if (!v.ok) {", 'F-T9-23: рядок null у журналі дає порожній список'),
   M('M29', 'src/close.mjs', "problems: v.problems.slice(0, 3).map((p) => p.code) }", "problems: [] }", 'F-T9-23: причини журналу не повідомляються'),
+  // --- раунд 2 (рецензія C3, F-T10-1…9) ---
+  M('M30', 'src/close.mjs', "  const m = line.match(/^(?:-[ \\t]+|checks:[ \\t]+)?(\\{.*\\})$/s);", "  const m = line.match(/^(?:-[ \\t]+|[A-Za-z_][A-Za-z0-9_]*:[ \\t]+)?(\\{.*\\})$/s);", 'F-T10-2: довільний префікс-ключ'),
+  M('M31', 'src/close.mjs', "    if (/(?:^|:|-)[ \\t]*[|>][+\\-0-9]*$/.test(stripComment(raw).trimEnd())) {", "    if (false) {", 'F-T10-2: блокові скаляри не пропускаються'),
+  M('M32', 'src/close.mjs', "    if (r && r.get('subject') === subject) latest.set(r.get('cmd') ?? '', resultIsPass(r.get('result')));", "    if (r && r.get('subject') === subject && resultIsPass(r.get('result'))) latest.set(r.get('cmd') ?? '', true);", 'F-T10-2: пізній збій не скасовує успіх'),
+  M('M33', 'src/close.mjs', String.raw`fail\\w*|errors?|cancel\\w*|time[ -]?outs?`, String.raw`fail\\w*|errors?|time[ -]?outs?`, 'F-T10-3: слово cancelled'),
+  M('M34', 'src/close.mjs', String.raw`[ :=]*0(?![\\w.])`, String.raw`[ :=]*0`, 'F-T10-3: fail 0.5'),
+  M('M35', 'src/close.mjs', String.raw`\\b(?![ ]*[\\d.])`, String.raw`\\b`, 'F-T10-3: 0 fail 3'),
+  M('M36', 'src/close.mjs', String.raw` && !/(?<![\w.])0[ ]+tests?\b/i.test(cleaned);`, ';', 'F-T10-3: 0 tests run'),
+  M('M37', 'src/close.mjs', "  if (m[3] !== undefined && Number(m[3]) === 0) return false; // «0 pass»\n", "", 'F-T10-4: bare 0 pass'),
+  M('M38', 'src/close.mjs', "      if (e === null || typeof e !== 'object' || Array.isArray(e)) throw Object.assign(new Error('escalation-file-malformed'), { code: 'escalation-file-malformed' });\n", "", 'F-T10-9: не-об\'єктний файл ескалації'),
+  M('M39', 'src/close.mjs', "    if (e instanceof SyntaxError || typeof e?.code === 'string') return refuse('escalation-source-unreadable', ['store-unreadable']);\n    throw e;", "    return refuse('escalation-source-unreadable', ['store-unreadable']);", 'F-T10-9: маскування помилок програми'),
+  M('M40', 'src/close.mjs', "e.code === 'ENOENT' || e.code === 'ENOTDIR' ? 'home-not-j4-store'", "e.code === 'ENOENT' ? 'home-not-j4-store'", 'F-T10-6 X1: ENOTDIR'),
+  M('M41', 'src/store.mjs', "      if (e.code === 'ENOENT') return [];\n      throw e;", "      if (e.code === 'ENOENT' || e.code === 'EACCES') return [];\n      throw e;", 'F-T10-6 X10: list ковтає EACCES'),
+  M('M42', 'src/close.mjs', "latest.set(r.get('cmd') ?? '', resultIsPass(r.get('result')));", "latest.set(JSON.stringify([...r]), resultIsPass(r.get('result')));", 'F-T10-6 M8: verify збігається за будь-яким полем'),
+  M('M43', 'src/close.mjs', "  const counter = '(?:fail", "  const counterX = 'x'; const counter = '(?:fail", 'контроль: свідомо еквівалентний мутант — очікується SURVIVED (перевірка самого запуску)'),
 ];
 
 function run(m) {
@@ -53,9 +69,20 @@ function run(m) {
   const n = text.split(m.find).length - 1;
   if (n !== 1) return { id: m.id, status: 'not-applied', occurrences: n };
   fs.writeFileSync(file, text.replace(m.find, () => m.replace));
-  const counts = path.join(tmp, 'calls.txt');
-  const r = spawnSync(process.execPath, ['--test', path.join('bridge', 'test', 't0010.test.mjs')], {
-    cwd: tmp, encoding: 'utf8', timeout: 120000,
+  const asNobody = typeof process.getuid === 'function' && process.getuid() === 0;
+  fs.mkdirSync(path.join(tmp, 'out'));
+  const counts = path.join(tmp, 'out', 'calls.txt');
+  const testArgs = ['--test', path.join('bridge', 'test', 't0010.test.mjs')];
+  let cmd = process.execPath;
+  let args = testArgs;
+  if (asNobody) {
+    spawnSync('chmod', ['-R', 'a+rX', tmp]);
+    fs.chmodSync(path.join(tmp, 'out'), 0o777);
+    cmd = 'setpriv';
+    args = ['--reuid=65534', '--regid=65534', '--clear-groups', process.execPath, ...testArgs];
+  }
+  const r = spawnSync(cmd, args, {
+    cwd: tmp, encoding: 'utf8', timeout: 180000,
     env: { ...process.env, J4_CALL_COUNT_FILE: counts, NODE_OPTIONS: `--import ${COUNTER}` },
   });
   const failed = (r.stdout.match(/^not ok /gm) ?? []).length;
@@ -69,7 +96,7 @@ const results = MUTANTS.map((m) => ({ ...run(m), covers: m.covers }));
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : null;
 const yaml = [
   '# T-0010: результат мутаційної перевірки (tasks/T-0010/tools/mutate.mjs) на тимчасових копіях; репозиторій не змінювався.',
-  `# убито ${results.filter((r) => r.status === 'killed').length} з ${results.length}; виклики адаптера: ${results.reduce((a, r) => a + (r.adapter_calls ?? 0), 0)}`,
+  `# убито ${results.filter((r) => r.status === 'killed').length} з ${results.length - 1} (+ M43 — контрольний еквівалентний мутант, очікувано SURVIVED); виклики адаптера: ${results.reduce((a, r) => a + (r.adapter_calls ?? 0), 0)}`,
   'mutants:',
   ...results.map((r) => `  - {id: ${r.id}, status: ${r.status}, failed_tests: ${r.failed_tests ?? 'null'}, adapter_calls: ${r.adapter_calls ?? 'null'}, covers: ${JSON.stringify(r.covers)}}`),
   '',

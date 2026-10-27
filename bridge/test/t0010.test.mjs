@@ -131,6 +131,10 @@ test('T-0010 A2: inspectJ4Home розрізняє «не сховище» і «�
   fs.mkdirSync(asFile);
   fs.writeFileSync(path.join(asFile, 'escalations'), 'файл');
   assert.deepEqual(inspect(asFile), { ok: false, reason: 'home-not-j4-store' });
+  // J4_HOME сам є файлом: ENOTDIR при stat підтеки — це «не сховище», а не «нечитне»
+  const homeFile = path.join(t.root, 'home-is-file');
+  fs.writeFileSync(homeFile, 'файл');
+  assert.deepEqual(inspect(homeFile), { ok: false, reason: 'home-not-j4-store' });
   // тека є, але вміст не читається (EACCES): зсередини root цього не відтворити, тому через підставну fs
   const real = fs;
   const denied = { statSync: (p) => real.statSync(p), readdirSync: () => { throw Object.assign(new Error('EACCES'), { code: 'EACCES' }); } };
@@ -156,6 +160,17 @@ test('T-0010 A3: closeTask не падає винятком, коли схови
   const r2 = closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, ...src(t.root) });
   assert.equal(r2.code, 'escalation-source-unreadable');
   assert.deepEqual(r2.missing, ['store-unreadable']);
+  // файл ескалації — валідний JSON, але не об'єкт (null, масив, рядок): пошкодження, а не «чужа задача»
+  for (const body of ['null', '[]', '"x"', '42']) {
+    fs.writeFileSync(path.join(t.home, 'escalations', 'E-X.json'), body);
+    const rr = closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, ...src(t.root) });
+    assert.equal(rr.code, 'escalation-source-unreadable', body);
+    assert.deepEqual(rr.missing, ['store-unreadable'], body);
+  }
+  fs.writeFileSync(path.join(t.home, 'escalations', 'E-X.json'), '{не json');
+  // помилка програми (не fs і не JSON) не маскується під «нечитне сховище»
+  const buggy = { list: () => { throw new TypeError('помилка програми'); }, readJson: () => null };
+  assert.throws(() => closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, store: buggy, ledgerEntries }), TypeError);
   // CLI: те саме — код 3 і ні done, ні виклику адаптера
   const c = cli(t.root, t.args);
   assert.equal(c.code, 3, c.stderr);
@@ -180,6 +195,26 @@ test('T-0010 A4: J4_HOME без читного вмісту (не root) — CLI 
     assert.equal(stateChanged(t.root).length, 0);
   } finally {
     fs.chmodSync(path.join(t.home, 'escalations'), 0o700);
+  }
+});
+
+test('T-0010 A5: нечитна тека черги — Store.list кидає EACCES, run --once відмовляє кодом 1, а не тихо «порожньо» (не root; C3 F-T10-1)', (ctx) => {
+  if (typeof process.getuid === 'function' && process.getuid() === 0) {
+    ctx.skip('root читає будь-яку теку; перевіряється на CI й під користувачем без прав root');
+    return;
+  }
+  const t = base();
+  const dir = path.join(t.home, 'messages');
+  fs.chmodSync(dir, 0o000);
+  try {
+    assert.throws(() => new Store(t.home).list('messages'), (e) => e.code === 'EACCES');
+    const r = cli(t.root, ['run', '--once']);
+    assert.equal(r.code, 1, r.stderr);
+    assert.match(r.stderr, /EACCES/);
+    assert.equal(r.json, null, 'жодного «ok: true» зі steps: 0');
+    noDispatch(t);
+  } finally {
+    fs.chmodSync(dir, 0o700);
   }
 });
 
@@ -287,6 +322,21 @@ test('T-0010 C1: F-T9-22 — форми, що раніше проходили е
     'pass, ok: false': rec('pass, ok: false'),
     'двокрапка в простому скалярі': rec('76/76 pass', ', by: J3: x'),
     'аліас YAML у значенні': rec('76/76 pass', ', by: *x'),
+    'сміття після закритих лапок': `- {cmd: "${CMD}", subject: ${SHA_A}, result: "pass" x}\n`,
+    'cancelled 5': rec('pass, cancelled 5'),
+    '0 tests run': rec('pass; 0 tests run'),
+    'timeout': rec('76/76 pass, 3 timeout'),
+    'partial run': rec('pass (partial run, 3 of 76)'),
+    'aborted': rec('pass, aborted'),
+    'crashed': rec('pass, crashed'),
+    'fail 0.5': rec('pass, fail 0.5'),
+    '0 fail 3': rec('pass, 0 fail 3'),
+    'bare 0 pass': rec('0 pass'),
+    'довільний префікс-ключ': `rejected_example: {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass"}\n`,
+    'запис усередині блокового скаляра': `note: |\n  - {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass"}\n`,
+    'запис усередині блокового скаляра елемента списку': `- |\n    - {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass"}\n`,
+    'пізніший збій тієї ж команди скасовує успіх': `${rec('76/76 pass')}${rec('75/76 pass, 1 fail')}`,
+    'команда verify лише в чужому полі': `- {cmd: "інша команда", subject: ${SHA_A}, result: "76/76 pass", by: "${CMD}"}\n`,
     'cmd відсутній, а verify є': `- {subject: ${SHA_A}, result: "76/76 pass"}\n`,
     'інша команда': `- {cmd: "інша команда", subject: ${SHA_A}, result: "76/76 pass"}\n`,
     'команда лише в note': `- {note: "${CMD}", subject: ${SHA_A}, result: "76/76 pass"}\n`,
@@ -309,6 +359,13 @@ test('T-0010 C2: F-T9-22 — справжні форми запису (reports/T
     'cmd довший за verify': `- {cmd: "${CMD} --test-name-pattern failover", subject: ${SHA_A}, result: "76/76 pass"}\n`,
     'збій раніше й успіх пізніше': `${rec('75/76 pass, 1 fail')}${rec('76/76 pass')}`,
     'порожні рядки між записами': `\n${rec('76/76 pass')}\n`,
+    '93 pass, 0 fail': rec('93 pass, 0 fail'),
+    '93 passed, 0 failed': rec('93 passed, 0 failed'),
+    'cancelled 0 у підсумку': rec('76/76 pass, fail 0, cancelled 0'),
+    'додаткові ключі note, ref, date': rec('76/76 pass', ', note: "довільний текст", ref: reports/x.yaml, date: 2026-10-27'),
+    'блоковий скаляр не ховає наступний запис': `note: |\n  - {cmd: "${CMD}", subject: ${SHA_A}, result: "0/76 pass"}\n${rec('76/76 pass')}`,
+    'пізніший успіх тієї ж команди після збою': `${rec('75/76 pass, 1 fail')}${rec('76/76 pass')}`,
+    'збій іншої команди не блокує': `${rec('76/76 pass')}- {cmd: "echo other", subject: ${SHA_A}, result: "0/1 pass"}\n`,
   };
   for (const [name, text] of Object.entries(good)) {
     const r = evidenceResult(text);
