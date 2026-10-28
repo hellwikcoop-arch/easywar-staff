@@ -3,7 +3,7 @@ task_id: T-0012
 from: J3
 to: J5
 cc: [JE, C3]
-stage: "реалізація завершена; незалежна рецензія C3 за diff запитана (0 викликів); технічне приймання J3 — після C3; змістове J5 і остаточне JE — на тому ж SHA"
+stage: "реалізація завершена; C3 раунд 1 на dc78287 — passed (0 обов'язкових, 3 необов'язкових відкладено, 3 примітки; reports/T-0012/c3-review.yaml); технічне приймання J3 записано (events.jsonl seq 5); змістове J5 і остаточне JE — на тому ж SHA"
 base_sha: 0f2cd0b819f25d386311a9f16e3c78b6e923903f                # t-0010/stabilization (bridge/ == 96ff45a2)
 control_sha: dc7828752eab1c3e68e8d450c5d0c18293fc1b59             # коміт, що останнім змінює bridge/ і CONTRACT; наступні коміти — лише reports/T-0012/** і tasks/T-0012/**
 execution_branch: t-0012/acceptance-barrier                        # локальна гілка (без push/PR/CI — рішення Р-Т12-3); резервна копія — bundle у проєктних файлах
@@ -24,6 +24,7 @@ decisions_applied:
 checks:
   - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59, result: "144/144 pass, fail 0, skipped 2 (A4 і A5 пропущено під root); 146 тестів: 105 базових + 41 T-0012", by: J3, calls: "44 dispatch + 4 прямих (derived)", ref: reports/T-0012/evidence/full-run-dc78287.txt}
   - {cmd: "node --test bridge/test/t0012.test.mjs", subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59, result: "41/41 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+  - {cmd: "node --test bridge/test/t0010.test.mjs (від користувача nobody, копія dc78287)", subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59, result: "12/12 pass, fail 0, skipped 0 (A4 і A5 виконані: замок знято після відмови); лічильник dispatch 0", by: J3, calls: 0, ref: reports/T-0012/evidence/t0010-nobody-dc78287.txt}
   - {cmd: "node --test bridge/test/t0012.test.mjs", subject: 0f2cd0b819f25d386311a9f16e3c78b6e923903f, result: "12/41 pass, 29 fail (червоний на базі — дефекти F-T9-16, SCOPE-1, R-11, R-10 підтверджені до реалізації)", by: J3, calls: 0, note: "контроль «тести до змін»; не доказ готовності"}
 
 mutants:   # reports/T-0012/mutants.yaml
@@ -43,10 +44,12 @@ calls_ledger:   # reports/T-0012/calls-ledger.yaml
 
 legacy_tests_updated: "16 фікстур scope: full / review_status: complete / result: accepted (t0006 5, t0007 3, t0009 5, t0010 2 + ok() у t0006); фікстури доказів без cmd доповнено cmd (R11-13); точні порівняння missing розширено причинами evidence-* (перевірка коду + префікс) — 0 тверджень видалено; A5 — замок знято після відмови (R-12 в)"
 not_verified:
-  - "A4/A5 (нечитна тека) — пропускаються під root у цій сесії; виконуються в CI (CI для T-0012 не запускався — без дозволу JE)"
+  - "CI для T-0012 не запускався (без дозволу JE); A4/A5 виконані локально від nobody (див. checks), не в CI"
   - "macOS/Windows; реальні журнали J4 за межами репозиторію"
   - "прямі adapter.call() у gate.test.mjs підраховані за базовим значенням (4), сканер їх не бачить"
+c3: "раунд 1: passed; C3T12-1 (посилання на compat у DESIGN §19 має бути reports/T-0012/evidence/compat-events-dc78287.txt), C3T12-3 (тести SC1-7/8 + мутант M16), C3T12-5/6 (формулювання) — відкладені до дельта-раунду; C3T12-2 закрито; C3T12-4 задокументовано (Р-Т12-11)"
 open_for_je:
+  - "Р-Т12-11: дельта-раунд для необов'язкових зауважень C3 зараз (новий SHA, один повний прогін → 124/150, дельта-C3 0) чи прийняти dc78287 з відкладеним"
   - "Р-Т12-4: залишковий ризик R11-14 (команда записана інакше) — прийняти як залишковий або дозволити канонізацію cmd окремим наказом"
   - "Р-Т12-2: ліміт 150 (програма) чи 200 (наказ 08:04) — J3 веде 150"
   - "дозвіл на draft PR із кодом і CI (Р-Т12-3) — лише після приймань C3/J5 і остаточного JE"

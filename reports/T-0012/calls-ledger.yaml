@@ -39,4 +39,9 @@ entries:
     stage: C
     run: "повний прогін node --test 'bridge/test/*.test.mjs' на dc78287: 146 тестів — 144 pass / 0 fail / 2 skipped (T-0010 A4 і A5 — пропускаються під root; у CI виконуються), exit 0"
     calls: {dispatch: 44, direct: 4, total: 48, accuracy: "dispatch exact (сканер журналів, створених після старту прогону: 44); direct — за базовим значенням gate.test.mjs (4), сканер їх не бачить", basis: "прогноз T12-005 підтверджено"}
+  - id: T12-007
+    kind: actual
+    stage: D
+    run: "C3 раунд 1 за diff (0 викликів, тестів не запускала) + node --test bridge/test/t0010.test.mjs від nobody на копії dc78287 (C3T12-2): 12/12, skipped 0"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact, basis: "сканер dispatch_attempt у журналах після старту прогону: 0"}
 state: {used: 76, forecast_next_full_run: 48, projected_after_full_run: 124, remaining_to_150: 74, remaining_to_200: 124, note: "другий повний прогін (124 ≤ 144) ще дозволений; третій (172) — HALT", paid_api_calls: 0, network_calls: 0, ci_runs: 0}

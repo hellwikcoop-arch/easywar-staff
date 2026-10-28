@@ -1,0 +1,82 @@
+TAP version 13
+# Subtest: T-0010 A1: Store.list не ковтає помилки читання; відсутня тека — порожній список
+ok 1 - T-0010 A1: Store.list не ковтає помилки читання; відсутня тека — порожній список
+  ---
+  duration_ms: 22.402555
+  type: 'test'
+  ...
+# Subtest: T-0010 A2: inspectJ4Home розрізняє «не сховище» і «нечитне сховище» (F-T9-19)
+ok 2 - T-0010 A2: inspectJ4Home розрізняє «не сховище» і «нечитне сховище» (F-T9-19)
+  ---
+  duration_ms: 5.982009
+  type: 'test'
+  ...
+# Subtest: T-0010 A3: closeTask не падає винятком, коли сховище J4 нечитне, а відмовляє (escalation-source-unreadable)
+ok 3 - T-0010 A3: closeTask не падає винятком, коли сховище J4 нечитне, а відмовляє (escalation-source-unreadable)
+  ---
+  duration_ms: 88.405497
+  type: 'test'
+  ...
+# Subtest: T-0010 A4: J4_HOME без читного вмісту (не root) — CLI відмовляє home-unreadable
+ok 4 - T-0010 A4: J4_HOME без читного вмісту (не root) — CLI відмовляє home-unreadable
+  ---
+  duration_ms: 77.448243
+  type: 'test'
+  ...
+# Subtest: T-0010 A5: нечитна тека черги — Store.list кидає EACCES, run --once відмовляє кодом 1, а не тихо «порожньо» (не root; C3 F-T10-1)
+ok 5 - T-0010 A5: нечитна тека черги — Store.list кидає EACCES, run --once відмовляє кодом 1, а не тихо «порожньо» (не root; C3 F-T10-1)
+  ---
+  duration_ms: 66.815756
+  type: 'test'
+  ...
+# Subtest: T-0010 B1: Store.open — лише читання: нічого не створює, запис і замок відхиляє
+ok 6 - T-0010 B1: Store.open — лише читання: нічого не створює, запис і замок відхиляє
+  ---
+  duration_ms: 2.822
+  type: 'test'
+  ...
+# Subtest: T-0010 B2: j4 close не створює і не змінює жодного файла в J4_HOME (чужа тека, повний домашній каталог, повтор, відмова)
+ok 7 - T-0010 B2: j4 close не створює і не змінює жодного файла в J4_HOME (чужа тека, повний домашній каталог, повтор, відмова)
+  ---
+  duration_ms: 350.176032
+  type: 'test'
+  ...
+# Subtest: T-0010 C1: F-T9-22 — форми, що раніше проходили евристику, більше не є доказом перевірок
+ok 8 - T-0010 C1: F-T9-22 — форми, що раніше проходили евристику, більше не є доказом перевірок
+  ---
+  duration_ms: 83.989369
+  type: 'test'
+  ...
+# Subtest: T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймаються
+ok 9 - T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймаються
+  ---
+  duration_ms: 76.049356
+  type: 'test'
+  ...
+# Subtest: T-0010 D1: ledger-changed-during-read ловиться детерміновано (хук afterVerify між перевіркою і читанням)
+ok 10 - T-0010 D1: ledger-changed-during-read ловиться детерміновано (хук afterVerify між перевіркою і читанням)
+  ---
+  duration_ms: 12.844909
+  type: 'test'
+  ...
+# Subtest: T-0010 D2: J4_HOME/escalations — файл; рядок `null` у журналі; витік у записі журналу: CLI відмовляє, нічого не пише
+ok 11 - T-0010 D2: J4_HOME/escalations — файл; рядок `null` у журналі; витік у записі журналу: CLI відмовляє, нічого не пише
+  ---
+  duration_ms: 271.030443
+  type: 'test'
+  ...
+# Subtest: T-0010 E1: повтор close після done — already:true лише за читних джерел; інакше відмова без запису (характеризація)
+ok 12 - T-0010 E1: повтор close після done — already:true лише за читних джерел; інакше відмова без запису (характеризація)
+  ---
+  duration_ms: 472.647643
+  type: 'test'
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1625.096171
