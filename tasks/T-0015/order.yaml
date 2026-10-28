@@ -1,0 +1,59 @@
+# ПРОЄКТ картки (чернетка J3 для J5; не зареєстровано). Шаблон — templates/order.yaml. Підготовка ≠ дозвіл. Бюджет не затверджено.
+
+id: T-0015
+version: 0
+parent_task_id: T-0010
+title: "Відновлення, моніторинг і контроль ресурсів: j4 status (лише читання), автоматичний облік викликів із порогами, тести відновлення"
+
+intent:
+  purpose: "Зробити стан мосту і витрати видимими одною командою, рахувати виклики з журналу J4 автоматично з порогами наказу, довести відновлення кожного кроку з записом без повторного виклику адаптера"
+  end_state:
+    - "j4 status [--task] [--json]: черга, нитки, спул, ескалації з трьох джерел, бюджет задачі (used/limit/forecast), місячна стеля, цілісність журналу, ідентичність установки, стоп-кран; нічого не пише; коди 0/3/4"
+    - "j4 budget --task рахує dispatch_attempt із журналу і звіряє з max_calls і reporting.thresholds; перевищення → жодного нового dispatch"
+    - "тести відновлення (finalize↔syncTaskEvents, застарілий замок, обірваний журнал, спул без журналу) — без повторного dispatch і без дубльованих подій; мутанти вбиті"
+    - "j4-tick.sh пише підсумок status --json у tick.log; планувальник не вмикається"
+  red_lines:
+    - "тільки синтетичні дані; live, платні API, планувальник — заборонені"
+    - "не змінювати bridge/src/acceptance.mjs, close.mjs, router.mjs, events.mjs, store.mjs (крім читання), bridge/config/**, .github/**"
+    - "ліміти задач не змінюються кодом; лічильники не обнуляються"
+    - "події ADM не додаються без рішення JE G5"
+
+mission: "status/budget у bridge/src/cli/status.mjs (або bin/j4.mjs), guards.mjs (forecast, пороги), monthly.mjs, ledger.mjs (читання/repair), тести t0015, DESIGN §21, README"
+scope:
+  in: ["bridge/src/guards.mjs", "bridge/src/monthly.mjs", "bridge/src/ledger.mjs (читання, repairIfNeeded)", "bridge/src/cli/status.mjs (новий) або bridge/bin/j4.mjs (реєстрація команд)", "bridge/bin/j4-tick.sh", "bridge/test/t0015.test.mjs (новий)", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0015/**", "reports/T-0015/**"]
+  out: ["bridge/src/acceptance.mjs", "bridge/src/close.mjs", "bridge/src/router.mjs", "bridge/src/events.mjs", "bridge/src/store.mjs (запис)", "bridge/config/**", ".github/**", "live, планувальник", "застосунок EasyWAR"]
+context_refs: ["reports/J4-HARDENING/01-architecture.md §1.1 (guards, monthly, ledger, recover)", "reports/T-0012/calls-ledger.yaml і decisions-register.md Р-Т12-10", "reports/PROGRAM/dependency-graph.md"]
+materials: ["tasks/T-0015/order-j5.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: false}   # true, якщо JE обере G5 «так» (нова подія ADM) або G3 «held»
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: null              # НЕ ЗАТВЕРДЖЕНО; прогноз J3: 120 без CI — order-j5.md §5
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "~1.5 робочі дні J3", accuracy: estimate}
+
+reporting:
+  milestones: ["тести відновлення червоні/характеризація", "status/budget", "контрольний SHA і C3", "пакет J5"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: null
+depends_on: [T-0011]
+parallel_with: "T-0013 — лише за розділення команд CLI в окремі модулі (reports/PROGRAM/dependency-graph.md)"
+amendments: []

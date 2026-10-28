@@ -1,0 +1,59 @@
+# ПРОЄКТ картки (чернетка J3 для J5; не зареєстровано, task_created немає). Шаблон — templates/order.yaml, CONTRACT_v0_4.md розд. 3.
+# Підготовка наказу не є дозволом на виконання (програма JE 2026-10-28). Бюджет не затверджено. Лише синтетичні дані.
+
+id: T-0013
+version: 0                      # 0 = проєкт; 1 — після реєстрації J5/JE
+parent_task_id: T-0009
+title: "Оркестрація агентів: автоматизація ланок J3 → J5 → C3 через J4 (stub), без зміни моделі довіри"
+
+intent:
+  purpose: "Прибрати ручні ланки M-1/M-2: J4 веде нитку задачі між ролями, доставляє відповіді наступній ролі, записує події ADM із посиланням на журнал; зупиняється на кожному рішенні рівня C"
+  end_state:
+    - "синтетична задача у stub проходить J3 → J5 → C3 → J5 без ручних кроків до стану, в якому close на копії сховища відкриває бар'єр лише з явними полями T-0012"
+    - "будь-який невідомий стан, рішення рівня C чи відповідь без схеми → held + ескалація; J4 не створює done і не вигадує verdict/result/scope"
+    - "повтор кроку ідемпотентний; recover() завершує обірваний крок без повторного виклику адаптера"
+    - "тести t0013 червоні на базі; мутанти вбиті; старі журнали читаються без змін"
+  red_lines:
+    - "тільки синтетичні дані; live і платні API заборонені; планувальник не вмикається"
+    - "не змінювати bridge/src/acceptance.mjs, bridge/src/close.mjs, bridge/src/store.mjs, bridge/src/ledger.mjs, bridge/config/**, .github/**; контракт — лише за G3"
+    - "події review_finished/acceptance від імені ролей — лише за рішенням JE G2(а) і лише з явними полями; інакше вручну як нині"
+    - "не зливати PR; PR із кодом і CI — лише за окремим дозволом JE; реальний j4 close заборонено"
+
+mission: "Нитка задачі в router.mjs, автоматична доставка за routes.json, події ADM report_filed/review_requested, CLI j4 orchestrate --once/--dry-run, тести, мутанти, DESIGN §20"
+scope:
+  in: ["bridge/src/router.mjs", "bridge/src/events.mjs", "bridge/src/adapters/stub.mjs", "bridge/src/adapters/common.mjs", "bridge/src/policy.mjs (читання routes; без зміни config)", "bridge/src/cli/orchestrate.mjs (новий) або bridge/bin/j4.mjs (один рядок реєстрації)", "bridge/test/t0013.test.mjs (новий)", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0013/**", "reports/T-0013/**"]
+  out: ["bridge/src/acceptance.mjs", "bridge/src/close.mjs", "bridge/src/store.mjs", "bridge/src/ledger.mjs", "bridge/config/**", ".github/**", "адаптери openai/cli у live", "j4-tick.sh і планувальник", "J5 → C5.1 постановка задач (G5)", "автентифікація by (F-9)", "застосунок EasyWAR"]
+context_refs: ["reports/J4-HARDENING/01-architecture.md §1.2 (M-1, M-2)", "bridge/docs/DESIGN.md §15 п. 8", "reports/PROGRAM/dependency-graph.md", "tasks/T-0012/je-program-2026-10-28.md"]
+materials: ["tasks/T-0013/order-j5.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: true}   # зміна потоку між ролями — остаточно приймає JE
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: null              # НЕ ЗАТВЕРДЖЕНО (програма JE п. 5); прогноз J3: 200 без CI / 300 з одним CI — order-j5.md §6
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "~2 робочі дні J3", accuracy: estimate}
+
+reporting:
+  milestones: ["тести до змін червоні на базі", "контрольний SHA і рецензія C3", "технічне приймання J3", "пакет J5", "пакет JE"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: null                 # визначити після злиття/приймання T-0011 і T-0012 (не вважати старі SHA актуальними без звірки)
+depends_on: [T-0012, T-0011]
+amendments: []

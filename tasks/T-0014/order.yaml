@@ -1,0 +1,58 @@
+# ПРОЄКТ картки (чернетка J3 для J5; не зареєстровано). Шаблон — templates/order.yaml. Підготовка ≠ дозвіл. Бюджет не затверджено.
+
+id: T-0014
+version: 0
+parent_task_id: T-0013
+title: "End-to-end автономний цикл у stub на синтетичній копії: одне правильне done, жодного помилкового"
+
+intent:
+  purpose: "Довести відтворюваним прогоном, що цикл наказ → J4 → J3 → перевірки → C3 → J5 → бар'єр → close дає done лише за повного комплекту на одному SHA і не дає його за жодної порушеної умови"
+  end_state:
+    - "E2E-OK: рівно одне done на копії сховища (J4_STAFF_ROOT, тимчасова тека), evidence_sha256 записано, повтор → already: true; у репозиторії жодного запису"
+    - "E2E-NEG (≥ 8 сценаріїв: review_status, scope, limits, пізніший збій доказу, installation_id, ескалація в кожному з трьох джерел, стоп-кран, інший SHA): без done, причина в missing"
+    - "відновлення після обриву між dispatch і finalize / між журналом J4 і events.jsonl — без повторного виклику адаптера"
+    - "звіт reports/T-0014/e2e-report.md із таблицею сценаріїв і лічильником dispatch"
+  red_lines:
+    - "тільки синтетичні дані; live, платні API, планувальник — заборонені"
+    - "не змінювати bridge/src/**; знайдені дефекти — окремими задачами"
+    - "реальний j4 close і done у репозиторії заборонені; done лише на копії в тимчасовій теці"
+    - ".github/** — лише за рішенням JE G2(а), окремим PR, без секретів"
+
+mission: "Фікстури T-0900, тести bridge/test/e2e/*.test.mjs (OK, NEG, recovery), звіт, за дозволом — job e2e-stub (workflow_dispatch)"
+scope:
+  in: ["bridge/test/e2e/** (новий)", "bridge/test/fixtures/e2e/** (новий, синтетика)", "reports/T-0014/**", "tasks/T-0014/**", "bridge/docs/DESIGN.md (розділ про e2e)", ".github/workflows/j4-bridge.yml (лише job e2e-stub, лише за G2(а))"]
+  out: ["bridge/src/**", "bridge/config/**", "route-live і будь-який live", "j4-tick.sh", "реальні задачі T-0001…T-0013", "застосунок EasyWAR"]
+context_refs: ["reports/J4-HARDENING/01-architecture.md §1.2", "reports/PROGRAM/dependency-graph.md", "tasks/T-0012/decisions-register.md Р-Т12-10 (урок обліку)"]
+materials: ["tasks/T-0014/order-j5.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: true}
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'", "node --test 'bridge/test/e2e/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: null              # НЕ ЗАТВЕРДЖЕНО; прогноз J3: 160 без CI / 260 з одним CI stub — order-j5.md §5
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "~1.5 робочі дні J3", accuracy: estimate}
+
+reporting:
+  milestones: ["фікстури й NEG-тести", "E2E-OK на копії", "відновлення", "звіт і C3", "пакет J5/JE"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: null
+depends_on: [T-0012, T-0011, T-0013]
+amendments: []
