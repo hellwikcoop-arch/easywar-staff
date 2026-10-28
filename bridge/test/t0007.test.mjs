@@ -215,15 +215,15 @@ test('T-0007 S6: бар\'єр приймання — без C3, J3 і J5 на о
     const ev = evidenceFromEvents(root, 'T-0900');
     return { subject: SHA_A, checks: [{ subject: SHA_A, passed: true, evidence_ref: 'log' }], reviews: ev.reviews, acceptances: ev.acceptances };
   };
-  add({ event: 'acceptance', by: 'J3', role: 'technical', subject: SHA_A, ref: 'r1', result: 'accepted' });
+  add({ event: 'acceptance', by: 'J3', role: 'technical', subject: SHA_A, ref: 'r1', result: 'accepted', scope: 'full' });
   assert.deepEqual(acceptanceReady(gate()).missing, ['review-C3-missing', 'acceptance-J5-content-missing']);
   // J5 прийняв інший SHA, C3 — теж інший: не зараховується
-  add({ event: 'acceptance', by: 'J5', role: 'content', subject: SHA_B, ref: 'r2', result: 'accepted' });
+  add({ event: 'acceptance', by: 'J5', role: 'content', subject: SHA_B, ref: 'r2', result: 'accepted', scope: 'full' });
   add({ event: 'review_finished', by: 'C3', subject: SHA_B, review_status: 'complete', verdict: 'passed', ref: 'r3' });
   assert.equal(acceptanceReady(gate()).ready, false);
   // C3 passed і J5 на тому ж SHA, але J3 не ADM: done заборонено
   add({ event: 'review_finished', by: 'C3', subject: SHA_A, review_status: 'complete', verdict: 'passed', ref: 'r4' });
-  add({ event: 'acceptance', by: 'J5', role: 'content', subject: SHA_A, ref: 'r5', result: 'accepted' });
+  add({ event: 'acceptance', by: 'J5', role: 'content', subject: SHA_A, ref: 'r5', result: 'accepted', scope: 'full' });
   assert.equal(acceptanceReady(gate()).ready, true);
   assert.deepEqual(requestDone({ by: 'J3', ...gate() }).missing, ['done-only-adm']);
   assert.equal(requestDone({ by: 'ADM', ...gate() }).allowed, true);

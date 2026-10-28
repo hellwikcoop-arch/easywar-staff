@@ -26,8 +26,8 @@ node bridge/bin/j4.mjs verify
 
 ```sh
 bridge/bin/j4-tick.sh                       # один такт за розкладом: run --once --mode stub --task-events
-node bridge/bin/j4.mjs run --once           # один прохід черги; 75 — інший обробник працює, 4 — стоп-кран, 6 — подію ADM не записано
-J4_HOME=… J4_LEDGER=… node bridge/bin/j4.mjs close --task T-XXXX --subject <SHA> --checks-ref reports/T-XXXX/001.yaml   # J4_HOME (сховище J4) і J4_LEDGER (цілий журнал J4) обов'язкові й мають бути читними: інакше відмова (код 3), нічого не записується; J4_HOME відкривається лише для читання (нічого не створюється); повтор після done — already:true лише за читних джерел; доказ перевірок — запис {cmd, subject: <повний SHA>, result: "N/N pass …"} (суворий розбір, DESIGN розд. 17–18)
+node bridge/bin/j4.mjs run --once           # один прохід черги; 75 — інший обробник працює, 4 — стоп-кран, 6 — подію ADM не записано, 1 — виняток (напр. нечитна тека черги/сховища: `j4: EACCES`, замок обробника знято)
+J4_HOME=… J4_LEDGER=… node bridge/bin/j4.mjs close --task T-XXXX --subject <SHA> --checks-ref reports/T-XXXX/001.yaml   # J4_HOME (сховище J4) і J4_LEDGER (цілий журнал J4) обов'язкові й мають бути читними: інакше відмова (код 3), нічого не записується; J4_HOME відкривається лише для читання (нічого не створюється); повтор після done — already:true лише за читних джерел; доказ перевірок — запис {cmd, subject: <повний SHA>, result: "N/N pass …"} (суворий розбір, DESIGN розд. 17–19); з T-0012 діє останній релевантний запис на SHA: пізніший збій, запис без cmd чи з нерозпізнаним result скасовує раніший успіх, причини evidence-* додаються до missing; cmd пишіть в одній формі (як у verify наказу); рецензія зараховується лише з review_status: complete, приймання — лише result: accepted + scope: full (G1/G2)
 ```
 
 Розклад кодом не вмикається (приклади cron/launchd — [DESIGN.md](docs/DESIGN.md), розд. 17).
