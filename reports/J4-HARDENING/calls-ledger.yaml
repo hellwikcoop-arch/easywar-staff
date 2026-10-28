@@ -11,7 +11,7 @@ entries:
   - id: H-001
     kind: actual
     run: "контроль бази: повний прогін node --test 'bridge/test/*.test.mjs' на 0f2cd0b (bridge/ = 96ff45a)"
-    result: "105 тестів: 103 pass, 2 skipped (A4, A5 під root)"
+    result: "105 тестів: 103 pass, 2 skipped (A4, A5 під root); на CI (run 40537188604, job 122305507120, 0f2cd0b) — 105 pass, 0 skipped, за логом"
     calls: {dispatch: 44, direct: 4, total: 48, accuracy: exact_by_baseline}
   - id: H-002
     kind: actual
