@@ -2,8 +2,8 @@
 
 | Поле | Значення |
 |---|---|
-| Оновлено | 2026-10-28 ~11:35 UTC |
-| Задача / етап | T-0012, етапи C–E завершено: C3 раунд 1 passed (0 обов'язкових; 3 необов'язкових відкладено — Р-Т12-11), технічне приймання J3 записано (seq 5). J5 — CONTENT REVIEWED / CONDITIONAL ACCEPTANCE (seq 6 report_filed; acceptance J5 ще не записано — пише J5). Рекомендації J5: без дельта-раунду, R11-14 — ризик, ліміт 150. Чекає: формальне приймання J5 і остаточне JE |
+| Оновлено | 2026-10-28 ~23:05 UTC |
+| Задача / етап | T-0012, етапи C–E завершено: C3 раунд 1 passed (0 обов'язкових; 3 необов'язкових відкладено — Р-Т12-11), технічне приймання J3 записано (seq 5). J5 — CONTENT ACCEPTED — FULL SCOPE (22:54; seq 7 report_filed; подію acceptance J5 пише лише J5 — J3 не підміняє by). Рекомендації J5: без дельта-раунду, R11-14 — ризик, ліміт 150. Чекає: остаточне JE і дозвіл на один draft PR + один CI (запит: reports/T-0012/je-final-acceptance-request.md; прогноз 76+48=124/150). Бар'єр: missing J5-acceptance і JE |
 | Гілка | `t-0012/acceptance-barrier` на origin, без PR і CI (Р-Т12-3, Р-Т12-12); резервна копія `/mnt/project-files/j4-hardening/t-0012.bundle` |
 | База | 0f2cd0b819f25d386311a9f16e3c78b6e923903f (t-0010/stabilization) |
 | Контрольний SHA | dc7828752eab1c3e68e8d450c5d0c18293fc1b59 (останній коміт у bridge/ і CONTRACT); далі лише reports/T-0012, tasks/T-0012 |
