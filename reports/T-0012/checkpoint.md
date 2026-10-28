@@ -14,3 +14,6 @@
 | Події T-0012 | seq 1 command JE; seq 2 task_created (J5, записав J3); seq 3 task_accepted J3; seq 4 review_finished C3 (complete/passed, записав J3, M-2); seq 5 acceptance J3 technical (accepted, scope full). Бар'єр на dc78287: `missing: [acceptance-J5-content-missing]` (+ JE key_decision). Наступні події — лише від J5 і JE (J3 їх не створює) |
 | Блокери / питання JE | Р-Т12-2 (150/200), Р-Т12-4 (R11-14 залишковий ризик), PR #8 аномальний запуск CI (HALT на частині PR) |
 | Далі | Дельта-раунд НЕ робити (J5 п. 3), повну регресію НЕ запускати (J5 п. 5). Пакет J5/JE подано (reports/T-0012/001.yaml, c3-review.yaml, зведений звіт у проєктних файлах). Якщо JE обере дельта-раунд: правки C3T12-1/3/5/6 → новий SHA → один повний прогін (→124/150) → дельта-C3 → нове приймання J3. Чернетки T-0013…T-0015 і граф — гілка program/t-0013-15-drafts (bundle program-t-0013-15.bundle). T-0011 — лише після остаточного приймання T-0012 JE |
+
+## 2026-10-28 23:02 — JE-T12-02
+J5 acceptance записано (seq 8), JE key_decision записано (seq 9). Дозвіл: ОДИН draft PR t-0012/acceptance-barrier → t-0010/stabilization + ОДИН CI (124/150). Після відкриття PR жодних push, повторного CI, merge, done, реального close, live. Результат CI — лише у треді/пам'яті, не в гілці.
