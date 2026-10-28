@@ -130,3 +130,11 @@ amendments:
     decided_by: JE
     decided_at: 2026-10-29
     decision_ref: "tasks/T-0002/je-decision-R0.md (п. 1 наказу JE 29.10.2026)"
+  - id: A-3
+    proposed_by: J3
+    base_version: 3
+    change: {field: resources.max_calls, from: 225, to: 235}
+    reason: "зауваження J5 (PR #10 easywar-staff, коментар 6483655733): за CONTRACT §3 витрати дочірнього T-0004 (Codex 25) входять до T-0002; рахунок ≈181 + 25 + C3 ≈10 + J3 ≈6 + приймання/злиття C1d ≈3 = ≈225 без резерву; +10 — резерв на другу спробу C3/J3 у C1c. Історичні витрати не обнуляються"
+    status: proposed
+    decided_by: null
+    decided_at: null

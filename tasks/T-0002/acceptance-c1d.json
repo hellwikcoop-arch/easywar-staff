@@ -1,0 +1,39 @@
+{
+  "task_id": "T-0002",
+  "subtask": "C1d",
+  "pr": "https://github.com/hellwikcoop-arch/EasyWAR/pull/160",
+  "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380",
+  "review_c3": {
+    "verdict": "passed",
+    "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380",
+    "ref": "reports/T-0002/016.yaml"
+  },
+  "acceptance_j3_technical": {
+    "result": "accepted",
+    "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380",
+    "ref": "reports/T-0002/017.yaml"
+  },
+  "acceptance_j5_content": {
+    "result": "accepted",
+    "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380",
+    "ref": "https://github.com/hellwikcoop-arch/EasyWAR/pull/160#issuecomment-6483649302"
+  },
+  "ci": {
+    "run": 39836049078,
+    "checks": "success",
+    "audit": "success",
+    "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380"
+  },
+  "merge_authorization": {
+    "by": "JE",
+    "decision": "JE-T5 + п. 5 рішення JE 29.10.2026",
+    "ref": "tasks/T-0002/je-decision-R0.md"
+  },
+  "merge": {
+    "sha": "f5b857ce4518313d99b75e6414d97fc75317231d",
+    "method": "merge",
+    "at": "2026-10-28T23:57:00+00:00"
+  },
+  "recorded_by": "J3",
+  "recorded_at": "2026-10-28T23:58:00+00:00"
+}
