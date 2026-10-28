@@ -1,0 +1,10 @@
+# Облік викликів адаптера J4 для T-0012 (одиниця — як у T-0009/T-0010: dispatch_attempt у журналі J4 + прямий adapter.call()). Лише додавання рядків.
+# Ліміт: 150 (програма JE 2026-10-28 08:11; наказ 08:04 — 200; проєкт JE-T12-01 — 240 не діє). HALT-поріг 144 — перед прогоном, який перевищив би 150.
+task: T-0012
+limits: {effective: 150, halt_threshold: 144, alternatives: {order_0804: 200, draft_je_t12_01: 240}, paid_usd: 0}
+counting_method:
+  - "повний прогін node --test 'bridge/test/*.test.mjs' = 48 (44 dispatch_attempt + 4 прямих; базове значення T-0009/T-0010, підтверджене в J4-HARDENING H-001)"
+  - "фільтровані прогони бар'єрних тестів (t0012, t0006 бар'єр, t0007 S6, t0009 C*, t0010) не диспетчеризують — 0, підтверджується сканером dispatch_attempt у тимчасових журналах після кожного прогону"
+  - "C3 за diff — 0 (без node --test); CI — 48 за подію (лише за окремим дозволом JE)"
+entries: []
+state: {used: 0, forecast_next_full_run: 48, remaining_to_150: 150, remaining_to_200: 200, paid_api_calls: 0, network_calls: 0, ci_runs: 0}
