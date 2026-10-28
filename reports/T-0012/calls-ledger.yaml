@@ -6,5 +6,10 @@ counting_method:
   - "повний прогін node --test 'bridge/test/*.test.mjs' = 48 (44 dispatch_attempt + 4 прямих; базове значення T-0009/T-0010, підтверджене в J4-HARDENING H-001)"
   - "фільтровані прогони бар'єрних тестів (t0012, t0006 бар'єр, t0007 S6, t0009 C*, t0010) не диспетчеризують — 0, підтверджується сканером dispatch_attempt у тимчасових журналах після кожного прогону"
   - "C3 за diff — 0 (без node --test); CI — 48 за подію (лише за окремим дозволом JE)"
-entries: []
+entries:
+  - id: T12-001
+    kind: actual
+    stage: B
+    run: "node --test bridge/test/t0012.test.mjs на базі 0f2cd0b (bridge/ == 96ff45a): 41 тест — 12 pass / 29 fail (дефекти F-T9-16, SCOPE-1, R-11, R-10 підтверджені; R10-4/R10-7/R12-1 червоні лише через нову діагностику evidence-* у missing)"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact, basis: "сканер /tmp/j4-t0012-*: 0 dispatch_attempt"}
 state: {used: 0, forecast_next_full_run: 48, remaining_to_150: 150, remaining_to_200: 200, paid_api_calls: 0, network_calls: 0, ci_runs: 0}
