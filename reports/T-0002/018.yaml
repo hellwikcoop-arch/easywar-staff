@@ -1,0 +1,11 @@
+# Донесення J5 (змістове приймання C1d). Перенесено J3 з коментаря J5 у PR #160; стиснуто.
+task_id: T-0002
+task_version: 2
+seq: 18
+author: J5
+kind: milestone
+subject: {kind: commit, ref: 923e1bc19d106a6f65a5a903d21c16c275abb380}
+acceptance: {role: J5, scope: content, verdict: accepted, subject_ref: 923e1bc19d106a6f65a5a903d21c16c275abb380, source: "https://github.com/hellwikcoop-arch/EasyWAR/pull/160#issuecomment-6483649302"}
+notes:
+  - "перевірено відповідність затвердженому C1d; ядра без мережі, криптографії, сховища й підключення до застосунку"
+  - "F-21 лишається частково відкритим залишковим ризиком для авторитетної перевірки Rust (C3b); не дозвіл довіряти довільному JS-перегляду в production"

@@ -1,0 +1,16 @@
+# Донесення J3: C1d злито, підетап закрито.
+task_id: T-0002
+task_version: 2
+seq: 19
+author: J3
+kind: milestone
+subject: {kind: commit, ref: f5b857ce4518313d99b75e6414d97fc75317231d}
+merge: {pr: 160, head: 923e1bc19d106a6f65a5a903d21c16c275abb380, merge_commit: f5b857ce4518313d99b75e6414d97fc75317231d, merged_by: hellwikcoop-arch, merged_at: "2026-10-28T23:44:02Z"}
+barrier:
+  - "HEAD PR на момент злиття = 923e1bc19d106a6f65a5a903d21c16c275abb380 (незмінний з рецензії C3)"
+  - "C3 passed (016), J3 technical accepted (017), J5 content accepted (018) — на тому самому SHA"
+  - "CI run 39836049078 на 923e1bc19d106a6f65a5a903d21c16c275abb380: checks success (спроба 2), audit success"
+note: "PR злив акаунт власника репозиторію; J3 злиття не виконував"
+status: {C1a: merged, C1b: merged, C1d: merged, C1c: "не розпочато — T-0004 (Codex) чекає; бюджетне рішення JE відкрите"}
+open_findings: ["F-21 — partially_open (low), залишковий ризик для C3b", "F-15 — tracked"]
+budget: "≈181 з 210 (estimate); пропозиція J5 для JE — 225 загалом; до рішення JE C1c не починати"
