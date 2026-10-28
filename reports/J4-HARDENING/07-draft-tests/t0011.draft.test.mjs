@@ -1,5 +1,5 @@
 // ЧЕРНЕТКА майбутнього bridge/test/t0011.test.mjs (місія J4 AUTONOMY HARDENING). Не є частиною bridge/, CI не запускає.
-// Tests-first: на поточному коді 21/30 червоні (F-T9-18); на копії з poc/t0011-poc.patch 26/30 зелені, червоні — вимоги 03-spec, яких PoC ще
+// Tests-first: 36 тестів; на поточному коді 10 pass / 26 fail (F-T9-18); на копії з poc/t0011-poc.patch 28/36 зелені, червоні — вимоги 03-spec, яких PoC ще
 // не має: N2/N3 (marker не-JSON має давати store-marker-missing, а не виняток), N6/N7/N9 (first_hash, min_seq), N8, N11 (run --once),
 // N13 (kind-mismatch), N14 (ескалація сховища, невідома журналу), N23 (порядок M11: already до звірки подій). Виміряно 2026-10-27 (05-experiments.md §5.8). Запуск лише на копіях:
 //   J4H_BRIDGE=<тека bridge/ копії> node --test reports/J4-HARDENING/07-draft-tests/t0011.draft.test.mjs

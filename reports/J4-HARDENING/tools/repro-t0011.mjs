@@ -133,7 +133,9 @@ run('I19', 'adopt повторно — already; adopt журналу, прив\'
   return `${cli(s, ['adopt', '--human'])} | чужий журнал: ${cli(s, ['adopt', '--human'], { J4_LEDGER: a.ledger })}`;
 });
 
+// лічильник — ПІСЛЯ останнього сценарію; dispatch > 0 — код виходу 1 (C3H-15)
 const dispatch = ledgers.reduce((n, f) => n + (fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').filter((l) => l.includes('"dispatch_attempt"')).length : 0), 0);
+if (dispatch > 0) process.exitCode = 1;
 if (o.json) process.stdout.write(`${JSON.stringify({ bridge: BRIDGE, dispatch_attempt: dispatch, results }, null, 2)}\n`);
 else {
   process.stdout.write(`bridge: ${BRIDGE}\n`);

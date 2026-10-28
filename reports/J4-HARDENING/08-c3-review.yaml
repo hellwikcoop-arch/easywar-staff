@@ -50,3 +50,105 @@ j3_response:
   - {finding: C3H-12, action: "11 Р-2: другий раунд C3 = HALT і новий бюджет від JE", status: accepted}
   - {finding: C3H-13, action: "04 §4.11: задокументувати; тест-контроль R10-8", status: accepted}
   - {finding: "not_verified C3", action: "твердження про dispatch 0, результати S/I/R і compat лишаються підтвердженими лише J3 (evidence/*.json, 05); C3 їх не перевіряв — JE бачить це тут; повторна рецензія після правок — за рішенням JE (0 викликів адаптера)", status: open}
+
+# ---------------------------------------------------------------------------------------------------------------------------------
+# РАУНД 2 (наказ JE 2026-10-28 08:04): повторна незалежна рецензія виправленого пакета на c4a71f6233a40e4dc5ca8899b014f358d01e63ec.
+# Звіт C3 збережено дослівно (c3_report_round2); реакція J3 — j3_response_round2. Після рецензії J3 внесла лише документарні правки
+# за C3H-14…19 (перелік у j3_response_round2); код bridge/, CONTRACT, .github/, tasks/ не змінювались.
+round2:
+  reviewed_at: 2026-10-28
+  c3_report_round2:
+    reviewer: C3
+    round: 2
+    reviewed_sha: c4a71f6233a40e4dc5ca8899b014f358d01e63ec
+    base_sha: 0f2cd0b819f25d386311a9f16e3c78b6e923903f
+    branch: plan/j4-autonomy-hardening
+    mode: read-only
+    diff_scope_check: "git diff --name-only 0f2cd0b..HEAD — лише reports/J4-HARDENING/** (25 файлів, +2512); bridge/, CONTRACT_v0_4.md, .github/, tasks/ без змін; git status чистий до і після рецензії"
+    files_read_fully:   # 15 (ліміт вичерпано)
+      - reports/J4-HARDENING/08-c3-review.yaml
+      - reports/J4-HARDENING/calls-ledger.yaml
+      - reports/J4-HARDENING/05-experiments.md
+      - reports/J4-HARDENING/06-defects-risks.yaml
+      - reports/J4-HARDENING/01-architecture.md
+      - reports/J4-HARDENING/04-spec-T-0012.md
+      - reports/J4-HARDENING/11-je-decisions-draft.md
+      - reports/J4-HARDENING/03-spec-T-0011.md
+      - reports/J4-HARDENING/02-threats.md
+      - reports/J4-HARDENING/09-plan-T-0011.md
+      - reports/J4-HARDENING/07-draft-tests/t0012.draft.test.mjs
+      - reports/J4-HARDENING/07-draft-tests/t0011.draft.test.mjs
+      - reports/J4-HARDENING/tools/repro.mjs
+      - reports/J4-HARDENING/tools/repro-t0011.mjs
+      - reports/J4-HARDENING/tools/compat-events.mjs
+    files_read_partially:
+      - "reports/J4-HARDENING/evidence/repro-old.json, repro-poc-t0012.json, repro-t0011-old.json, repro-t0011-poc.json — jq-витяг полів bridge/dispatch_attempt і всіх пар id→outcome (фактично весь зміст, але механічно, без читання тексту)"
+      - "reports/J4-HARDENING/evidence/compat-events-t0012.txt — cat (10 рядків, порівняно diff-ом із власним прогоном)"
+      - "reports/J4-HARDENING/poc/t0012-poc.patch — grep: заголовки diff, рядки з cmd/trim/regex (підтверджено: нормалізації trim у PoC немає — PG-1 чесний)"
+      - "reports/J4-HARDENING/poc/t0011-poc.patch — grep: заголовки diff, checkInstallation/already/ledger-events-mismatch (підтверджено: звірка подій усередині checkInstallation ДО already — PG-6 чесний)"
+      - "reports/J4-HARDENING/10-plan-T-0012.md, 00-INDEX.md, checkpoint.md — grep бюджетів/SHA/згадок C3"
+      - "tasks/T-0002…T-0010/events.jsonl — grep/jq: кількість рядків, подій ADM, ref j4-ledger, review_finished без review_status, acceptance без result/scope, state done"
+      - "bridge/src/acceptance.mjs, bridge/src/close.mjs і їх копії в poc11/poc12 — лише grep -c маркерів патчів (репозиторій 0, копії >0)"
+    commands_run:
+      - "git rev-parse HEAD; git branch --show-current; git status --short; git diff --stat 0f2cd0b HEAD; git diff --name-only … | grep -v reports/J4-HARDENING/ (порожньо)"
+      - "ls/grep -c по $SCRATCH/poc11, poc12 (CONTRACT_v0_4.md є в обох; патчі прикладені лише там)"
+      - "node --check для tools/*.mjs і 07-draft-tests/*.mjs — усі 5 OK"
+      - "node reports/J4-HARDENING/tools/repro.mjs --json  → dispatch_attempt=0, 33 сценарії; diff з evidence/repro-old.json: IDENTICAL"
+      - "node reports/J4-HARDENING/tools/repro.mjs --bridge $SCRATCH/poc12/bridge --json → dispatch_attempt=0, 33; diff з evidence/repro-poc-t0012.json: IDENTICAL"
+      - "node reports/J4-HARDENING/tools/repro-t0011.mjs --json → dispatch_attempt=0, 19; diff з evidence/repro-t0011-old.json: IDENTICAL"
+      - "node reports/J4-HARDENING/tools/repro-t0011.mjs --bridge $SCRATCH/poc11/bridge --json → dispatch_attempt=0, 19; diff з evidence/repro-t0011-poc.json: IDENTICAL"
+      - "node reports/J4-HARDENING/tools/compat-events.mjs bridge $SCRATCH/poc12/bridge → diff з evidence/compat-events-t0012.txt: IDENTICAL (увага: інструмент приймає два позиційні аргументи, не --bridge — див. C3H-16)"
+      - "find poc11 poc12 -newer 08-c3-review.yaml (порожньо — копії не змінені); git status після запусків — чистий"
+      - "node --test НЕ запускався (ні bridge/test, ні чернетки); мережевих/платних викликів 0; виклики адаптера моїми запусками 0 (підраховано інструментами)"
+    verdict: passed
+    mandatory_findings_round1:
+      - {id: C3H-1, status: resolved, where: "04-spec §4.4 (абзац «Уточнення до PoC»), 06 F-T10-11.residual, 07/t0012 R11-7 (цикл '', '   ', '\\t'), R11-14", note: "вимога trim → порожній = відсутній cmd записана; залишок про не-надрядкові варіанти (інші лапки, подвійний пробіл, регістр) задекларований чесно і покритий характеризацією R11-14 як ЗАЛИШОК, не як закрите. Прийнятний residual: канонізація команд не пропонується свідомо; захист — єдина форма cmd + рецензія файла доказів. За наказом JE 2026-10-28 R11-14 потребує ще тесту/виправлення або окремого рішення JE про залишковий ризик — пакет це не приховує"}
+      - {id: C3H-2, status: resolved, where: "04-spec §4.2 («Доповнення за C3»), 11 G2 T-0012 (пункт вибору), 06 PG-7, 07/t0012 SC1-6", note: "fail-closed scope-contradictory сформульовано, винесено JE як пункт рішення, тест SC1-6 є (на PoC червоний — PG-7). JE вже обрав відхиляти — J3 має зафіксувати це в 11 без варіанту «не перевіряти»"}
+      - {id: C3H-3, status: resolved, where: "03-spec M11 (нормативний порядок: identity → already → наказ → M7 → бар'єр), 06 PG-6, 07/t0011 N23, 11 G2 T-0011", note: "один порядок оголошено, розбіжність PoC названа прогалиною (підтверджено grep патча: checkInstallation із звіркою подій стоїть до already). Compat-факт перевірено самостійно: у tasks/T-0002…T-0010/events.jsonl 124 рядки, 0 згадок j4-ledger#seq — хибних відмов M7 на реальних журналах нині немає"}
+      - {id: C3H-4, status: resolved, where: "02-threats T7/T9 (колонка «Залишок»), 03-spec §3.8а, 06 F-T9-18.residual", note: "«чиста» пара з публічним закріпленим значенням і скопійованим seq 1 названа явно; ловить лише M7 за наявності синхронізованої події; таблиця загроз більше не завищує закриття"}
+      - {id: C3H-5, status: resolved, where: "07/t0011 N13 (expectRefusal … 'ledger-events-mismatch', 'kind-mismatch'), 05 §5.8 (N13 у червоних на PoC)", note: "тест очікує саме kind-mismatch; на PoC червоний, що й заявлено"}
+      - {id: C3H-6, status: resolved, where: "07/t0011: N6/N7, N9, N12, N17, N22 (перенесений installation_adopted → ledger-not-bound), N23; 09-plan крок 1 («I1–I19, N1–N3, N5–N23; N4 — у N1/N4»)", note: "усі названі сценарії присутні; порахував 36 test() у чернетці — збігається з 05 §5.8"}
+      - {id: C3H-7, status: resolved, where: "11 G1 T-0012 (рядок у розд. 6 п. 4), 04-spec §4.10 G1", note: "зміна тлумачення §6 п. 4 винесена JE явно; JE 2026-10-28 її прийняв"}
+    evidence_check:
+      repro_t0012: "evidence/repro-old.json і repro-poc-t0012.json: 33 сценарії кожен, dispatch_attempt 0; усі 33 outcome збігаються з таблицею 05 §5.2 рядок у рядок (включно з R11-7 done на PoC = PG-1 і R11-8 refused evidence-latest-failed:other); відтворено власним запуском на bridge/ репозиторію і на poc12 — IDENTICAL"
+      repro_t0011: "evidence/repro-t0011-old.json і repro-t0011-poc.json: 19 сценаріїв, dispatch 0; усі збігаються з 05 §5.3 (I11 done на PoC = залишок, I9/I18 exception на старому коді — як описано); відтворено на bridge/ і poc11 — IDENTICAL"
+      compat: "evidence/compat-events-t0012.txt збігається з 05 §5.4 і 04 §4.3 (T-0006 ×2, T-0007: ready→not-ready scope-not-full; T-0009/T-0010: not-ready до і після); відтворено — IDENTICAL"
+      tools_vs_claims: "інструменти справді не викликають адаптер (лише closeTask/acceptanceReady, submit рівня C → held, CLI close/adopt); але див. C3H-15/16 про формулювання «вимагають 0» і про задокументований спосіб виклику compat-events"
+      caveat: "evidence/repro-t0011-poc.json поле bridge = «<ізольована копія bridge/ з PoC>» (відредаговано вручну після генерації; у repro-poc-t0012.json лишився реальний шлях) — зміст результатів підтверджено повторним прогоном, але файл не є дослівним виводом інструмента (C3H-18)"
+    poc_gaps_check:
+      list: "PG-1 (cmd '' у PoC — підтверджено grep патча й R11-7 = done в evidence), PG-2 (N2/N3), PG-3 (N8), PG-4 (N11), PG-5 (N14), PG-6 (порядок M11 — підтверджено grep патча), PG-7 (SC1-6), PG-8 (пробіли, R11-13)"
+      completeness: "перелік відповідає червоним на PoC, заявленим у 05 §5.8 (t0012: SC1-6, R11-7, R11-13; t0011: N2/N3, N6/N7, N8/N9, N11, N13, N14, N23), і чернеткам; N6/N7/N9 (first_hash/min_seq) входять у PG-3 за змістом (M3), окремого PG не мають — прийнятно, але краще назвати явно. Фактичні пропорції pass/fail чернеток на PoC (37/40, 28/36) C3 не відтворював (node --test не запускався)"
+      honesty: "прогалини не замасковані: 05 §5.2 і 04 §4.4 прямо показують R11-7 = done на PoC; 03 M11 прямо каже «PoC від цього відхиляється»"
+    accounting_check:
+      s5_7: "05 §5.7: «200 − 44 = 156» виправлено; calls-ledger H-002 dispatch 156, cumulative dispatch_max_observed 200 + direct 4 = 204 — узгоджено; paid 0, network 0, ci_runs 0"
+      other_arithmetic: "11 Р-2 «180 − 48 = 132» ✓; 09 §9.2 (96/84, 144/36, 192>180 HALT) ✓; 10 §10.2 і 04 §4.9 (144/150, запас 6) ✓"
+      ci_tests_claim: "01-architecture.md тепер стверджує «підтверджено логом CI: run 40537188604, job test 122305507120 на 0f2cd0b, # tests 105 / # pass 105 / # skipped 0, прочитано 2026-10-28» (також calls-ledger H-001). C3 цього НЕ перевіряв (мережевих викликів 0). Форма відповідає вимозі JE (або лог, або позначка «непідтверджено») лише якщо J3 справді читав лог; JE може перевірити одним відкриттям job 122305507120"
+      my_runs: "мої запуски інструментів додали 0 dispatch_attempt (кожен інструмент вивів 0); тимчасові теки j4h-*, j4h11-* у /tmp не містять dispatch_attempt"
+    new_findings:
+      - {id: C3H-14, kind: optional_but_fix_before_4_8_p5, where: "04-spec §4.3 («review_finished без review_status у реальних журналах: лише T-0010 seq 8»), таблиця сумісності 04 §4.3 / 05 §5.4 / 11 G3 (T-0005…T-0010), tools/compat-events.mjs (T-0006…T-0010)", what: "T-0002 і T-0004 у аналіз сумісності не включені без пояснення. Факт: tasks/T-0002/events.jsonl має 7 review_finished БЕЗ review_status (seq 4, 6, 12, 17, 18, 31, 34) і 5 acceptance без result і без scope (seq 7, 13, 15, 21, 22); події done немає (остання — seq 35 acceptance_recorded). На старому бар'єрі суб'єкти 5923b49d і 9ec729ee рахувалися б ready (значення за замовчуванням), після T-0012 — not-ready. Твердження «лише T-0010 seq 8» хибне для сукупності реальних журналів", why: "критерій приймання 04 §4.8 п. 5 (compat збігається з таблицею 4.3) спирається на неповну таблицю; рішення G3 (нова подія, не переписування) це покриває, тож рішень JE не змінює — але пакет має сказати правду: додати T-0002/T-0004 у таблицю і в compat-events, виправити формулювання"}
+      - {id: C3H-15, kind: optional, where: "tools/repro.mjs:129-134, tools/repro-t0011.mjs:136, 00-INDEX («усі перевіряють dispatch 0»), 05 §5.1 («вимагає 0»)", what: "інструменти лише друкують лічильник dispatch_attempt, не завершуються з помилкою при >0; у repro.mjs лічильник обчислюється ДО сценаріїв R11-7/8/9 (вони роутера не створюють, тож ризику нема); compat-events.mjs не рахує нічого (і не може диспетчеризувати)", suggestion: "process.exitCode = 1 при dispatch > 0; перенести підрахунок після останнього сценарію; у 00-INDEX уточнити «repro* перевіряють, compat — не стосується»"}
+      - {id: C3H-16, kind: optional, where: "05 §5.1 vs tools/compat-events.mjs", what: "задокументований виклик `compat-events.mjs [--bridge <копія>]`, фактичний — два позиційні аргументи `<oldBridge> <newBridge>`, і шлях репозиторію зашито як /home/user/easywar-staff", suggestion: "узгодити документацію або додати parseArgs і REPO від import.meta.url, як у repro.mjs"}
+      - {id: C3H-17, kind: optional, where: "07/t0011.draft.test.mjs рядки 2-3 («21/30 червоні», «26/30 зелені»), 07/t0012.draft.test.mjs рядок 3 («зелені, крім R11-7»)", what: "коментарі-заголовки чернеток застаріли відносно 05 §5.8 (36 тестів: 10/26 і 28/36; 40 тестів: 37/40 із SC1-6, R11-7, R11-13 червоними)", suggestion: "оновити коментарі при перенесенні в bridge/test/"}
+      - {id: C3H-18, kind: optional, where: "evidence/repro-t0011-poc.json поле bridge", what: "значення замінено вручну на «<ізольована копія bridge/ з PoC>» — файл доказу не є дослівним виводом інструмента", suggestion: "або зберігати дослівно (як repro-poc-t0012.json), або позначати в 05 §5.1, що шлях знеособлено після генерації"}
+      - {id: C3H-19, kind: optional, where: "04-spec §4.4 алгоритм", what: "наказ JE вимагає, щоб «неоднозначний» доказ на тому ж subject не лишав чинним успіх; алгоритм оперує лише pass/fail (resultIsPass) і не каже явно, що нерозпізнаний result = не pass = скасовує", suggestion: "один рядок у §4.4: «result, не розпізнаний як pass, трактується як збій (fail-closed)» і тест із result: 'unknown'"}
+    not_verified:
+      - "CI-лог run 40537188604 / job 122305507120 (без мережі); твердження 01/calls-ledger про 105/105/0 — лише за словом J3"
+      - "пропорції pass/fail чернеток на старому коді й на PoC (05 §5.8) — node --test не запускався; синтаксис чернеток перевірено лише node --check"
+      - "код bridge/src/*.mjs і повний текст poc/*.patch не читались (ліміт 15) — лише grep ключових фрагментів; алгоритм R-11 і regex R-10 перевірені за текстом 04 і за результатами evidence"
+      - "CONTRACT_v0_4.md (§4, §6 п. 4, 9а.3) у цьому раунді не читався; формулювання контрактних змін оцінені лише за 04/11"
+      - "10-plan-T-0012.md прочитаний лише grep-ом бюджетних рядків"
+      - "чи має пакет відобразити рішення JE 2026-10-28 (G2 scope-contradictory = відхиляти; ліміт 200; R-13 не включати) — пакет на c4a71f6 ще містить пункти вибору; це не дефект пакета, а наступний крок J3"
+    residual_accepted_for_passed:
+      - "C3H-1: не-надрядкові варіанти cmd — залишок названий і охарактеризований (R11-14); остаточне рішення про залишковий ризик — за JE згідно з наказом"
+      - "C3H-2: вибір «відхиляти/не перевіряти» в 11 G2 — JE вже вирішив; J3 має зафіксувати"
+      - "C3H-14…19 — необов'язкові; C3H-14 слід виправити до застосування критерію 04 §4.8 п. 5"
+    summary_for_je: "Усі 7 обов'язкових зауважень раунду 1 закриті в тексті пакета на c4a71f6; докази evidence/* відтворено ідентично на репозиторійному bridge/ і копіях poc11/poc12 з 0 викликів адаптера; облік 200 − 44 = 156 і 204 узгоджений; твердження про CI-лог не перевірене C3. Нових обов'язкових зауважень немає; одна фактична неточність щодо сумісності (T-0002/T-0004 поза таблицею, 7 review_finished без review_status) потребує документарного виправлення, але рішень G1–G4/G3 не змінює. Ворота review_status: complete / verdict: passed на цій версії пакета, на мою думку, відкриті."
+  j3_response_round2:   # лише документи й інструменти пакета; код bridge/, CONTRACT, .github/, tasks/ не змінювались
+    - {finding: C3H-14, action: "tools/compat-events.mjs: додано T-0002 (усі 7 SHA) і T-0004; evidence/compat-events-t0012.txt перегенеровано (T-0002 5923b49d, 9ec729ee: old ready → new not-ready[review-C3-incomplete, …-not-accepted]; T-0004 — подій немає); 04 §4.3 таблиця і формулювання про «лише T-0010 seq 8» виправлені; 05 §5.4 доповнено; наслідку для j4 close немає (T-0002 done не має і через J4 не закривалась)", status: fixed_in_package}
+    - {finding: C3H-15, action: "repro.mjs і repro-t0011.mjs: лічильник після останнього сценарію, exitCode 1 при dispatch > 0; 05 §5.1 уточнено (compat не диспетчеризує за побудовою)", status: fixed_in_package}
+    - {finding: C3H-16, action: "compat-events.mjs: REPO від import.meta.url, перевірка аргументів, usage; 05 §5.1 — фактичний виклик", status: fixed_in_package}
+    - {finding: C3H-17, action: "заголовки обох чернеток оновлено за 05 §5.8", status: fixed_in_package}
+    - {finding: C3H-18, action: "05 §5.1: знеособлення шляху в repro-t0011-poc.json задекларовано; файл не перегенеровано (зміст C3 відтворила IDENTICAL)", status: fixed_in_package}
+    - {finding: C3H-19, action: "04 §4.4: рядок «result, не розпізнаний як pass, = збій (fail-closed)»; чернетка R11-15 (result «unknown») — на poc12 зелений (resultIsPass уже нині не визнає такий result); чернетка 38/41, dispatch 0", status: fixed_in_package}
+    - {finding: "ci_tests_claim not_verified", action: "лог CI J3 читала через GitHub API (job 122305507120, хвіст 40 рядків: «# tests 105 / # pass 105 / # fail 0 / # skipped 0»); JE може перевірити відкриттям job", status: open_for_je}
+    - {finding: "рішення JE 2026-10-28 у пакеті", action: "11-je-decisions-draft.md: блок «Стан 2026-10-28» (G2 відхиляти, R-13 не включати, ліміт 150/200 — чинним 150, HALT 144); реєстр розбіжностей — при реєстрації tasks/T-0012", status: fixed_in_package}

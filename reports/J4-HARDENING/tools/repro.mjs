@@ -126,13 +126,15 @@ run('S18-5', 'F-T9-18 (обрізаний журнал: лише seq 1, еска
 run('S18-6', 'F-T9-18 (знімок сховища до ескалації: порожній J4_HOME тієї ж форми)', () => { const { r, ref, alien } = withEscalation(); const f = path.join(r, 'ledger.jsonl'); const lines = fs.readFileSync(f, 'utf8').split('\n').filter(Boolean); fs.writeFileSync(f, `${lines[0]}\n`); return cli(r, ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref], { J4_HOME: alien }); });
 
 // ---- лічильник викликів адаптера ----
-const dispatch = ledgers.reduce((n, f) => n + (fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').filter((l) => l.includes('"dispatch_attempt"')).length : 0), 0);
 
 // ---- R11-7/8/9: уточнення специфікації 04-spec-T-0012.md §4.4 (cmd: "", порожній verify, контроль варіантного успіху) ----
 run('R11-7', 'F-T10-11 (успіх, далі збій із cmd: "")', () => { const r = staff(); review(r); accept(r, 'J3', 'technical'); accept(r, 'J5', 'content'); return close(r, evidence(r, rec('76/76 pass') + rec('75/76 pass, 1 fail', ''))); });
 run('R11-8', 'F-T10-11 (verify порожній: дві cmd, остання другої — збій)', () => { const r = staff(); fs.writeFileSync(path.join(r, 'tasks', T, 'order.yaml'), fs.readFileSync(path.join(r, 'tasks', T, 'order.yaml'), 'utf8').replace(/^\s*verify:.*$/m, '  verify: []')); review(r); accept(r, 'J3', 'technical'); accept(r, 'J5', 'content'); return close(r, evidence(r, rec('76/76 pass') + rec('10/10 pass', 'other') + rec('9/10 pass, 1 fail', 'other'))); });
 run('R11-9', 'F-T10-11 (контроль: збій базовою, далі успіх варіантною, що містить вимогу)', () => { const r = staff(); review(r); accept(r, 'J3', 'technical'); accept(r, 'J5', 'content'); return close(r, evidence(r, rec('75/76 pass, 1 fail') + rec('76/76 pass', `${CMD} --test-reporter spec`))); });
 
+// лічильник — ПІСЛЯ останнього сценарію; dispatch > 0 — код виходу 1 (C3H-15)
+const dispatch = ledgers.reduce((n, f) => n + (fs.existsSync(f) ? fs.readFileSync(f, 'utf8').split('\n').filter((l) => l.includes('"dispatch_attempt"')).length : 0), 0);
+if (dispatch > 0) process.exitCode = 1;
 if (o.json) process.stdout.write(`${JSON.stringify({ bridge: BRIDGE, dispatch_attempt: dispatch, results }, null, 2)}\n`);
 else {
   process.stdout.write(`bridge: ${BRIDGE}\n`);

@@ -1,6 +1,6 @@
 // ЧЕРНЕТКА майбутнього bridge/test/t0012.test.mjs (місія J4 AUTONOMY HARDENING, етап D). Не є частиною bridge/ і не запускається CI.
-// Тести написані «спочатку»: на поточному коді вони ЧЕРВОНІ (дефекти F-T9-16, SCOPE-1, R-11, R-10 підтверджуються), на копії з
-// poc/t0012-poc.patch — зелені, крім R11-7 (прогалина PoC, вимога 04-spec §4.4). Запуск лише на копіях:
+// Тести написані «спочатку»: 41 тест (R11-15 додано 2026-10-28); на поточному коді 12 pass / 28 fail (з 40, виміряно 2026-10-27) (дефекти F-T9-16, SCOPE-1, R-11, R-10 підтверджуються), на копії з
+// poc/t0012-poc.patch — 38/41 (2026-10-28, dispatch 0); червоні SC1-6, R11-7, R11-13 — вимоги 04-spec поза PoC (05 §5.8, виміряно 2026-10-27; C3H-17). Запуск лише на копіях:
 //   J4H_BRIDGE=<тека bridge/ копії> node --test reports/J4-HARDENING/07-draft-tests/t0012.draft.test.mjs
 // Без J4H_BRIDGE береться bridge/ репозиторію (лише читання; сховище штабу — тимчасова синтетична тека T-0900). Виклики адаптера: 0.
 import { test } from 'node:test';
@@ -82,6 +82,7 @@ test('T-0012 R11-6: успіх варіантною, далі збій базо�
 test('T-0012 R11-7: успіх, далі збій із cmd: "" або cmd лише з пробілів → відмова (порожній після trim = відсутній; C3H-1)', () => { for (const c of ['', '   ', '\t']) { const r = staff(); full(r); closeRefused(r, evidence(r, rec('76/76 pass') + rec('75/76 pass, 1 fail', c)), 'evidence-latest-without-cmd:'); } });
 test('T-0012 R11-13: без verify єдиний запис без cmd із pass не є доказом (C3H-8)', () => { const r = staff([]); full(r); closeRefused(r, evidence(r, `- {subject: ${SHA_A}, result: "76/76 pass"}\n`), 'evidence-no-cmd-record'); });
 test('T-0012 R11-14 (залишок, характеризація C3H-1): збій cmd в інших лапках — «інша команда», успіх лишається → done', () => { const r = staff(); full(r); assert.equal(close(r, evidence(r, rec('76/76 pass') + rec('75/76 pass, 1 fail', 'node --test "bridge/test/*.test.mjs"'))).ok, true); });
+test('T-0012 R11-15 (C3H-19): успіх, далі запис із нерозпізнаним result («unknown») → трактується як збій, відмова', () => { const r = staff(); full(r); closeRefused(r, evidence(r, rec('76/76 pass') + rec('unknown — див. лог')), `evidence-latest-failed:${CMD}`); });
 test('T-0012 R11-8: verify порожній — остання запис будь-якої команди провальний → відмова', () => { const r = staff([]); full(r); closeRefused(r, evidence(r, rec('76/76 pass') + rec('10/10 pass', CMD2) + rec('9/10 pass, 1 fail', CMD2)), `evidence-latest-failed:${CMD2}`); });
 test('T-0012 R11-9: збій базовою, далі успіх варіантною, що містить вимогу → done (контроль)', () => { const r = staff(); full(r); assert.equal(close(r, evidence(r, rec('75/76 pass, 1 fail') + rec('76/76 pass', `${CMD} --test-reporter spec`))).ok, true); });
 test('T-0012 R11-10: дві вимоги verify — друга провалена варіантною → відмова саме за другою; обидві пройшли → done', () => {
