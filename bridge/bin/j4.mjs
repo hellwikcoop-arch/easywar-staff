@@ -12,8 +12,13 @@ import { MonthlyBudget } from '../src/monthly.mjs';
 import { acceptanceReady, evidenceFromEvents } from '../src/acceptance.mjs';
 import { openaiAdapter } from '../src/adapters/openai.mjs';
 import { codexAdapter } from '../src/adapters/cli.mjs';
+import { closeTask, readLedgerStrict, inspectJ4Home } from '../src/close.mjs';
+import { Store } from '../src/store.mjs';
 
-const STAFF_ROOT = path.resolve(BRIDGE_DIR, '..');
+// Корінь сховища штабу. J4_STAFF_ROOT — лише для тестів на копії сховища; стоп-кран bridge/HALT
+// канонічного сховища діє й тоді (див. haltedCanonical).
+const CANON_ROOT = path.resolve(BRIDGE_DIR, '..');
+const STAFF_ROOT = process.env.J4_STAFF_ROOT ? path.resolve(process.env.J4_STAFF_ROOT) : CANON_ROOT;
 const CONTRACT = 'CONTRACT_v0_4.md';
 
 const { values: o, positionals } = parseArgs({
@@ -25,7 +30,7 @@ const { values: o, positionals } = parseArgs({
     intent: { type: 'string' }, level: { type: 'string', default: 'A' }, summary: { type: 'string' }, 'text-file': { type: 'string' },
     refs: { type: 'string' }, thread: { type: 'string' }, 'reply-to': { type: 'string' }, human: { type: 'boolean', default: false },
     role: { type: 'string' }, id: { type: 'string' }, decision: { type: 'string' }, note: { type: 'string', default: '' },
-    approval: { type: 'string' }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
+    approval: { type: 'string' }, once: { type: 'boolean', default: false }, 'max-steps': { type: 'string' }, 'task-events': { type: 'boolean', default: false }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
   },
 });
 
@@ -50,7 +55,13 @@ function j4() {
     adapters: adaptersFor(o.mode), instructionsDir: path.join(BRIDGE_DIR, 'roles'),
     approvalFile: o.approval ?? process.env.J4_APPROVAL ?? path.join(BRIDGE_DIR, 'approvals', 'live.json'),
     monthlyFile: process.env.J4_MONTHLY_BUDGET,
+    env: haltedCanonical() ? { ...process.env, J4_HALT: '1' } : process.env,
+    taskEvents: o['task-events'] || process.env.J4_TASK_EVENTS === '1',
   });
+}
+
+function haltedCanonical() {
+  return STAFF_ROOT !== CANON_ROOT && fs.existsSync(path.join(CANON_ROOT, 'bridge', 'HALT'));
 }
 
 function out(x) {
@@ -83,9 +94,61 @@ async function main() {
       break;
     }
     case 'run': {
-      const r = await j4().process();
+      // --once: один прохід черги для запуску за розкладом (T-0009). Коди виходу: 0 — пройдено,
+      // 75 — інший обробник тримає замок (не помилка, наступний запуск підхопить), 4 — стоп-кран, 2 — інше.
+      if (o.once && o.mode !== 'stub') throw new Error('run --once дозволено лише в режимі stub');
+      if (haltedCanonical()) {
+        out({ ok: false, code: 'halted' });
+        process.exitCode = o.once ? 4 : 2;
+        break;
+      }
+      const maxSteps = o['max-steps'] ? Number(o['max-steps']) : 50;
+      if (!Number.isInteger(maxSteps) || maxSteps < 1 || maxSteps > 50) throw new Error('--max-steps 1..50');
+      const r = await j4().process({ maxSteps });
       out(r);
-      process.exitCode = r.ok ? 0 : 2;
+      // 6 — черга пройдена, але подію ADM у журнал задачі не записано (деталі: task_event_failed у журналі J4)
+      if (r.ok) process.exitCode = o.once && r.events?.failed > 0 ? 6 : 0;
+      else if (o.once && r.code === 'locked') process.exitCode = 75;
+      else if (o.once && r.code === 'halted') process.exitCode = 4;
+      else process.exitCode = 2;
+      break;
+    }
+    case 'close': {
+      // Завершення задачі ADM: done лише після бар'єра на одному subject (bridge/src/close.mjs).
+      if (!o.task || !o.subject) throw new Error('потрібні --task і --subject');
+      if (haltedCanonical() || process.env.J4_HALT === '1' || fs.existsSync(path.join(STAFF_ROOT, 'bridge', 'HALT'))) {
+        out({ ok: false, code: 'halted' });
+        process.exitCode = 4;
+        break;
+      }
+      // Відкриті ескалації беруться зі сховища J4 і журналу J4: обидва місця треба вказати явно, інакше close міг би
+      // не побачити ескалацію, створену в іншому J4_HOME (C3 F-T9-2).
+      if (!(o.home ?? process.env.J4_HOME) || !(o.ledger ?? process.env.J4_LEDGER)) {
+        out({ ok: false, code: 'escalation-source-unknown', missing: ['J4_HOME', 'J4_LEDGER'] });
+        process.exitCode = 3;
+        break;
+      }
+      // Обидва місця мають існувати й бути читними (JE-T9-03 D-3, C3 F-T9-11/12): J4_HOME — наявна тека зі сховищем J4
+      // (new Store створив би її мовчки), J4_LEDGER — наявний цілий журнал. Інакше ескалація, створена деінде, лишилась би невидимою.
+      const sourceUnreadable = (reason, extra = {}) => {
+        out({ ok: false, code: 'escalation-source-unreadable', missing: [reason], ...extra });
+        process.exitCode = 3;
+      };
+      // Сховище лише для читання (Store.open): close не створює підтек у чужому J4_HOME (T-0010, F-T9-20); нечитний вміст
+      // сховища — окрема причина home-unreadable, а не «порожньо» (F-T9-19).
+      const homeState = inspectJ4Home(home);
+      if (!homeState.ok) {
+        sourceUnreadable(homeState.reason);
+        break;
+      }
+      const led = readLedgerStrict(ledgerFile);
+      if (!led.ok) {
+        sourceUnreadable(led.reason, led.problems ? { problems: led.problems } : {});
+        break;
+      }
+      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: Store.open(home), ledgerEntries: led.entries });
+      out(r);
+      process.exitCode = r.ok ? 0 : 3;
       break;
     }
     case 'inbox': {
@@ -126,7 +189,7 @@ async function main() {
       break;
     }
     default:
-      process.stderr.write('j4 <send|submit|run|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
+      process.stderr.write('j4 <send|submit|run [--once]|close|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
       process.exitCode = 64;
   }
 }

@@ -1,0 +1,61 @@
+task_id: T-0009
+task_version: 2
+seq: 2
+author: J3
+to: JE
+cc: J5
+kind: stop_report   # зупинка за JE-T9-02 п. 3 і JE-T9-01 п. 6: потрібне рішення JE
+at: 2026-10-26T19:37:35+00:00
+subject: {kind: commit, ref: d05dc5aaf449fc9c5be03a0869035e2871d6b57a}
+result: C3_round_2_changes_requested_stopped   # не done; приймання J3 не записано; PR не відкрито; CI не запускався
+
+c3_round_2:   # reports/T-0009/c3-reviews.yaml#seq=2; events seq 11
+  verdict: changes_requested
+  round1_status: {F-T9-1: fixed, F-T9-2: partial, F-T9-3: fixed, F-T9-4: fixed, F-T9-5: fixed}
+  new_mandatory:
+    - {id: F-T9-11, what: "передача журналу J4 у closeTask через CLI не покрита тестом (мутанти m1/m2 проходять 11/11)"}
+    - {id: F-T9-12, what: "j4 close приймає неіснуючий/хибний J4_LEDGER і відкидає обірваний рядок журналу мовчки; бібліотечний closeTask без ledgerEntries пропускає журнал"}
+  new_recommended: ["F-T9-13 евристика result: pass (not passed, 0 passed)", "F-T9-14 другий verify: ігнорується", "F-T9-15 бар'єр поза замком", "F-T9-16 acceptance.mjs: review_finished без review_status проходить (поза межами T-0009)", "F-T9-17 косметика"]
+  j3_check: "F-T9-12 підтверджено читанням bin/j4.mjs; F-T9-11 — за описом C3 і структурою тестів, самостійно не відтворювалось (нові тести поза межами JE-T9-02)"
+  C3_could_not_confirm: "Q1–Q3 і повний набір на d05dc5a (заборонені D-1а); CLI close end-to-end з ескалацією лише в журналі J4"
+  files_read_disclosure: "14 файлів + 3 order.yaml, розібрані скриптом orderGate; якщо це рахувати читанням — max_read_files 15 перевищено на 2"
+  note: "висновок C3 не підміняється прийманням J3 (JE-T9-02 п. 3); бар'єр CONTRACT розд. 6 не пройдено: review-C3 не passed на d05dc5aaf449fc9c5be03a0869035e2871d6b57a"
+
+state:
+  regression_J3_2: "90/90, 44 dispatch (+4 прямих = 48) — без змін (A-003, K-001)"
+  not_done: ["acceptance J3 technical", "acceptance J5 content", "PR до setup/staff-bootstrap", "CI", "done"]
+  untouched: "CONTRACT_v0_4.md, bridge/config/**, bridge/src/acceptance.mjs, .github/**, планувальник, live, платні API"
+
+accounting:   # reports/T-0009/calls-ledger.yaml, K-001 і A-004
+  limit: 250
+  used: {local_J3: 98, C3: 48, CI: 0, total: 146, remaining: 104}
+  C3_round_2_calls: 0
+  accuracy: {local: exact_plus_derived_direct, C3: exact, CI: "estimate (48 на подію PR: 44 dispatch + 4 прямих)"}
+  paid_api_calls: 0
+  network_calls: 0
+
+proposal_if_authorized:
+  fix_scope:
+    mandatory:
+      - "F-T9-12: j4 close відмовляє (exit 3, escalation-source-unreadable), якщо J4_HOME не є текою, файла J4_LEDGER немає або readAll().partial не null; closeTask вимагає ledgerEntries явно (без значення за замовчуванням)"
+      - "F-T9-11: CLI-тест j4 close — J4_HOME на порожню теку, J4_LEDGER із escalation_raised цієї задачі → exit 3 open-escalation; той самий журнал з escalation_resolved → 0; неіснуючий/обірваний журнал → escalation-source-unreadable; перевірка мутантами m1/m2 на тимчасовій копії"
+    cheap_recommended: ["F-T9-13 evidence result: pass не приймає 'not passed', '0 passed', '0 pass'", "F-T9-14 кілька ключів verify: → order-verify-unreadable", "F-T9-17 повідомлення для escalation без id"]
+    documented_not_fixed: ["F-T9-15 бар'єр поза замком (вікно мілісекунд) — розкрити в DESIGN", "F-T9-16 acceptance.mjs поза T-0009 — окреме завдання або прийняте обмеження"]
+  files: "bridge/src/close.mjs, bridge/bin/j4.mjs (case close), bridge/test/t0009.test.mjs, bridge/docs/DESIGN.md, bridge/README.md; CONTRACT, bridge/config, acceptance.mjs, .github не змінюються"
+  checks_before_regression: "відфільтровані тести T-0009 (E|C|H) + нові CLI-тести — 0 викликів адаптера (лічильник підтверджує)"
+  budget:
+    now: {total: 146, remaining: 104}
+    V1_recommended: {steps: "J3-3 повний прогін 48 → C3 раунд 3 лише за diff (0) → PR з одним CI-прогоном 48", total_estimate: 242, spare: 8, ci_result_recording: "коментар у PR і звіт J5, без додаткового push; рядок CI в обліку — резерв-estimate до відкриття PR", risk: "жоден повторний прогін (CI чи J3) не вміщується: 242+48 = 290 > 250 → зупинка й доповідь JE"}
+    V2_raise_limit: {steps: "як V1 плюс push із записом результату CI і запас на один повторний прогін", needs: "рішення JE про новий ліміт (≥ 300 для двох CI й одного повтору), поправка A-3"}
+    V3_no_extra_full_run: {steps: "без J3-3: лише відфільтровані тести, повна регресія — перший CI; C3 раунд 3 лише за diff", total_estimate: 242, spare: 8, drawback: "порядок JE-T9-01 п. 7 (регресія → C3 → PR) порушується: повна регресія нового SHA — лише в CI після відкриття PR"}
+
+decisions_needed_from_JE:
+  - {id: D-3, question: "Дозволити виправлення F-T9-11/12 (+ рекомендовані F-T9-13/14/17) — новий контрольний SHA?", note: "до рішення код bridge/ не змінюю"}
+  - {id: D-4, question: "Дозволити третій раунд C3 лише за diff d05dc5aaf449fc9c5be03a0869035e2871d6b57a..<новий SHA> (0 викликів), і уточнити, чи розбір order.yaml скриптом рахується читанням для max_read_files 15", recommended: yes}
+  - {id: D-5, question: "Варіант бюджету: V1 (рекомендую), V2 (підняти ліміт) чи V3"}
+  - {id: D-6, question: "F-T9-16 (acceptance.mjs, поза T-0009): окреме завдання чи прийняте обмеження?"}
+
+residual_blocks:
+  - "C3 не passed на d05dc5aaf449fc9c5be03a0869035e2871d6b57a; бар'єр не пройдено; PR і done неможливі до нового C3 passed"
+  - "M-1, M-2, M-5, M-7 ручні (reports/T-0007/001.yaml); M-4 скрипт є, планувальник не активовано; M-3/M-6 закрито з обмеженнями (reports/T-0009/001.yaml)"
+  - "T-0007: за правилом K-001 сукупний облік зріс би до ≈238 (derived) — запис reports/T-0007/005.yaml не змінено"

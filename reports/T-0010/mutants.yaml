@@ -1,0 +1,46 @@
+# T-0010: результат мутаційної перевірки (tasks/T-0010/tools/mutate.mjs) на тимчасових копіях; репозиторій не змінювався.
+# убито 42 з 42 (+ M43 — контрольний еквівалентний мутант, очікувано SURVIVED); виклики адаптера: 0
+mutants:
+  - {id: M01, status: killed, failed_tests: 2, adapter_calls: 0, covers: "F-T9-19: list ковтає всі помилки"}
+  - {id: M02, status: killed, failed_tests: 2, adapter_calls: 0, covers: "F-T9-20: open створює теки"}
+  - {id: M03, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-20: writeJson без захисту"}
+  - {id: M04, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-20: remove без захисту"}
+  - {id: M05, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-20: acquireLock без захисту"}
+  - {id: M06, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-20: releaseLock без захисту"}
+  - {id: M07, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-20: locked без захисту"}
+  - {id: M08, status: killed, failed_tests: 2, adapter_calls: 0, covers: "F-T9-19: inspectJ4Home не читає вміст"}
+  - {id: M09, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-19: помилка stat завжди «не сховище»"}
+  - {id: M10, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-19: виняток замість відмови"}
+  - {id: M11, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-23: хук afterVerify не викликається"}
+  - {id: M12, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-23: немає перевірки кількості"}
+  - {id: M13, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-23: немає перевірки голови"}
+  - {id: M14, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: дозволено будь-які ключі"}
+  - {id: M15, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: подвоєні ключі"}
+  - {id: M16, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: subject порівнюється за префіксом"}
+  - {id: M17, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: порожній відбір 0/0"}
+  - {id: M18, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: неповний відбір N/M"}
+  - {id: M19, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: продовження після pass"}
+  - {id: M20, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: слова not/never/false"}
+  - {id: M21, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: команди verify не вимагаються"}
+  - {id: M22, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: коментар після запису"}
+  - {id: M23, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: текст навколо запису"}
+  - {id: M24, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-22: службові символи в простому скалярі"}
+  - {id: M25, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-20: CLI відкриває сховище для запису"}
+  - {id: M26, status: killed, failed_tests: 3, adapter_calls: 0, covers: "F-T9-23: CLI не перевіряє J4_HOME"}
+  - {id: M27, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-23: журнал із витоком приймається"}
+  - {id: M28, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-23: рядок null у журналі дає порожній список"}
+  - {id: M29, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T9-23: причини журналу не повідомляються"}
+  - {id: M30, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-2: довільний префікс-ключ"}
+  - {id: M31, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-2: блокові скаляри не пропускаються"}
+  - {id: M32, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-2: пізній збій не скасовує успіх"}
+  - {id: M33, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-3: слово cancelled"}
+  - {id: M34, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-3: fail 0.5"}
+  - {id: M35, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-3: 0 fail 3"}
+  - {id: M36, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-3: 0 tests run"}
+  - {id: M37, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-4: bare 0 pass"}
+  - {id: M38, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-9: не-об'єктний файл ескалації"}
+  - {id: M39, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-9: маскування помилок програми"}
+  - {id: M40, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-6 X1: ENOTDIR"}
+  - {id: M41, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-6 X10: list ковтає EACCES"}
+  - {id: M42, status: killed, failed_tests: 1, adapter_calls: 0, covers: "F-T10-6 M8: verify збігається за будь-яким полем"}
+  - {id: M43, status: SURVIVED, failed_tests: 0, adapter_calls: 0, covers: "контроль: свідомо еквівалентний мутант — очікується SURVIVED (перевірка самого запуску)"}

@@ -1,0 +1,153 @@
+# Єдиний накопичувальний облік викликів адаптера J4 (stub/fake, без мережі) за T-0010.
+# Джерело ліміту: JE-T10-01 п. 1 і JE-T10-02 п. 4 (tasks/T-0010/events.jsonl seq 1–2). Лише додавання рядків:
+# виправлення — новим рядком із supersedes, старі рядки не редагуються. Облік T-0009 (194 із 250) окремий і сюди не входить.
+task_id: T-0010
+unit: "виклик адаптера J4 (stub/fake); платних і мережевих викликів немає"
+limit: {value: 150, source: "JE-T10-01 п. 1; JE-T10-02 п. 4"}
+caps: {full_runs_J3_plan: 2, C3: "за diff, 0 викликів", CI_runs_plan: 1, note: "caps — план J3, не рішення JE; рішення JE — лише ліміт 150"}
+rules:
+  - "перед кожним прогоном — рядок plan з оцінкою; після — рядок actual"
+  - "виклик = dispatch_attempt у журналі J4 (лічильник tasks/T-0009/tools/call-counter.mjs) + прямий adapter.call() у тестах (джерела: gate.test.mjs :121 ×3 + :154 ×1 = 4, derived)"
+  - "CI: accuracy exact лише якщо число підтверджено журналом прогону CI; інакше estimate"
+  - "ризик перевищення 150 (cumulative_after.total + оцінка наступних запланованих прогонів > 150) — HALT і доповідь JE"
+categories: {local: "прогони J3 у цьому сховищі", c3: "незалежні прогони C3", ci: "GitHub Actions CI"}
+baseline: {tests: 93, per_full_run: 48, basis: "reports/T-0009/calls-ledger.yaml#A-005 (44 dispatch exact + 4 прямих derived); CI на efe03c9: success, прогін 40502892802"}
+
+entries:
+  - id: P-001
+    kind: plan
+    category: local
+    run: "відфільтровані тести T-0010 і мутації (тимчасові копії) з лічильником"
+    estimate: {calls: 0, accuracy: estimate}
+    basis: "нові тести не викликають адаптер; лічильник підтверджує dispatch 0"
+    cumulative_if_done: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+
+  - id: P-002
+    kind: plan
+    category: local
+    run: "J3-1: повний прогін node --test 'bridge/test/*.test.mjs' після фільтрованих"
+    estimate: {calls: 48, accuracy: estimate}
+    basis: "baseline: 44 dispatch + 4 прямих; перерахувати, якщо нові тести викликають адаптер"
+    cumulative_if_done: {local: 48, c3: 0, ci: 0, total: 48, remaining: 102}
+
+  - id: P-003
+    kind: plan
+    category: c3
+    run: "C3-1: незалежна рецензія за diff від efe03c959107856f2536771ae5c023f1e007e7be до контрольного SHA, без повного набору"
+    estimate: {calls: 0, accuracy: estimate}
+    cumulative_if_done: {local: 48, c3: 0, ci: 0, total: 48, remaining: 102}
+
+  - id: P-004
+    kind: plan
+    category: ci
+    run: "CI-1: єдиний прогін на подію відкриття PR (лише за окремим дозволом JE після C3 passed, приймання J3 і J5)"
+    estimate: {calls: 48, accuracy: estimate}
+    basis: "workflow j4-bridge: pull_request, paths bridge/** — кожна подія PR = один прогін; після відкриття PR push заборонений"
+    cumulative_if_done: {local: 48, c3: 0, ci: 48, total: 96, remaining: 54}
+
+  - id: P-005
+    kind: plan
+    category: local
+    run: "J3-2: резервний повторний повний прогін (лише після C3 changes_requested)"
+    estimate: {calls: 48, accuracy: estimate}
+    cumulative_if_done: {local: 96, c3: 0, ci: 48, total: 144, remaining: 6}
+    note: "другий повтор не вміщується (144 + 48 > 150) → HALT і доповідь JE"
+
+state:   # на момент реєстрації
+  cumulative: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+  paid_api_calls: 0
+  network_calls: 0
+
+# --- факт і прогноз перед повним прогоном (дописано J3; рядки вище не редаговано) ---
+actuals:
+  - id: A-001
+    kind: actual
+    category: local
+    plan_ref: P-001
+    run: "відфільтровані тести T-0010 (старий код: 8 впало, 2 пройшли, 1 пропущено; новий код: 10 пройшли, 1 пропущено), T-0009 E|C|H|Q2|Q3 (16/16), 29 мутантів на тимчасових копіях (tasks/T-0010/tools/mutate.mjs; 29/29 убито)"
+    measured: {calls: 0, accuracy: exact, basis: "лічильник tasks/T-0009/tools/call-counter.mjs: total 0 у кожному прогоні; mutate.mjs сумує adapter_calls = 0 (reports/T-0010/mutants.yaml)"}
+    cumulative: {local: 0, c3: 0, ci: 0, total: 0, remaining: 150}
+  - id: A-002
+    kind: actual
+    category: local
+    plan_ref: P-002
+    run: "J3-1: повний прогін node --test 'bridge/test/*.test.mjs' на контрольному SHA 38c9f8edf21002a00cfdfb1f6db32d423714d941 (104 тести: 93 базових + 11 T-0010; 103 пройшли, 1 пропущено — A4 лише не-root; 0 впало; 9,4 с)"
+    measured:
+      dispatch_attempt: {calls: 44, accuracy: exact, by_mode: {stub: 33, live_path_with_fake_fetch: 11}, by_adapter: {stub: 33, openai_with_fetchImpl_fake: 11}, processes: 12, basis: "лічильник call-counter.mjs, J4_CALL_COUNT_FILE; збіг із baseline A-005 T-0009"}
+      direct_adapter_call: {calls: 4, accuracy: derived, basis: "gate.test.mjs :121 ×3 + :154 ×1; файл не змінювався"}
+      new_tests_t0010: {calls: 0, accuracy: exact}
+    total_this_run: 48
+    paid_api_calls: 0
+    network_calls: 0
+    paid_basis: "кожен openaiAdapter у bridge/test створено з fetchImpl: fake; OPENAI_API_KEY, CODEX_API_KEY, J4_ALLOW_LIVE, J4_APPROVAL у середовищі не задано (перевірено)"
+    cumulative: {local: 48, c3: 0, ci: 0, total: 48, remaining: 102}
+    forecast_next: "48 (CI-1) + 48 (резерв J3-2) = 96 → 144 ≤ 150"
+forecast_before_P002:
+  rule: "cumulative_after.total + оцінка наступних запланованих прогонів ≤ 150"
+  computation: "0 (використано) + 48 (J3-1, P-002) + 48 (CI-1, P-004) + 48 (резерв J3-2, P-005) = 144 ≤ 150"
+  verdict: "в межах ліміту; запас 6; другий повтор не вміщується — HALT"
+  new_tests_adapter_calls: 0
+
+# --- раунд 2 після рецензії C3 (раунд 1: passed, 0 обов'язкових, 9 необов'язкових; усі виправлення — без викликів адаптера) ---
+plans_round2:
+  - id: P-006
+    kind: plan
+    category: local
+    plan_ref: P-005     # використовується резерв: повторний повний прогін J3-2
+    run: "J3-2: повний прогін node --test 'bridge/test/*.test.mjs' на новому контрольному SHA після виправлень F-T10-1…9"
+    estimate: {calls: 48, accuracy: estimate}
+    basis: "baseline 44 dispatch + 4 прямих; нові/змінені тести t0010 без адаптера (фільтровані прогони: dispatch 0 — лічильник); перерахунок не потрібен"
+    forecast: "48 (використано A-002) + 48 (J3-2) + 48 (CI-1) = 144 ≤ 150; запас 6; третій повний прогін не вміщується — HALT і доповідь JE"
+    cumulative_if_done: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
+  - id: P-007
+    kind: plan
+    category: c3
+    run: "C3-2: рецензія за diff 38c9f8e..<новий контрольний SHA> (bridge/), 0 викликів адаптера; повний набір не запускається"
+    estimate: {calls: 0, accuracy: estimate}
+actuals_round2_filtered:
+  - id: A-003
+    kind: actual
+    category: local
+    run: "фільтровані прогони раунду 2: t0010 (root: 10 pass, 2 skipped; nobody: 12/12 pass), T-0009 E|C|H|Q2|Q3 (16/16), мутації 42/42 + контрольний M43 (як nobody)"
+    measured: {calls: 0, accuracy: exact, basis: "лічильник call-counter.mjs: total 0; mutate.mjs: adapter_calls 0"}
+actuals_round2:
+  - id: A-004
+    kind: actual
+    category: local
+    plan_ref: P-006
+    run: "J3-2: повний прогін node --test 'bridge/test/*.test.mjs' на контрольному SHA 96ff45a2feafcf0964eda290a2eacca52d3ab2e3 (105 тестів: 93 базових + 12 T-0010; 103 пройшли, 2 пропущено — A4 і A5 лише не-root; 0 впало; 8,6 с)"
+    measured:
+      dispatch_attempt: {calls: 44, accuracy: exact, by_mode: {stub: 33, live_path_with_fake_fetch: 11}, by_adapter: {stub: 33, openai_with_fetchImpl_fake: 11}, processes: 12, basis: "лічильник call-counter.mjs; збіг із A-002 і baseline"}
+      direct_adapter_call: {calls: 4, accuracy: derived, basis: "gate.test.mjs :121 ×3 + :154 ×1; файл не змінювався"}
+      new_tests_t0010: {calls: 0, accuracy: exact}
+    total_this_run: 48
+    paid_api_calls: 0
+    network_calls: 0
+    cumulative: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
+    forecast_next: "CI-1 48 → 144 ≤ 150; запас 6; будь-який подальший повний прогін (J3 чи CI) понад це — HALT і доповідь JE"
+    c3_round1: {calls: 0, accuracy: exact, basis: "лічильник C3 total 0 у всіх прогонах"}
+  - id: A-005
+    kind: actual
+    category: c3
+    plan_ref: P-007
+    run: "C3-2: дельта-рецензія 38c9f8e..96ff45a (bridge/): t0010 12 тестів (від root 10 pass, 2 skipped; від nobody 12/12), T-0009 C1,C3,C4,C6,C7,C8 6/6, 31 мутант, експерименти з парсером і run --once на копіях; повний набір не запускався"
+    measured: {calls: 0, accuracy: "exact для запусків від root (лічильник total 0); для запусків від nobody — непрямий доказ: жодного dispatch_attempt у 2331 файлі ledger.jsonl, створеному в /tmp після старту раунду"}
+    paid_api_calls: 0
+    network_calls: 0
+    cumulative: {local: 96, c3: 0, ci: 0, total: 96, remaining: 54}
+    forecast_next: "CI-1 48 → 144 ≤ 150; запас 6; виправлення F-T10-10…12 вимагало б J3-3 (48) + CI (48) → 192 > 150 — не вміщується, відкладено (див. c3-reviews.yaml seq 2)"
+
+forecast_before_CI1:
+  rule: "cumulative_after.total + оцінка наступних запланованих прогонів ≤ 150"
+  computation: "96 (використано: J3 96, C3 0, CI 0) + 48 (CI-1, одна подія відкриття PR, estimate) = 144 ≤ 150"
+  verdict: "в межах ліміту; запас 6; перевірено J3 2026-10-27 за п. 6 висновку J5; відкриття PR — лише за окремим дозволом JE"
+  workflow_facts: "j4-bridge.yml: on pull_request (типи за замовчуванням: opened, synchronize, reopened) з paths bridge/** і файл workflow; фільтра draft немає, тож чернетка PR теж запускає CI; ready_for_review прогону не запускає; workflow_dispatch — окремий ручний режим"
+  conditions: "після відкриття PR заборонені: push (synchronize), close/reopen (reopened), ручний workflow_dispatch, повторний прогін — кожне ≈ ще 48 → 192 > 150 → HALT"
+  risk: "CI-1 — лише estimate (лічильника в CI немає); збій CI (середовище, версія Node, не-root тести A4/A5) без push і без запасу бюджету не виправити в межах T-0010 → потрібне нове рішення JE"
+
+reservation_CI1_JE_T10_04:
+  authorization: "JE-T10-04 п. 2 (tasks/T-0010/je-decision-T10-04.md; подія 16): один автоматичний CI-прогін, спричинений відкриттям PR, у межах ліміту 150"
+  reserved: {category: ci, calls: 48, accuracy: estimate}
+  cumulative_if_done: {local: 96, c3: 0, ci: 48, total: 144, remaining: 6}
+  note: "фактичний результат CI і підсумок обліку — коментарем у PR (після відкриття PR жодних push, тож у журнал репозиторію не записується); джерело оцінки 48 — baseline T-0009 A-005"
+

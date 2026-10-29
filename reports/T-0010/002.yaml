@@ -1,0 +1,54 @@
+# T-0010: донесення J3 — результати на контрольному SHA (код bridge/ незмінний після цього коміту).
+task_id: T-0010
+from: J3
+to: J5
+cc: [JE]
+stage: "реалізація T-0010 завершена; запит C3 за diff; змістове приймання J5 — після C3 passed"
+base_sha: efe03c959107856f2536771ae5c023f1e007e7be
+control_sha: 38c9f8edf21002a00cfdfb1f6db32d423714d941        # коміт, що останнім змінює bridge/; наступні коміти — лише tasks/ і reports/
+execution_branch: t-0010/stabilization
+authorization: "JE-T10-02 п. 5 (реєстрація, база, перевірка конфліктів виконано); режим виконання — JE-T10-03"
+
+changed_files_vs_base:      # git diff --stat efe03c9..38c9f8e -- bridge
+  - {path: bridge/src/store.mjs, change: "list: лише ENOENT -> []; Store.open (лише читання); assertWritable"}
+  - {path: bridge/src/close.mjs, change: "inspectJ4Home; try/catch нечитного сховища; суворий розбір доказів; хук afterVerify"}
+  - {path: bridge/bin/j4.mjs, change: "j4 close: Store.open + inspectJ4Home"}
+  - {path: bridge/test/t0010.test.mjs, change: "новий, 11 тестів"}
+  - {path: bridge/docs/DESIGN.md, change: "розд. 17 (опис повтору close, review_status) + новий розд. 18"}
+  - {path: bridge/README.md, change: "рядок j4 close"}
+outside_bridge: ["tasks/T-0010/tools/mutate.mjs", "reports/T-0010/mutants.yaml", "tasks/T-0010/**", "reports/T-0010/**"]
+untouched_confirmed: "bridge/src/acceptance.mjs, bridge/config/**, CONTRACT_v0_4.md, .github/**, bridge/test/{t0006,t0007,t0009,...}.test.mjs — без змін відносно бази (git diff efe03c9..38c9f8e порожній для них)"
+
+checks:   # формат запису доказу — T-0010 F-T9-22 (суворий розбір)
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 38c9f8edf21002a00cfdfb1f6db32d423714d941, result: "103/103 pass, fail 0, skipped 1 (A4 пропущено під root; на CI не-root виконується); 104 тести: 93 базових + 11 T-0010", by: J3, calls: "44 dispatch + 4 прямих (derived)"}
+  - {cmd: "node --test bridge/test/t0010.test.mjs", subject: 38c9f8edf21002a00cfdfb1f6db32d423714d941, result: "10/10 pass, fail 0, skipped 1 (A4); лічильник dispatch 0", by: J3, calls: 0}
+  - {cmd: "node --test --test-name-pattern 'T-0009 (E|C|H|Q2|Q3)' bridge/test/t0009.test.mjs", subject: 38c9f8edf21002a00cfdfb1f6db32d423714d941, result: "16/16 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+
+tests_on_old_code:   # той самий файл t0010.test.mjs на efe03c9 (лічильник dispatch 0)
+  failed: [A1, A2, A3, B1, B2, C1, C2, D1]
+  passed: [D2, E1]
+  skipped: [A4]
+  note: "D2 (J4_HOME/escalations як файл, null-рядок, витік) і E1 (повтор close) — тести наявної поведінки (F-T9-23, F-T9-21), на старому коді проходять; їхня цінність підтверджена мутантами M26–M29. Інші 8 падають на старому коді"
+
+mutants:    # reports/T-0010/mutants.yaml
+  total: 29
+  killed: 29
+  survived: 0
+  adapter_calls: 0
+  history: "у першому прогоні M20 і M24 вижили, M14 не застосувався (помилка шаблона); додано тестові випадки (pass, not ok / never / ok: false, двокрапка й аліас у простому скаляр) і виправлено шаблон M14 — після цього 29/29"
+
+real_evidence_compat: "справжні файли доказів reports/T-0007/001.yaml, reports/T-0009/001.yaml (2 SHA), reports/T-0009/003.yaml проходять новий розбір (closeTask на синтетичній копії, ok: true)"
+
+accounting:   # reports/T-0010/calls-ledger.yaml A-001, A-002
+  used: {local_J3: 48, C3: 0, CI: 0, total: 48, remaining: 102}
+  paid_api_calls: 0
+  network_calls: 0
+  forecast: "48 (CI-1) + 48 (резерв J3-2) = 96 -> 144 з 150; запас 6"
+
+behavior_notes:
+  - "j4 close: поведінка для коректних пар не змінена; змінено лише: (а) сховище відкривається для читання — нічого не створюється; (б) нечитне сховище — відмова escalation-source-unreadable замість винятку чи «порожньо»; (в) суворіший розбір доказів (стара евристика пропускала SHA у note/коментарі/одинарних лапках, never passed, pass: false, 0 of 76 pass, 75/76 pass без слова fail)"
+  - "строгіший розбір — fail-closed: запис із невідомим ключем чи нестандартним оформленням уже не рахується доказом; ключі: cmd, subject, result, by, calls, at"
+  - "A4 (home-unreadable через chmod) виконується лише не-root; під root випадок покрито A2 з підставною fs"
+
+not_done: ["PR не створено (лише за окремим дозволом JE після C3 passed, технічного J3 і змістового J5)", "CI не запускався", "done не встановлювався; j4 close реально не запускався", "T-0011 і T-0012 не реалізовувались"]
+manual_links: "M-1, M-2 (запуск C3 і запис review_* вручну), M-5, M-7 — без змін"
