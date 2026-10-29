@@ -5,7 +5,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { J4 } from '../src/router.mjs';
 import { loadConfig, BRIDGE_DIR } from '../src/policy.mjs';
-import { verifyLedger } from '../src/ledger.mjs';
+import { verifyLedger, Ledger } from '../src/ledger.mjs';
 import { sha256, PROTOCOL } from '../src/protocol.mjs';
 import { stubAdapter } from '../src/adapters/stub.mjs';
 import { MonthlyBudget } from '../src/monthly.mjs';
@@ -30,7 +30,7 @@ const { values: o, positionals } = parseArgs({
     intent: { type: 'string' }, level: { type: 'string', default: 'A' }, summary: { type: 'string' }, 'text-file': { type: 'string' },
     refs: { type: 'string' }, thread: { type: 'string' }, 'reply-to': { type: 'string' }, human: { type: 'boolean', default: false },
     role: { type: 'string' }, id: { type: 'string' }, decision: { type: 'string' }, note: { type: 'string', default: '' },
-    approval: { type: 'string' }, once: { type: 'boolean', default: false }, 'max-steps': { type: 'string' }, 'task-events': { type: 'boolean', default: false }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
+    approval: { type: 'string' }, installation: { type: 'string' }, 'ledger-first-hash': { type: 'string' }, 'ledger-min-seq': { type: 'string' }, once: { type: 'boolean', default: false }, 'max-steps': { type: 'string' }, 'task-events': { type: 'boolean', default: false }, workdir: { type: 'string' }, file: { type: 'string' }, 'checks-ref': { type: 'string' }, 'key-decision': { type: 'boolean', default: false },
   },
 });
 
@@ -146,9 +146,56 @@ async function main() {
         sourceUnreadable(led.reason, led.problems ? { problems: led.problems } : {});
         break;
       }
-      const r = closeTask({ staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: Store.open(home), ledgerEntries: led.entries });
+      // T-0011: закріплені значення установки — лише явно (прапорець або змінна середовища, значення — з рішення JE); без них відмова
+      // installation-unknown. Хибний формат не нормалізується й не ігнорується (M4).
+      const r = closeTask({
+        staffRoot: STAFF_ROOT, taskId: o.task, subject: o.subject, checksRef: o['checks-ref'], store: Store.open(home), ledgerEntries: led.entries,
+        installationId: o.installation ?? process.env.J4_INSTALLATION_ID,
+        ledgerFirstHash: o['ledger-first-hash'] ?? process.env.J4_LEDGER_FIRST_HASH,
+        ledgerMinSeq: o['ledger-min-seq'] ?? process.env.J4_LEDGER_MIN_SEQ,
+      });
       out(r);
       process.exitCode = r.ok ? 0 : 3;
+      break;
+    }
+    case 'adopt': {
+      // T-0011 (M10): міграція наявної установки без втрати історії — marker сховища (якщо немає) і запис прив'язки в журнал J4:
+      // порожній журнал → `installation` (seq 1), непорожній без прив'язки → `installation_adopted` у голову. Лише людина за окремим
+      // рішенням JE (G6); команда друкує значення, які JE закріплює (installation_id, first_hash, ledger_head_seq), і більше нічого не змінює.
+      if (!o.human) throw new Error('adopt лише за рішенням JE: потрібен --human');
+      if (haltedCanonical() || process.env.J4_HALT === '1' || fs.existsSync(path.join(STAFF_ROOT, 'bridge', 'HALT'))) {
+        out({ ok: false, code: 'halted' });
+        process.exitCode = 4;
+        break;
+      }
+      // C3T11-2: marker не створюється в довільній теці — для непорожнього журналу J4_HOME має бути вже наявним сховищем J4 або мати marker
+      // (нова установка з порожнім чи відсутнім журналом створює сховище сама). Помилка в J4_HOME не прив'язує журнал до випадкового marker-а.
+      if (fs.existsSync(ledgerFile) && fs.statSync(ledgerFile).size > 0 && !fs.existsSync(path.join(home, 'installation.json'))) {
+        const hs = inspectJ4Home(home);
+        if (!hs.ok) {
+          out({ ok: false, code: hs.reason });
+          process.exitCode = 3;
+          break;
+        }
+      }
+      const marker = new Store(home).installation();
+      if (!marker) {
+        out({ ok: false, code: 'installation-mismatch', missing: ['store-marker-missing'] });
+        process.exitCode = 3;
+        break;
+      }
+      const led = new Ledger(ledgerFile);
+      const a = led.adopt(marker.installation_id, new Date().toISOString());
+      const { entries } = led.readAll();
+      const values = { installation_id: marker.installation_id, first_hash: entries[0]?.hash ?? null, ledger_head_seq: entries.length };
+      if (a.status === 'other') {
+        out({ ok: false, code: 'ledger-bound-to-other-installation', installation_id: marker.installation_id, ledger_installation_id: a.binding.installation_id });
+        process.exitCode = 3;
+      } else if (a.status === 'already') {
+        out({ ok: true, already: true, ...values });
+      } else {
+        out({ ok: true, seq: a.record.seq, ...values });
+      }
       break;
     }
     case 'inbox': {
@@ -189,12 +236,14 @@ async function main() {
       break;
     }
     default:
-      process.stderr.write('j4 <send|submit|run [--once]|close|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
+      process.stderr.write('j4 <send|submit|run [--once]|close|adopt|inbox|escalations|resolve|budget|acceptance|verify> [опції]; див. bridge/README.md\n');
       process.exitCode = 64;
   }
 }
 
 main().catch((e) => {
-  process.stderr.write(`j4: ${e.code ?? e.message}\n`);
+  // T-0011: відмова роутера (installation-mismatch) несе причини — оператор розрізняє store-marker-missing / ledger-not-bound / ledger-binding-mismatch
+  const why = Array.isArray(e.missing) && e.missing.length ? ` [${e.missing.join(', ')}]` : '';
+  process.stderr.write(`j4: ${e.code ?? e.message}${why}\n`);
   process.exitCode = 1;
 });

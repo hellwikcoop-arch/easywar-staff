@@ -67,7 +67,9 @@ test('T-0007 S1: маршрут J3 → J5 → J3 → J5 → J3 окремими 
   assert.equal(box2.length, 2);
   assert.equal(box2[1].in_reply_to, r2.json.msg_id);
 
-  const l = sb.ledger();
+  const all = sb.ledger();
+  assert.equal(all[0].event, 'installation', 'T-0011: seq 1 журналу — прив\'язка до установки');
+  const l = all.slice(1);
   assert.deepEqual(l.map((e) => e.event), [
     'message_accepted', 'dispatch_attempt', 'reply_received', 'message_accepted', 'message_delivered',
     'message_accepted', 'dispatch_attempt', 'reply_received', 'message_accepted', 'message_delivered',
@@ -245,9 +247,10 @@ test('T-0007 S7: журнал доказів виявляє підміну за�
   assert.equal(send(sb, ['--from', 'J3', '--to', 'J5', '--intent', 'question', '--summary', 'T-0007 S7: запис для перевірки']).code, 0);
   assert.equal(verifyLedger(sb.env.J4_LEDGER).ok, true);
   const lines = fs.readFileSync(sb.env.J4_LEDGER, 'utf8').split('\n').filter(Boolean);
-  const e = JSON.parse(lines[0]);
+  assert.equal(JSON.parse(lines[0]).event, 'installation', 'T-0011: seq 1 — прив\'язка; підміняємо запис повідомлення, як і раніше');
+  const e = JSON.parse(lines[1]);
   e.from = 'JE';
-  lines[0] = JSON.stringify(e);
+  lines[1] = JSON.stringify(e);
   fs.writeFileSync(sb.env.J4_LEDGER, `${lines.join('\n')}\n`);
   const v = sb.j4('verify');
   assert.equal(v.code, 1);

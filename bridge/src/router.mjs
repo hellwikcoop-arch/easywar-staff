@@ -6,7 +6,7 @@ import path from 'node:path';
 import { PROTOCOL, validateMessage, bodyHash, sha256, canonical } from './protocol.mjs';
 import { scanObject } from './scanner.mjs';
 import { Store } from './store.mjs';
-import { Ledger } from './ledger.mjs';
+import { Ledger, ledgerBinding } from './ledger.mjs';
 import { checkSender, checkRoute, taskAccepted } from './policy.mjs';
 import { Budget, Thread } from './guards.mjs';
 import { checkLive } from './gate.mjs';
@@ -23,7 +23,13 @@ export class J4 {
     this.lim = o.config.limits.defaults;
     this.evidence = o.config.limits.evidence?.level ?? 'summary';
     this.store = new Store(o.home);
-    this.ledger = new Ledger(o.ledgerFile);
+    // T-0011 (M2, M6): пара «сховище—журнал» мусить належати одній установці. Новий журнал прив'язується до marker-а першим записом;
+    // marker, якого не прочитати, непорожній журнал без прив'язки (стара установка до adopt) і журнал іншої установки — відмова
+    // ДО будь-якого запису (код виходу CLI 1). Єдиний шлях міграції — `j4 adopt --human`.
+    const marker = this.store.installation();
+    this.installationId = marker?.installation_id ?? null;
+    this.ledger = new Ledger(o.ledgerFile, { installationId: this.installationId });
+    this.assertPairOfOneInstallation();
     this.staffRoot = o.staffRoot ?? null;
     this.contractFile = o.contractFile ?? (this.staffRoot ? path.join(this.staffRoot, 'CONTRACT_v0_4.md') : null);
     this.adapters = o.adapters ?? {};
@@ -41,6 +47,21 @@ export class J4 {
 
   nowIso() {
     return new Date(this.clock()).toISOString();
+  }
+
+  assertPairOfOneInstallation() {
+    const missing = [];
+    if (!this.installationId) missing.push('store-marker-missing');
+    let entries = null;
+    try {
+      entries = this.ledger.readAll().entries;
+    } catch {
+      return; // журнал, що не розбирається, — відмова далі за першим записом і в `j4 verify`/close (readLedgerStrict); пару тут не оцінюємо
+    }
+    const bound = ledgerBinding(entries);
+    if (!bound) missing.push('ledger-not-bound');
+    else if (this.installationId && bound.installation_id !== this.installationId) missing.push('ledger-binding-mismatch');
+    if (missing.length) throw Object.assign(new Error('installation-mismatch'), { code: 'installation-mismatch', missing });
   }
 
   halted() {
@@ -476,6 +497,7 @@ export class J4 {
       ev.ref = `j4-ledger#seq=${x.seq}`;
       ev.ledger_file = path.basename(this.ledger.file); // CONTRACT 9а.3: файл і seq; повний шлях не пишемо
       ev.ledger_hash = x.hash;
+      if (this.installationId) ev.installation_id = this.installationId; // T-0011, G2: ідентифікатор установки в кожній новій події ADM із посиланням на журнал J4
       const key = `j4:${x.hash.slice(0, 32)}`;
       try {
         const r = appendAdmEvent(this.staffRoot, taskId, ev, { key, now: this.clock() });

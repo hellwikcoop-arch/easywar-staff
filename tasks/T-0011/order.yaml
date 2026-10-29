@@ -1,0 +1,87 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ J5: tasks/T-0011/order-j5.md (проєкт-ворота з orders/T-0010-12, без змін).
+# Ворота G1–G6 вирішені JE-T12-01 п. 4 (tasks/T-0011/je-decision-T11-01.md); робота відновлена JE 2026-10-29 00:42:08 UTC.
+# Зареєстровано J3 2026-10-29 після остаточного приймання T-0012 JE (key_decision, tasks/T-0012/events.jsonl seq 9). Лише синтетичні дані.
+# Розбіжності й уточнення меж — tasks/T-0011/decisions-register.md.
+
+id: T-0011
+version: 1
+parent_task_id: T-0009
+depends_on: [T-0010, T-0012]
+title: "B2 / F-T9-18: ідентичність установки J4 — marker сховища, прив'язка журналу, звірка подій і ескалацій"
+
+intent:
+  purpose: "Унеможливити помилкове done і помилкову роботу `run` на чужій або неповній парі «сховище J4 — журнал J4»: marker, прив'язка журналу, закріплені значення JE, звірка подій ADM"
+  end_state:
+    - "`j4 close` і `run --once` відмовляють (окремі коди) на хибній, порожній, чужій, неприв'язаній або обрізаній парі; правильна пара — поведінка без змін"
+    - "нові події ADM із посиланням на журнал J4 містять і перевіряють `ledger_hash` та `installation_id`; історичні події не переписані"
+    - "міграція наявної установки без втрати історії (`adopt --human`), crash/restart і повтор безпечні; реальний `adopt` не виконано"
+    - "кожна перевірка має тест, червоний на базі, і мутант, який тест знаходить; старі тести лише посилені; C3 за diff; технічне J3; змістове J5; остаточне JE"
+  red_lines:
+    - "тільки синтетичні дані; live і платні API — заборонено; реальний `adopt`, реальний `j4 close`, `done` — заборонено"
+    - "не змінювати bridge/src/acceptance.mjs, bridge/config/**, .github/**; CONTRACT — лише §4 і 9а.3 у межах G2"
+    - "не зливати PR; PR із кодом і CI — лише за окремим дозволом JE"
+    - "автентифікація by (F-9) і особа JE (F-3) не входять; зміна моделі довіри — зупинитися й передати JE"
+    - "жодного нового значення установки не створювати в хмарній сесії як «реальне»; закріплені значення тестів — лише синтетичні"
+
+mission: "Закріпити ідентичність установки J4 (Дизайн 1) і звіряти пару «сховище—журнал» та події ADM у events.jsonl; тести, мутанти, C3"
+scope:
+  in:
+    - "bridge/src/store.mjs"
+    - "bridge/src/ledger.mjs"                  # додано прямим рішенням JE (G1, JE-T12-01 п. 4)
+    - "bridge/src/close.mjs"
+    - "bridge/src/router.mjs"
+    - "bridge/bin/j4.mjs"
+    - "bridge/test/t0011.test.mjs (новий)"
+    - "bridge/test/helpers.mjs"                # Р-Т11-1: лише спільні функції закріпленого значення
+    - "bridge/test/recovery.test.mjs"          # Р-Т11-1: наявні тести — лише посилення за spec §3.6 (індексні твердження, закріплене значення)
+    - "bridge/test/t0007.test.mjs"
+    - "bridge/test/t0009.test.mjs"
+    - "bridge/test/t0010.test.mjs"
+    - "bridge/test/t0012.test.mjs"
+    - "bridge/docs/DESIGN.md"
+    - "bridge/README.md"
+    - "CONTRACT_v0_4.md §4 і 9а.3 (по одному рядку: ledger_hash та installation_id у подіях ADM; G2)"
+    - "tasks/T-0011/**"
+    - "reports/T-0011/**"
+  out:
+    - "bridge/src/acceptance.mjs"
+    - "автентифікація by (F-9) і особа JE (F-3)"
+    - ".github/**"
+    - "bridge/config/**"
+    - "інші розділи CONTRACT_v0_4.md"
+    - "планувальник, live, платні API, реальний j4 close, реальний adopt, реальна установка"
+    - "застосунок EasyWAR"
+context_refs: ["reports/J4-HARDENING/03-spec-T-0011.md", "reports/J4-HARDENING/09-plan-T-0011.md", "reports/J4-HARDENING/07-draft-tests/t0011.draft.test.mjs", "reports/J4-HARDENING/poc/t0011-poc.patch", "tasks/T-0011/je-decision-T11-01.md", "tasks/T-0011/decisions-register.md"]
+materials: ["tasks/T-0011/order-j5.md", "tasks/T-0012/je-decision-T12-01.md", "tasks/T-0012/je-program-2026-10-28.md"]
+
+gates: ["G1 Дизайн 1 — вирішено JE", "G2 ledger_hash + installation_id у подіях ADM — вирішено JE", "G3 закріплення значень рішенням JE — вирішено; значення — від власника", "G4 межі F-9, F-3 — підтверджено", "G5 база — T-0012 прийнято JE (seq 9)", "G6 фактичні значення і реальний adopt — окреме рішення JE, відкрито"]
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: true}   # зміна моделі довіри: остаточно приймає JE
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: 180               # stub/fake-виклики, перевірка used + next ≤ 180; HALT перед прогоном, що перевищив би (JE-T12-01 п. 4)
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2              # на сценарій
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: exact
+
+reporting:
+  milestones: ["тести до змін червоні на базі", "реалізація і фільтровані прогони зелені", "контрольний SHA і рецензія C3", "технічне приймання J3", "пакет J5", "пакет JE"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: dc7828752eab1c3e68e8d450c5d0c18293fc1b59   # код, прийнятий JE (T-0012, seq 9); гілка виконання t-0011/installation-identity відгалужена від 49226f9 (лише tasks/T-0012, reports/T-0012 відрізняються)
+
+amendments: []

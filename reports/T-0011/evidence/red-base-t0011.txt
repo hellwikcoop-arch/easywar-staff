@@ -1,0 +1,72 @@
+# T-0011: тести t0011 на БАЗІ (49226f9, bridge/ без змін Дизайну 1). Дата: 2026-10-29T01:13:12Z. Синтетично; виклики адаптера: 0.
+## 1. Сирий прогін (фікстура викликає Store.installation(), якого на базі немає)
+# tests 59
+# pass 0
+# fail 59
+# skipped 0
+## 2. Прогін із шимом (.installation?.()): класифікація за поведінкою
+# tests 59
+# pass 7
+# fail 52
+# skipped 0
+### тести, що проходять на базі (контролі «поведінка без змін», характеризація залишку, порядок M11):
+ok 1 - T-0011 I1: правильна пара + закріплений id, відкрита ескалація → open-escalation (пове
+ok 2 - T-0011 I2: правильна пара + закріплений id, без ескалацій → done
+ok 24 - T-0011 I11 (ЗАЛИШОК, характеризація): знімок журналу до несинхронізованої ес�
+ok 34 - T-0011 I15: ескалацію синхронізовано і вирішено, три джерела узгоджені → done (
+ok 51 - T-0011 I17: повтор після done на правильній парі → already, без запису
+ok 53 - T-0011 N23 (M11): done є на subject + застаріла подія ADM з хибним ledger_hash → already, а не ledger-e
+ok 54 - T-0011 N31: events.jsonl, що не читається (обірваний рядок), лишається першою причин
+### тести, що падають на базі:
+not ok 3 - T-0011 I2b: закріплене значення через прапорець --installation (а не змінну середо
+not ok 4 - T-0011 N1/N4: marker створюється один раз; новий журнал починається записом instal
+not ok 5 - T-0011 N1b: Store.open (лише читання) marker не створює і сліду в теці не лишає
+not ok 6 - T-0011 N2/N3: marker не JSON, масив, id 31 символ, великі літери, невідомий format, тека з
+not ok 7 - T-0011 N2b: зіпсований marker не переписується мовчки, а `run --once` на ньому відмо�
+not ok 8 - T-0011 N5: журнал, чий seq 1 — не installation (стара установка без прив'язки) → ledger-n
+not ok 9 - T-0011 N25: суперечливі прив'язки (seq 1 installation і пізніший installation_adopted іншої ус
+not ok 10 - T-0011 I3: без закріпленого значення → installation-unknown[pinned], нічого не записано
+not ok 11 - T-0011 I3b: бібліотечний closeTask без installationId → installation-unknown[pinned] (значення за з�
+not ok 12 - T-0011 I4/N10: закріплене значення хибного формату (not-an-id, великі літери, 31 с�
+not ok 13 - T-0011 I9: закріплено чужий id для правильної пари → відмова (помилка в ріш�
+not ok 14 - T-0011 I5: хибна наявна ціла пара (інша установка) при відкритій ескалації 
+not ok 15 - T-0011 I6: чужий J4_HOME без marker-а (лише тека escalations) → store-marker-missing; close marker у чуж�
+not ok 16 - T-0011 I7: правильний J4_HOME, чужий журнал → ledger-binding-mismatch
+not ok 17 - T-0011 I8: чужий J4_HOME, правильний журнал → store-marker-mismatch
+not ok 18 - T-0011 N11: run --once із журналом, прив'язаним до іншої установки → код 1, журна�
+not ok 19 - T-0011 N11b: run --once після втрати marker-а (журнал прив'язаний, сховище нове) → ко
+not ok 20 - T-0011 N11c: run --once на правильній парі → код 0 (контроль), прив'язка й ланцюг ц
+not ok 21 - T-0011 N27 (неповна пара): marker є, журнал непорожній без прив'язки → run --once і cl
+not ok 22 - T-0011 I10/N14: журнал обрізано до запису установки, ескалація лишилась у сх�
+not ok 23 - T-0011 N14b: open-ескалація у сховищі, якої журнал не знає, і без обрізання → in
+not ok 25 - T-0011 N8: --ledger-min-seq більше за довжину обрізаного журналу → installation-mismatch[ledge
+not ok 26 - T-0011 I12: ескалацію синхронізовано в events.jsonl, журнал обрізано, сховище по�
+not ok 27 - T-0011 I13: ledger_hash події не збігається із записом N (підмінений журнал тієї �
+not ok 28 - T-0011 I14 (G2): подію синхронізовано з installation_id і ledger_hash; installation_id іншої уста�
+not ok 29 - T-0011 N28 (G2): подія після прив'язки без installation_id → ledger-events-mismatch[installation-id-missi
+not ok 30 - T-0011 N30 (G2): подія з ref на журнал J4 без ledger_hash → ledger-events-mismatch
+not ok 31 - T-0011 N13: подія escalation посилається на запис N, що не escalation_raised з тим самим id 
+not ok 32 - T-0011 N13b: подія report_filed посилається на запис журналу іншого виду (escalation_rai
+not ok 33 - T-0011 N15: подія з ref на запис, якого в журналі немає (seq 99 при коротшому жур�
+not ok 35 - T-0011 N12: дві ескалації синхронізовано й вирішено; report_filed і escalation несуть 
+not ok 36 - T-0011 N6: правильний ledger_first_hash і ledger_min_seq (рівний довжині) → без змін (done)
+not ok 37 - T-0011 N7: ledger_first_hash іншого журналу → installation-mismatch[ledger-first-hash-mismatch]
+not ok 38 - T-0011 N9: ledger_min_seq не додатне ціле і ledger_first_hash хибного формату → installation-unkno
+not ok 39 - T-0011 N17: marker є, журнал порожній (збій між marker-ом і seq 1) → наступні роутери 
+not ok 40 - T-0011 N24: збій посеред запису seq 1 (у журналі лише обірваний перший рядок) �
+not ok 41 - T-0011 N26: обірваний рядок після seq 1 → роутер стартує, repairIfNeeded дописує ledger
+not ok 42 - T-0011 I18: стара установка (без marker-а, журнал без прив'язки) → відмова; adopt --
+not ok 43 - T-0011 I18b: adopt на порожньому журналі пише installation seq 1 (не installation_adopted)
+not ok 44 - T-0011 I19/N21: adopt повторно → already і журнал не росте; adopt журналу іншої устано
+not ok 45 - T-0011 N21b: два adopt поспіль на старій установці → перший приєднує, другий al
+not ok 46 - T-0011 N16: adopt на журналі з обірваним останнім рядком → відмова, журнал не 
+not ok 47 - T-0011 N20: adopt без --human → помилка використання, нічого не записано (ні marker-а
+not ok 48 - T-0011 N20b: adopt під стоп-краном (J4_HALT=1) → code halted, код 4, нічого не записано
+not ok 49 - T-0011 N22: запис installation_adopted, перенесений в інший журнал (first_hash не збігаєть
+not ok 50 - T-0011 N29 (G2): після adopt події, чиї записи журналу передують прив'язці, чинн�
+not ok 52 - T-0011 I16: повтор після done на чужій парі → installation-mismatch, а не already
+not ok 55 - T-0011 N18/N19: порожній список журналу в бібліотеці й порожній файл журналу
+not ok 56 - T-0011 N32: закріплений id, що збігається з marker-ом майже повністю (той самий �
+not ok 57 - T-0011 N33: межа ledger_min_seq — рівний довжині журналу проходить, довжина + 1 → le
+not ok 58 - T-0011 N16b: adopt на вже прив'язаному журналі з обірваним останнім рядком → в
+not ok 59 - T-0011 N34: закріплене значення — прапорець старший за змінну середовища (

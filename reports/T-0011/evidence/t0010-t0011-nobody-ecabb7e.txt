@@ -1,0 +1,8 @@
+# T-0011: t0010 + t0011 від користувача nobody (A4 і A5 виконуються лише не під root), копія ecabb7e (git archive); TMPDIR власний; лічильник dispatch_attempt = 0
+# Дата: 2026-10-29T01:45:51Z
+# tests 78
+# pass 78
+# fail 0
+# cancelled 0
+# skipped 0
+# dispatch_attempt=0

@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { J4 } from '../src/router.mjs';
+import { Store } from '../src/store.mjs';
+import { Ledger } from '../src/ledger.mjs';
 import { loadConfig, BRIDGE_DIR } from '../src/policy.mjs';
 import { sha256, PROTOCOL } from '../src/protocol.mjs';
 
@@ -57,6 +59,19 @@ export function makeJ4(root, { adapters = {}, limits = {}, evidence, env = {}, h
     hooks,
     now,
   });
+}
+
+// T-0011: закріплене значення установки тестового сховища (marker J4_HOME/installation.json) або undefined, якщо сховища ще немає.
+// Лише для тестів: у справжній роботі значення закріплює рішення JE (G3), а не marker, прочитаний з того самого сховища.
+export function pinnedId(root) {
+  return Store.open(path.join(root, '.j4')).installation()?.installation_id;
+}
+
+// T-0011: створює сховище J4 і журнал, прив'язаний до його установки (як роутер), у тестовому корені; повертає закріплене значення.
+export function installJ4(root) {
+  const id = new Store(path.join(root, '.j4')).installation().installation_id;
+  new Ledger(path.join(root, 'ledger.jsonl'), { installationId: id });
+  return id;
 }
 
 export function ledgerEntries(root) {

@@ -1,0 +1,7 @@
+# T-0011: t0010 від користувача nobody (A4 і A5 виконуються лише не під root), копія 0610635 (git archive); TMPDIR власний
+# Дата: 2026-10-29T01:20:32Z
+# tests 12
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0

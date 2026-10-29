@@ -36,8 +36,12 @@ test('J3 → J5 через J4: автоматична відповідь і до
   assert.equal(reply.hop, 1);
 
   const kinds = ledgerEntries(root).map((e) => e.event);
-  assert.deepEqual(kinds, ['message_accepted', 'dispatch_attempt', 'reply_received', 'message_accepted', 'message_delivered']);
-  const [accReq, , got, accRep] = ledgerEntries(root);
+  // T-0011: перший запис журналу — прив'язка до установки сховища J4 (seq 1)
+  assert.deepEqual(kinds, ['installation', 'message_accepted', 'dispatch_attempt', 'reply_received', 'message_accepted', 'message_delivered']);
+  const [bind, accReq, , got, accRep] = ledgerEntries(root);
+  assert.equal(bind.seq, 1);
+  assert.match(bind.detail.installation_id, /^[0-9a-f]{32}$/);
+  assert.equal(bind.detail.installation_id, JSON.parse(fs.readFileSync(path.join(root, '.j4', 'installation.json'), 'utf8')).installation_id, 'запис прив\'язки збігається з marker-ом сховища');
   assert.equal(accReq.msg_id, sent.msg_id);
   assert.equal(accReq.body_sha256.length, 64);
   assert.equal(got.detail.mode, 'stub');

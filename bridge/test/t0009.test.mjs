@@ -15,7 +15,7 @@ import { appendAdmEvent, readTaskEvents } from '../src/events.mjs';
 import { closeTask, orderGate } from '../src/close.mjs';
 import { Store } from '../src/store.mjs';
 import { Ledger } from '../src/ledger.mjs';
-import { tmpStaff, draft, makeJ4, openEscalations, events as ledgerEvents, SHA_A, SHA_B } from './helpers.mjs';
+import { tmpStaff, draft, makeJ4, openEscalations, events as ledgerEvents, pinnedId, installJ4, SHA_A, SHA_B } from './helpers.mjs';
 
 const CLI = path.join(BRIDGE_DIR, 'bin', 'j4.mjs');
 const TICK = path.join(BRIDGE_DIR, 'bin', 'j4-tick.sh');
@@ -48,9 +48,10 @@ function fullAcceptance(root, subject = SHA_A) {
   addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject, result: 'accepted', scope: 'full', ref: 'b' });
 }
 
+// T-0011: закріплене значення установки береться з marker-а тестового сховища (якщо воно вже є); хост-змінні закріплення не просочуються в тест
 function cliEnv(root, extra = {}) {
-  const env = { ...process.env, J4_STAFF_ROOT: root, J4_HOME: path.join(root, '.j4'), J4_LEDGER: path.join(root, 'ledger.jsonl'), J4_MONTHLY_BUDGET: path.join(root, 'monthly.json'), ...extra };
-  for (const k of ['J4_HALT', 'J4_ALLOW_LIVE', 'J4_APPROVAL', 'J4_TASK_EVENTS']) if (!(k in extra)) delete env[k];
+  const env = { ...process.env, J4_STAFF_ROOT: root, J4_HOME: path.join(root, '.j4'), J4_LEDGER: path.join(root, 'ledger.jsonl'), J4_MONTHLY_BUDGET: path.join(root, 'monthly.json'), ...(pinnedId(root) ? { J4_INSTALLATION_ID: pinnedId(root) } : {}), ...extra };
+  for (const k of ['J4_HALT', 'J4_ALLOW_LIVE', 'J4_APPROVAL', 'J4_TASK_EVENTS', 'J4_LEDGER_FIRST_HASH', 'J4_LEDGER_MIN_SEQ']) if (!(k in extra)) delete env[k];
   return env;
 }
 
@@ -68,12 +69,16 @@ function cli(root, args, extra) {
 const adapterCalls = (root) => ledgerEvents(root, 'dispatch_attempt').length;
 
 // Справжні (порожні) сховище й журнал J4 у тимчасовому сховищі: close вимагає, щоб обидва існували й читались.
-const prepareJ4 = (root) => {
-  new Store(path.join(root, '.j4'));
-  new Ledger(path.join(root, 'ledger.jsonl'));
+const prepareJ4 = (root) => { installJ4(root); }; // T-0011: журнал прив'язаний до установки сховища (marker + запис installation)
+// T-0011: інша тека «J4_HOME» тієї самої установки (marker скопійовано), без ескалацій — щоб перевіряти звірку ескалацій, а не ідентичність
+const sameInstallationHome = (root, dir) => {
+  fs.mkdirSync(dir, { recursive: true });
+  fs.copyFileSync(path.join(root, '.j4', 'installation.json'), path.join(dir, 'installation.json'));
+  return new Store(dir);
 };
 // Обидва джерела ескалацій J4 для бібліотечного closeTask (store і ledgerEntries обов'язкові).
-const src = (root) => ({ store: new Store(path.join(root, '.j4')), ledgerEntries: new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries });
+// T-0011: пара «сховище — журнал» однієї установки (installJ4 ідемпотентний) і закріплене значення; чужа чи неповна пара — окремі тести t0011
+const src = (root) => ({ installationId: installJ4(root), store: new Store(path.join(root, '.j4')), ledgerEntries: new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries });
 
 // ---------- B. Події ADM у events.jsonl ----------
 
@@ -390,10 +395,14 @@ test('T-0009 C5: ескалація з журналу J4 видна при по�
   const ledgerEntries = () => new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries;
   const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'j4-clone-'));
   fs.cpSync(root, clone, { recursive: true });   // контроль на копії: без журналу J4 ескалація невидима
-  const elsewhere = new Store(path.join(root, 'other-home'));   // «інший J4_HOME»: ескалацій у ньому немає
-  const close = () => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref, store: elsewhere, ledgerEntries: ledgerEntries() });
+  const elsewhere = sameInstallationHome(root, path.join(root, 'other-home'));   // «інший J4_HOME» тієї ж установки: ескалацій у ньому немає
+  const close = () => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref, store: elsewhere, ledgerEntries: ledgerEntries(), installationId: pinnedId(root) });
   assert.equal(close().code, 'open-escalation');
-  assert.equal(closeTask({ staffRoot: clone, taskId: T, subject: SHA_A, checksRef: ref, store: new Store(path.join(clone, 'other-home')), ledgerEntries: [] }).ok, true, 'з порожнім списком журналу така ескалація невидима — тому CLI читає журнал суворо (C6/C7)');
+  // T-0011 (Р-Т11-1): порожній список журналу раніше робив ескалацію невидимою (ok:true) — тепер це непривʼязаний журнал, і close відмовляє до звірки ескалацій
+  const blind = closeTask({ staffRoot: clone, taskId: T, subject: SHA_A, checksRef: ref, store: sameInstallationHome(clone, path.join(clone, 'other-home')), ledgerEntries: [], installationId: pinnedId(clone) });
+  assert.equal(blind.ok, false, 'з порожнім списком журналу ескалація невидима — close має відмовити, а не закрити');
+  assert.equal(blind.code, 'installation-mismatch');
+  assert.deepEqual(blind.missing, ['ledger-not-bound']);
   assert.deepEqual(closeTask({ staffRoot: clone, taskId: T, subject: SHA_A, checksRef: ref, store: new Store(path.join(clone, 'other-home')) }).missing, ['ledgerEntries'], 'бібліотека не приймає виклик без журналу J4');
   assert.deepEqual(closeTask({ staffRoot: clone, taskId: T, subject: SHA_A, checksRef: ref, ledgerEntries: [] }).missing, ['store'], 'і без сховища J4');
   const esc = openEscalations(root)[0];
@@ -428,7 +437,7 @@ test('T-0009 C6: CLI передає журнал J4 у перевірку еск
   const j4 = makeJ4(root, { adapters: {} });
   j4.submit(draft(root, { decision_level: 'C' }), { origin: 'agent_cli' });
   const other = path.join(root, 'other-home');
-  assert.deepEqual(new Store(other).list('escalations'), [], 'інше сховище J4 порожнє: ескалації в ньому немає');
+  assert.deepEqual(sameInstallationHome(root, other).list('escalations'), [], 'інше сховище J4 тієї ж установки порожнє: ескалації в ньому немає');
   const args = ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref];
   const blocked = cli(root, args, { J4_HOME: other });
   assert.equal(blocked.code, 3, blocked.stderr);
@@ -515,10 +524,19 @@ test('T-0009 C7: j4 close відмовляє без запису, якщо жу�
   refused(t7, 'home-not-j4-store', { J4_HOME: plain });
   assert.deepEqual(fs.readdirSync(plain), [], 'і не наповнює чужу теку');
 
-  // порожній, але справжній журнал і сховище — це читний стан, а не відмова
+  // T-0011 (Р-Т11-1): файл журналу, усічений до нуля, — журнал без прив'язки: відмова installation-mismatch, а не «читний порожній стан»
   const t8 = base();
   fs.writeFileSync(t8.file, '');
-  assert.equal(cli(t8.root, t8.args).code, 0);
+  const r8 = cli(t8.root, t8.args);
+  assert.equal(r8.code, 3, r8.stderr);
+  assert.equal(r8.json.code, 'installation-mismatch');
+  assert.deepEqual(r8.json.missing, ['ledger-not-bound']);
+  assert.equal(taskEvents(t8.root).filter((e) => e.event === 'state_changed').length, 0, 'done не записано');
+
+  // порожній, але справжній журнал (лише запис прив'язки seq 1) і сховище — це читний стан, а не відмова
+  const t9 = base();
+  fs.writeFileSync(t9.file, `${lines(t9.file)[0]}\n`);
+  assert.equal(cli(t9.root, t9.args).code, 0);
 });
 
 test('T-0009 C8: F-T9-13/14/17 — «not passed», порожній відбір і SHA лише в cmd не є доказом; кілька verify: — відмова; ескалація без id має читну мітку', () => {
