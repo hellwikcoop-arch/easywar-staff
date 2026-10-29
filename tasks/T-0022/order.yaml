@@ -1,0 +1,8 @@
+# Наказ T-0022 — Sync MVP / S1 «Колектив (демо)» за ресурсним рішенням JE 29.10.2026 ≈20:20 (Київ). Записано J3 (ручний режим ADM).
+id: T-0022
+version: 1
+title: "Sync MVP / S1 — «Колектив (демо)»: два ізольовані клієнти в пам'яті на ядрах C1"
+resources: {J3_max_calls: 90, J3_includes_first_report: 7, C3_max_calls: 15, w1_budget_used: false, paid_api: 0, report_at: 63, halt_at: 90, accuracy: estimate}
+red_lines: ["лише пам'ять: без LAN, команд Tauri, профілів, бази, localStorage", "без інсталяторів", "ядра C1 не дублювати", "злиття лише після C3/J3/J5 і дозволу JE"]
+acceptance_criterion: "JE відкриває «Колектив (демо)», виконує «Доповісти» → «Звірити», бачить зміну в таблиці й дашборді, перевіряє дублі, конфлікти, право запису"
+base: {easywar_main: 15402b2b80304f1304d8400e88b5d8114d403570}
