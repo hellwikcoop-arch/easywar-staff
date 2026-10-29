@@ -4,11 +4,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export class Store {
-  constructor(home) {
+  // create: false — сховище лише для читання (Store.open): підтек не створює, запис і замки відхиляє (T-0010, F-T9-20).
+  constructor(home, { create = true } = {}) {
     this.home = path.resolve(home);
-    for (const d of ['queue', 'messages', 'spool', 'threads', 'inbox', 'escalations', 'budget']) {
-      fs.mkdirSync(path.join(this.home, d), { recursive: true, mode: 0o700 });
+    this.readOnly = !create;
+    if (create) {
+      for (const d of ['queue', 'messages', 'spool', 'threads', 'inbox', 'escalations', 'budget']) {
+        fs.mkdirSync(path.join(this.home, d), { recursive: true, mode: 0o700 });
+      }
     }
+  }
+
+  // Відкриває наявну теку лише для читання: нічого не створює, `j4 close` не залишає слідів у чужому J4_HOME.
+  static open(home) {
+    return new Store(home, { create: false });
+  }
+
+  assertWritable() {
+    if (!this.readOnly) return;
+    const err = new Error('store-read-only');
+    err.code = 'store-read-only';
+    throw err;
   }
 
   p(...parts) {
@@ -16,10 +32,12 @@ export class Store {
   }
 
   locked(name, fn) {
+    this.assertWritable();
     return withFileLock(this.p(`${name}.lock`), fn);
   }
 
   writeJson(rel, obj) {
+    this.assertWritable();
     const file = this.p(rel);
     fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
     const tmp = `${file}.tmp-${process.pid}`;
@@ -40,20 +58,25 @@ export class Store {
     return fs.existsSync(this.p(rel));
   }
 
+  // Відсутня тека — порожній список; будь-яка інша помилка читання (EACCES, ENOTDIR, ELOOP, EIO) — виняток:
+  // «не вдалося прочитати» не має виглядати як «ескалацій немає» (T-0010, F-T9-19).
   list(dir) {
     try {
       return fs.readdirSync(this.p(dir)).filter((f) => f.endsWith('.json')).sort();
-    } catch {
-      return [];
+    } catch (e) {
+      if (e.code === 'ENOENT') return [];
+      throw e;
     }
   }
 
   remove(rel) {
+    this.assertWritable();
     fs.rmSync(this.p(rel), { force: true });
   }
 
   // Ексклюзивний замок обробника. Застарілий замок (мертвий процес або старший за staleMs) перехоплюється.
   acquireLock(staleMs, now = Date.now()) {
+    this.assertWritable();
     const file = this.p('lock');
     const mine = { pid: process.pid, at: now };
     try {
@@ -76,6 +99,7 @@ export class Store {
   }
 
   releaseLock() {
+    this.assertWritable();
     const file = this.p('lock');
     try {
       const held = JSON.parse(fs.readFileSync(file, 'utf8'));

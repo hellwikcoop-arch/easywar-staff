@@ -1,0 +1,41 @@
+# T-0010: підсумковий стан після змістового висновку J5; запит до JE на відкриття PR.
+task_id: T-0010
+from: J3
+to: JE
+cc: [J5]
+control_sha: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3
+base_sha: efe03c959107856f2536771ae5c023f1e007e7be
+branch: t-0010/stabilization      # запушено; PR немає; CI-запусків немає
+
+status:
+  c3: "passed на 96ff45a (раунд 2), обов'язкових 0"
+  technical_J3: "accepted (подія 13)"
+  content_J5: "CONTENT ACCEPTED — LIMITED SCOPE (подія 14, report_filed); подію acceptance з result accepted не створено за п. 5 висновку J5"
+  barrier_done: "закритий: acceptance-J5-content-missing (суха перевірка на копії); done не встановлювався; реальний j4 close не запускався"
+  pr: "не відкрито — потрібен окремий дозвіл JE"
+  ci: "не запускався"
+
+accounting: {used: 96, local_J3: 96, c3: 0, ci: 0, limit: 150, remaining: 54, paid_api_calls: 0, network_calls: 0, forecast_CI1: "144 з 150 (estimate)"}
+
+je_request:
+  id: JE-REQ-T10-1
+  question: "Дозволити відкриття ОДНОГО стекового draft PR T-0010 (t-0010/stabilization → t-0009/j4-automation) без злиття й одну подію CI (≈48 викликів, разом 144 з 150)?"
+  recommended_by: J5 (висновок п. 6)
+  options:
+    - id: A
+      label: "Дозволити (рекомендація J5)"
+      then_J3: "перевірити, що гілка запушена й дерево чисте; відкрити чернетку PR через REST API (GraphQL у сеансі недоступний); у тілі PR — контрольний SHA, база, тести, C3, облік, відкладені ризики R-10…R-12 і заборони; не зливати; після відкриття — жодних push, close/reopen, workflow_dispatch; результат CI записати коментарем у PR"
+      risk: "збій CI (середовище, Node, тести A4/A5 під не-root) без push і без запасу бюджету (6) виправити в межах T-0010 не можна — потрібне нове рішення JE"
+    - id: B
+      label: "Не відкривати зараз"
+      then_J3: "гілка лишається запушеною без PR і без CI; бюджет 96 з 150 збережено; PR — після нового рішення JE"
+    - id: C
+      label: "Інша база PR (setup/staff-bootstrap)"
+      note: "не рекомендовано: різниця охопить усі зміни T-0009 понад T-0010; J5 рекомендує t-0009/j4-automation"
+  other_open_decisions:
+    - "SCOPE-1: безпечна форма запису часткового змістового приймання J5 (щоб не відкривати загальний бар'єр done); потрібно до будь-якого j4 close"
+    - "наступне виправлення R-11 (F-T10-11, пріоритетний) разом із F-T9-16/SCOPE-1 (T-0012) або окреме завдання: scope.in і бюджет — J5, затвердження — JE"
+
+done_by_J3_this_step: ["записано частковий висновок J5 дослівно (tasks/T-0010/j5-conclusion-T10.md) і подію 14", "уточнення наказу order-j5.md розд. 7 (run --once код 1, fail-closed, R-10…R-12, приймання, PR)", "прогноз CI у calls-ledger.yaml#forecast_before_CI1", "суха перевірка бар'єра: J5 content лишається нестачею"]
+not_done: ["PR не створено", "CI не запускався", "done не встановлювався", "T-0011 і T-0012 не реалізовувались і не змінювались (чернетки в orders/T-0010-12)", "runbook T-0009 — чернетка; подія 25 T-0009 відкладена"]
+open_risks: "R-10, R-11 (пріоритетний), R-12; F-T9-15, F-T9-16, F-T9-18, SCOPE-1, F-9, F-3"
