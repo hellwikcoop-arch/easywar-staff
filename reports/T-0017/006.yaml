@@ -1,0 +1,25 @@
+# Висновок C3 (рецензія №4: лише коміт злиття main у PR #180) за T-0017, CONTRACT_v0_4.md розділ 18. Read-only. Лише синтетичні дані.
+# Записав J3 за змістом підсумку рецензента (без транскрипту і проміжних виводів).
+task_id: T-0017
+task_version: 3
+report_no: 6
+by: C3
+recorded_by: J3
+at: 2026-10-29T13:22:00+00:00
+route: "J4 M-T-0017-0003 (TH-T-0017-003), inbox C3, dispatch_attempt 0 (0 USD); рецензент — окрема незалежна сесія Claude без контексту J3; автентифікації ролі C3 немає (F-9)"
+brief: tasks/T-0017/c3-merge-brief.md
+review_status: complete
+verdict: passed
+subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4
+parents: [9ea099433f83088fb97d04c6a0521e3379446fa0, 649b6e225835eca4a49ea22e5136094ac70eff7c]
+merge_base: a1761880a3ac1dcff4c675f9a6a0f1188dcbf116
+resources: {files_read_count: 1, max_read_files: 5, tool_calls: 5, max_calls: 10, attempts: 1}
+files_read: [tasks/T-0017/c3-merge-brief.md]
+items:
+  - {id: 1, result: confirmed, evidence: "git show --cc 70bade5: єдиний combined-hunk у src-tauri/src/lib.rs (рядки 2–8), обидва рядки pub mod collective і pub mod dashboard_layout збережено; дублікатів mod і записів generate_handler! (109) немає; get/save_dashboard_layout присутні; маркерів конфлікту 0"}
+  - {id: 2, result: confirmed, evidence: "git diff 9ea0994 70bade5 по collective/, ADR, чеклісту, векторах і фікстурі — 0 рядків"}
+  - {id: 3, result: confirmed, evidence: "a1761880..9ea0994 і 649b6e2..70bade5: ті самі файли, 0 розбіжностей у рядках +/-"}
+  - {id: 4, result: confirmed, evidence: "a1761880..649b6e2 і 9ea0994..70bade5: ті самі файли, 0 розбіжностей у рядках +/-; --cc показує лише злиття списку модулів у lib.rs"}
+findings: []
+not_checked: "збірку, тести, fmt і clippy рецензент не запускав (бриф не дозволяє); їх виконав J3 на тотожному дереві 33f71fc (seq 23), CI — окремо"
+summary: "Коміт злиття 70bade5 лише об'єднує список модулів у lib.rs; дерево C2 тотожне 9ea0994; вміст PR проти main не змінився; зайвих правок немає. Висновок стосується лише злиття: G12 не закриває, G06/J3/J5 не замінює, merge #180 не дозволяє."
