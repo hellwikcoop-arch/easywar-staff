@@ -305,3 +305,485 @@
       - "Не читав scanner.mjs, events.mjs, policy.mjs, bridge/config/**, order-j5.md, 09-plan, 05-experiments, t0006 F-4, t0009 base()/C7 повністю. Ризик, що scanObject колись відхилить випадковий 32-hex installation_id і назавжди заблокує конструктор (ledger-leak), не оцінив. Практично малий: сотні маркерів у прогонах і мутантах без збою. Варто один раз проганяти 10^5 випадкових id через scanObject."
       - "Чи інші модулі, крім router.mjs, викликають repairIfNeeded (C3T11-3), не перевіряв."
       - "CONTRACT: перевірив лише, що змінено §4 і 9а.3 двома рядками. Не перевіряв, чи sha256 контракту де-небудь закріплений (config/політики) і чи зміна сумісна з наявними повідомленнями."
+- seq: 2
+  by: J3
+  responds_to: seq 1 (раунд 1, subject 061063598d49c6584e1e6b6c7328fce1948fd8b9)
+  fixed_in: ecabb7e9f04b86229a352df64c3a5e088c3645ea
+  note: "Реакція J3 (не рецензія): що зроблено за кожним finding-ом раунду 1; перевірка виправлень — раунд 2 (seq 3). Реєстр: tasks/T-0011/decisions-register.md Р-Т11-20…23."
+  dispositions:
+    C3T11-1: "прийнято (mandatory): DESIGN розд. 20 переписано — прив'язку не змінити без перерахунку хвоста від її запису; ledger_first_hash виявляє лише підміну seq 1 або повну заміну журналу, не перепис хвоста чи installation_adopted у голові; закріплені значення публічні, ловить лише M7 і лише для синхронізованих подій; свіжий порожній журнал при тому самому marker-і проходить без --ledger-first-hash/--ledger-min-seq. Характеризаційні тести N37, N38"
+    C3T11-2: "прийнято, код: adopt для непорожнього журналу без marker-а у J4_HOME вимагає сховища J4 (inspectJ4Home) — інакше home-not-j4-store/home-unreadable (код 3), нічого не створюється; тест N35, мутант M36. Dry-run не додано (за рішенням JE); ручне відновлення описано в DESIGN"
+    C3T11-3: "документовано: ручна процедура для непривʼязаного журналу з обірваним хвостом; питання J5/JE — чи дозволити adopt викликати repairUnlocked (Р-Т11-22)"
+    C3T11-4: "документовано: store-ledger-escalation-unknown може бути тимчасовим або наслідком збою між двома записами escalate(); дія — повторити close/resolve"
+    C3T11-5: "прийнято, код: main().catch друкує missing відмови роутера; тести N2b/N11/N11b/N27, мутант M37"
+    C3T11-6: "прийнято, тести+мутанти: пробіл/табуляція/\\n навколо id і first_hash, '007', '5\\n', '1 ', '+1' (I4/N10, N9); N13c (msg_id); M26 (reconcile до already), M27 (pinned до events), M28, M31–M33; замок журналу покрито детерміновано (N39 — замок живого pid, M29/M30) замість недетермінованої гонки; F-4 у RUNS не додано"
+    C3T11-7: "прийнято: G1–G5 вирішені, G6 відкрито; 66 тестів; 52 червоні на базі + 7 контролів; crash/restart — N17, N24, N26 (Р-Т11-23)"
+    C3T11-8a: "прийнято, код: marker пишеться з fsync до link"
+    C3T11-8b: "документовано, кодом не змінено: роутер створює новий marker при втраті старого; відновлення installation.json вручну (Р-Т11-22)"
+    C3T11-9: "прийнято, код: installation() приймає лише звичайний файл (lstat); тест N2c, мутант M34"
+    C3T11-10: "документовано, кодом не змінено: вимога валідного ref для подій by:ADM і порівняння task_id — за рішенням J5/JE"
+    C3T11-11: "лишається питанням до JE (Р-Т11-1/19): e2e.test.mjs і t0006.test.mjs поза буквальним scope.in; amendments: [] не змінювався J3"
+    C3T11-12: "прийнято, README: коди adopt, причини відмов, порядок розгортання (спершу рішення JE про adopt)"
+    C3T11-13: "документовано: неатомарне скорочення в bindIfEmpty, вартість старту"
+    scanner_finding: "випадковий installation_id міг би збігтися з ops.phone_ua (≈ 3,6·10⁻⁶) і назавжди блокувати запис прив'язки ledger-leak — newInstallationId перегенеровує id; тест N36, мутант M35"
+  evidence_after: "повний прогін №3 на ecabb7e: 212 тестів, 210 pass, 0 fail, 2 skipped (під root); від nobody t0010+t0011 78/78, skipped 0; мутанти 37/37; використано 153/180 (reports/T-0011/calls-ledger.yaml)"
+- seq: 3
+  round: 2
+  subject: ecabb7e9f04b86229a352df64c3a5e088c3645ea
+  requested_at: "2026-10-29T01:48:00Z"
+  received_at: "2026-10-29T01:58:30Z"
+  mandatory: 0
+  optional: 3
+  notes: 5
+  verdict: passed
+  review_status: complete
+  note_j3: "Раунд 2 — той самий незалежний read-only рецензент (агент, контекст раунду 1 збережено) за дельтою 0610635..ecabb7e; тестів не запускав. Реакція J3 і раунд 3 (лише документація, коміт 3c87dd0) — seq 4."
+  c3_report_verbatim: |
+    review_status: complete
+    subject: ecabb7e9f04b86229a352df64c3a5e088c3645ea
+    files_read:
+      # Повністю (5)
+      - reports/T-0011/c3-review.yaml                 # раунд 1
+      - bridge/src/store.mjs
+      - bridge/src/ledger.mjs
+      - bridge/src/scanner.mjs
+      - bridge/bin/j4.mjs
+      # Частково (5)
+      - bridge/docs/DESIGN.md                         # рядки 307–354 (розд. 20 повністю)
+      - bridge/src/close.mjs                          # 80–104 (inspectJ4Home), 318–473 (readLedgerStrict, pinnedProblems, checkInstallation, reconcileEvents, closeTask)
+      - bridge/src/router.mjs                         # 15–74 (конструктор, assertPairOfOneInstallation)
+      - bridge/test/t0011.test.mjs                    # 30–150 (фікстури) + дельта
+      - tasks/T-0011/order.yaml                       # 27–42 + grep (gates, amendments)
+      # Лише grep або git show: README.md, reports/T-0011/mutants.yaml@ecabb7e, evidence/full-run-3-ecabb7e.txt, evidence/t0010-t0011-nobody-ecabb7e.txt
+      # Дельта: scratchpad/c3-t0011-r2/1…5 (не входять у ліміт)
+      # Інше: git diff/show/log (лише читання), node --check для 7 файлів (OK). Тестів і скриптів не запускав.
+
+    round1_dispositions:
+      - id: C3T11-1
+        status: fixed
+        evidence: >
+          DESIGN:315 тепер каже, що прив'язку не змінити без перерахунку хвоста від цього запису. Там же: ledger_first_hash ловить лише підміну
+          seq 1 або повну заміну журналу, а перепис хвоста й перепис installation_adopted у голові НЕ ловить. Це звірено з ledger.mjs:165
+          (`adopted.filter(e => e.detail.first_hash === first.hash)`) і close.mjs:376.
+          DESIGN:337: закріплені значення публічні, підробляти середовище close не треба, ловить лише M7 і лише для синхронізованих подій.
+          DESIGN:340: свіжий порожній журнал при тому самому marker-і (N37). Це звірено з ledger.mjs:19,22 (bindIfEmpty) і close.mjs:376-377.
+          DESIGN:341 — випадок N38. G4 сформульовано прямо (DESIGN:336: «Не автентифікує `by`, `--human` і особу JE», F-9/F-3 відкриті).
+          Характеризаційні тести N37 (t0011:721) і N38 (t0011:734) відтворюють саме ці обходи.
+          Залишкові неточності тексту — у C3T11-R2-1 (optional).
+      - id: C3T11-2
+        status: fixed
+        evidence: >
+          j4.mjs:171-180. Якщо журнал непорожній, а файла marker-а немає, перед `new Store(home)` викликається inspectJ4Home (close.mjs:88-103,
+          ознака — тека `escalations`). Інакше `{code: home-not-j4-store|home-unreadable}`, вихід 3, і нічого не створюється.
+          Тест N35 (t0011:684): тека не створена, порожня тека лишилась порожньою, журнал не змінено. Контролі: старе сховище без marker-а
+          приєднується; нова установка (порожній журнал і відсутня тека) створюється. Мутант M36 убито саме N35.
+          Легітимні сценарії не зламані: старе сховище завжди має `escalations` (Store:30); порожній чи відсутній журнал перевірку оминає.
+          Dry-run свідомо не додано (DESIGN:328). Залишки (хибний J4_LEDGER, прив'язаний журнал із загубленим marker-ом) — C3T11-R2-2.
+      - id: C3T11-3
+        status: documented_ok
+        evidence: >
+          DESIGN:330 (1) описує ручну процедуру: резервна копія, відрізати хвіст після останнього \n, розмір і sha256 у нотатку JE, потім adopt.
+          Питання J5/JE про виклик repairUnlocked із adopt записане; README:36 посилається на неї. Кодом не змінено, тесту на «вихід» немає
+          (так і заявлено, Р-Т11-22).
+      - id: C3T11-4
+        status: documented_ok
+        evidence: >
+          DESIGN:342 описує, що store-ledger-escalation-unknown буває тимчасовим або є наслідком збою між двома записами escalate()
+          (сховище пишеться раніше за журнал). Дія — повторити close або resolve. Відрізнити від чужої пари можна за відсутністю
+          store-marker-mismatch / ledger-binding-mismatch. Це збігається з close.mjs:454 і порядком читання в j4.mjs:144→152.
+      - id: C3T11-5
+        status: fixed
+        evidence: >
+          j4.mjs:244-248 друкує `[${e.missing.join(', ')}]`. Єдине джерело винятку з `missing` — router.mjs:64, і там лише три фіксовані коди
+          (grep по bridge/src). Шляхів і значень у виводі немає.
+          Посилені тести: N2b (t0011:171), N11 (:250), N11b (:259), N27 (:275) — regex із якорем рядка. M37 убито чотирма тестами.
+      - id: C3T11-6
+        status: fixed
+        evidence: >
+          (а) I4/N10 (t0011:208) додає `${id}\n`, ` ${id}`, `${id} `, `\t${id}`. N9 (:409) додає '007', '5\n', '1 ', '+1', а для first_hash —
+          пробіл і \n. Убиті мутанти M31 (trim id), M32 (trim hash), M33 (ведучі нулі).
+          (б) M26 (reconcile до already) убито N23. M27 (pinned до readTaskEvents) убито N31. Обидва патчі нееквівалентні.
+          (в) N13c (:672) + M28. Підмінено msg_id, ref і ledger_hash правильні → kind-mismatch.
+          (г) Частково. M29/M30 (без withFileLock) убиває N39 саме твердженням `read(s.ledger) === ''` / `before2`. Мутанта «читання поза
+          замком» немає, t0006 F-4 у RUNS не додано (mutate.mjs:133-136 без змін), гонка adopt ∥ run не тестується → C3T11-R2-7.
+      - id: C3T11-7
+        status: fixed
+        evidence: >
+          DESIGN:311: «G1–G5 вирішені, G6 … відкрито» (збігається з order.yaml:57). DESIGN:351: 66 тестів (grep -c '^test(' → 66), «52 червоні
+          + 7 контролів». DESIGN:332: crash-тести N17, N24, N26, а N25/N27 — стан пари (назви тестів у t0011:184,271,418,427,441 це
+          підтверджують). Р-Т11-23 уточнює Р-Т11-8.
+          Нова неточність: DESIGN:351 посилається на mutants.yaml, де за ecabb7e лише M01–M25 → C3T11-R2-6.
+      - id: C3T11-8 (а)
+        status: fixed
+        evidence: >
+          store.mjs:46-52: openSync → writeSync → fsyncSync → close, потім link. Порожній marker після втрати живлення неможливий, бо
+          ім'я з'являється лише на вже записаний inode. Fsync теки немає → C3T11-R2-4 (note).
+      - id: C3T11-8 (б)
+        status: documented_ok
+        evidence: >
+          Кодом не змінено (Р-Т11-22). DESIGN:330 (2): роутер створює новий marker, `run` дає ledger-binding-mismatch, close —
+          store-marker-mismatch; описано відновлення installation.json з id із seq 1 / installation_adopted. N11b (t0011:259) фіксує причину.
+          Те саме робить і adopt (j4.mjs:181), у тексті згадано лише роутер → C3T11-R2-2.
+      - id: C3T11-9
+        status: fixed
+        evidence: >
+          store.mjs:68: `if (!fs.lstatSync(file).isFile()) return null`. N2c (t0011:655): симлінк → store-marker-missing для close і код 1 для
+          run, симлінк не замінено; звичайний файл → done. M34 убито N2c. ensureMarker на симлінку нічого не переписує (existsSync / EEXIST у
+          link). Вікно між lstat і read — C3T11-R2-5 (note).
+      - id: C3T11-10
+        status: documented_ok
+        evidence: >
+          DESIGN:343 фіксує, що task_id не порівнюється, а нерозпізнаний ref пропускається; вимогу валідного ref для by: ADM винесено на
+          рішення J5/JE. Код close.mjs:394-397 не змінено.
+      - id: C3T11-11
+        status: not_fixed
+        evidence: >
+          order.yaml:87 `amendments: []`; Р-Т11-19/20 лишають це питанням до JE. Для рецензії коду не блокує. Поки JE не підтвердить межі,
+          e2e.test.mjs і t0006.test.mjs лишаються поза буквальним scope.in. У дельті d331d97..ecabb7e поза scope.in нових файлів немає.
+      - id: C3T11-12
+        status: fixed
+        evidence: >
+          README:31: порожній журнал → installation, непорожній → installation_adopted; коди 0/3/4/1. README:29: причина в stderr і відмова
+          send/submit/resolve. README:36: порядок розгортання (спершу рішення JE про adopt, G6). Дрібна неповнота кодів → C3T11-R2-6.
+      - id: C3T11-13
+        status: documented_ok
+        evidence: "DESIGN:344 (неатомарне скорочення в bindIfEmpty, ledger.mjs:35) і DESIGN:345 (вартість старту). Код не змінено."
+
+    findings:
+      - id: C3T11-R2-1
+        severity: optional
+        file: bridge/docs/DESIGN.md:335,344,348
+        claim: >
+          Після виправлення C3T11-1 у розд. 20 лишились три фрази, що суперечать новому тексту. (а) :335 «Доводить: close не закриває задачу на
+          парі … з іншим першим записом». За замовчуванням це хибно: ledger_first_hash необов'язковий (close.mjs:376), і N37 показує, що
+          інший перший запис проходить. (б) :344 «пара з новим журналом — окремий adopt». Насправді порожній журнал прив'язує будь-яка
+          команда роутера (ledger.mjs:19,22; так і сказано в DESIGN:326,340). (в) :348 повторює стару фразу «нападник, що може одночасно
+          писати marker, журнал і середовище close». Після :337 (середовище підробляти не треба) читач може знову вирішити, що потрібен
+          запис середовища.
+        evidence: "DESIGN:335 «… з іншим першим записом»; DESIGN:340 «без --ledger-first-hash … свіжий порожній журнал … проходить»"
+        fix: >
+          :335 — дописати «(якщо закріплено ledger_first_hash)». :344 — «новий порожній журнал прив'язується автоматично (див. N37)». :348 —
+          вилучити або злити з :337.
+      - id: C3T11-R2-2
+        severity: optional
+        file: bridge/bin/j4.mjs:173,181,187
+        claim: >
+          Захист adopt від помилки в J4_HOME несиметричний і неповний. (а) Хибний J4_LEDGER (неіснуючий шлях): `new Ledger` створює теки й
+          порожній файл (ledger.mjs:17-18), adopt пише `installation` seq 1 до наявного marker-а і друкує значення для закріплення
+          (ledger_head_seq: 1). Справжній журнал лишається непривʼязаним, з'являється другий журнал того самого marker-а (вікно N37).
+          Якщо JE закріпить надрукований first_hash, наслідок — fail-closed. (б) Прив'язаний журнал, а marker загублено в справжньому сховищі:
+          перевірка проходить, `new Store` створює НОВИЙ випадковий marker, далі вихід 3 ledger-bound-to-other-installation. Ознака
+          «загублено» затирається так само, як у роутері, а DESIGN:330 (2) згадує лише роутер. (в) J4_HOME іншої установки з marker-ом:
+          перевірку оминає, непривʼязаний журнал необоротно прив'язується до чужого id, відновлення не описане.
+          (г) DESIGN:328 і README:31 кажуть «для непорожнього непривʼязаного журналу», а код перевіряє будь-який непорожній журнал без
+          файла marker-а (строгіше, текст неточний).
+          Перевірка й створення розділені в часі, без замка: при паралельній прив'язці може лишитися створена хибна тека. Хибного
+          проходження це не дає. Легітимні сценарії (старе сховище без marker-а, порожній чи відсутній журнал, нова установка) не зламані.
+        evidence: "j4.mjs:173 `fs.existsSync(ledgerFile) && … size > 0 && !fs.existsSync(path.join(home,'installation.json'))`; :181 `new Store(home)`; :187 `new Ledger(ledgerFile)`"
+        fix: >
+          Для adopt: якщо журнал прив'язаний, а marker-а немає — відмовляти store-marker-missing, нічого не створюючи. Для неіснуючого
+          J4_LEDGER вимагати явного прапорця нової установки або друкувати `new_ledger: true`. У DESIGN:330 (2) додати, що adopt теж створює
+          marker; виправити формулювання «непривʼязаного».
+      - id: C3T11-R2-3
+        severity: optional
+        file: bridge/docs/DESIGN.md:346; bridge/src/ledger.mjs:140,144; bridge/src/close.mjs:331,337-339
+        claim: >
+          Залишок «хеш як телефон» описано неповно, і найсильніший його наслідок не згадано. ops.phone_ua (scanner.mjs:19) на рядку з 64 hex
+          спрацьовує, коли рядок закінчується на `380` + 9 цифр (\b лише в кінці): P ≈ 16⁻³·(10/16)⁹ ≈ 3,55·10⁻⁶ на значення, оцінка в
+          DESIGN правильна. verifyLedger сканує `body`, а в ньому є `prev` — хеш попереднього запису. readLedgerStrict тоді повертає
+          `ledger-corrupt`, і `close` назавжди відмовляє на всьому журналі. Імовірність накопичується з довжиною: ≈ 0,36 % на 1000 записів,
+          ≈ 3,5 % на 10⁴; журнал не ротується. До того самого правила підпадають `dropped_sha256` у записі `installation` і `ledger_repaired`.
+          Через `first_hash` adopt не вдасться для конкретного старого журналу, але такий журнал і без того вже не закривається (`prev`
+          seq 2). Поведінка існувала до T-0011 (код не в дельті), але текст :346 («для конкретного значення») її приховує.
+        evidence: "ledger.mjs:140 `const { hash, ...body } = rec;` :144 `scanObject(body)`; close.mjs:337-339 `!v.ok → ledger-corrupt`"
+        fix: >
+          У DESIGN:346 назвати `prev`/`dropped_sha256` і накопичення з довжиною журналу. Окремою задачею (поза T-0011) не застосовувати
+          ops.* до hex-полів ланцюга (`prev`, `*_hash`, `*_sha256`) або вимагати не-hex контекст.
+      - id: C3T11-R2-4
+        severity: note
+        file: bridge/src/store.mjs:53-59
+        claim: >
+          Після link теку не fsync-ують. Після втрати живлення ім'я marker-а може зникнути, тоді як seq 1 журналу вже записано. Наступний
+          старт створить новий marker, і буде ledger-binding-mismatch: fail-closed, вихід — ручна процедура (2). DESIGN:347 про це не каже.
+        evidence: "fs.linkSync(tmp, file) без fsync теки J4_HOME"
+        fix: "fsync теки після link на POSIX або одне речення в DESIGN:347."
+      - id: C3T11-R2-5
+        severity: note
+        file: bridge/src/store.mjs:68-69
+        claim: >
+          Між lstat і readFileSync є вікно: звичайний файл можна підмінити симлінком. Це межа G4, бо потрібен запис у J4_HOME, і наслідки
+          такі самі, як від копіювання чужого marker-а. Жорсткий лінк на чужий marker приймається, що рівносильне копії.
+        evidence: "lstatSync(file).isFile() → readFileSync(file)"
+        fix: "Необов'язково: open з O_NOFOLLOW + fstat, або лишити як межу G4."
+      - id: C3T11-R2-6
+        severity: note
+        file: reports/T-0011/mutants.yaml; tasks/T-0011/tools/mutate.mjs:84; bridge/src/store.mjs:14; bridge/README.md:31
+        claim: >
+          Дрібні розбіжності звітності. (а) mutants.yaml@ecabb7e містить лише M01–M25, хоча DESIGN:351 на нього посилається. Результат
+          M26–M37 є лише в scratchpad; reports/T-0011/c3-review.yaml і два файли evidence/*-ecabb7e.txt не закомічені. (б) Коментар
+          «M26–M36», хоча є і M37. (в) store.mjs:14 «≈ 4·10⁻⁶» проти «≈ 3,6·10⁻⁶» у DESIGN. (г) README:31 серед кодів 3 для adopt не
+          називає `home-unreadable` і `installation-mismatch[store-marker-missing]` (зіпсований marker або симлінк).
+        evidence: "git show ecabb7e:reports/T-0011/mutants.yaml | grep M2[6-9] → порожньо; git status: ?? reports/T-0011/c3-review.yaml, evidence/*-ecabb7e.txt"
+        fix: "Дописати M26–M37 у mutants.yaml, закомітити свідчення й c3-review.yaml, вирівняти числа й коди."
+      - id: C3T11-R2-7
+        severity: note
+        file: bridge/test/t0011.test.mjs:645,710,750; tasks/T-0011/tools/mutate.mjs:133-136
+        claim: >
+          Прогалини в нових тестах, флейковості не знайдено. N39 детермінований: замок тримає живий pid батька, а parseable-замок за віком не
+          знімається (store.mjs:225). Тривалість ≈ 5,2 с (full-run-3). Від root чи не-root не залежить; від nobody — 78/78.
+          (а) У spawnCli немає timeout: регресія чи мутант із нескінченним очікуванням замка повісить тест, а mutate.mjs зарахує 300-секундний
+          timeout як «убитий».
+          (б) N36 перевіряє newInstallationId ізольовано. Мутант «ensureMarker використовує randomBytes напряму» вижив би.
+          (в) C3T11-6(г): немає мутанта «читання стану поза замком» у bindIfEmpty/adopt; F-4 не в RUNS.
+          (г) N13c замінює перше входження `"msg_id":"…"` у events.jsonl. Це коректно, поки report_filed — перша подія з цим msg_id.
+        evidence: "spawnCli: spawn(...) без timeout; RUNS без t0006"
+        fix: "Додати timeout і kill у spawnCli; додати мутант для ensureMarker і F-4 (`--test-name-pattern F-4`) у RUNS."
+      - id: C3T11-R2-8
+        severity: note
+        file: bridge/bin/j4.mjs:247
+        claim: >
+          Нова частина stderr виводить лише фіксовані коди. Поза дельтою: для винятків без `code` друкується `e.message` без redact(). Це,
+          наприклад, SyntaxError JSON.parse з уривком вмісту файла (submit --file, зіпсований рядок журналу) або `невідомий режим <аргумент>`.
+          Вивід локальний, вплив малий.
+        evidence: "process.stderr.write(`j4: ${e.code ?? e.message}${why}`)"
+        fix: "Окремо (поза T-0011): `redact(e.message)` або друкувати лише клас помилки."
+
+    counterexamples:
+      - idea: "adopt: непорожній непривʼязаний журнал, J4_HOME — неіснуюча тека, порожня тека, файл"
+        result: refused_correctly
+        where: "j4.mjs:173-180, close.mjs:88-96 (ENOENT/ENOTDIR → home-not-j4-store); N35 (t0011:684); M36"
+      - idea: "adopt: J4_HOME без права читання (EACCES)"
+        result: "refused_correctly (статично: home-unreadable, код 3); тестом не покрито"
+        where: "close.mjs:94,100"
+      - idea: "adopt з хибним J4_LEDGER (неіснуючий шлях)"
+        result: "bypass_found (низький вплив): новий журнал створюється й прив'язується до наявного marker-а, значення друкуються → C3T11-R2-2(а)"
+        where: "j4.mjs:187; ledger.mjs:17-18,54"
+      - idea: "adopt на прив'язаному журналі після втрати marker-а"
+        result: "refused_correctly (код 3), але з побічним новим marker-ом → C3T11-R2-2(б)"
+        where: "j4.mjs:181,191"
+      - idea: "adopt з J4_HOME іншої установки (marker є) на непривʼязаному журналі"
+        result: "bypass_found (помилка оператора, межа G4): необоротна прив'язка до чужого id → C3T11-R2-2(в)"
+        where: "j4.mjs:173 (перевірку оминає)"
+      - idea: "adopt і run --once при чужому замку журналу (живий pid)"
+        result: "refused_correctly: lock-timeout, вихід 1, журнал не змінено"
+        where: "N39 (t0011:750); store.mjs:188-228; M29/M30"
+      - idea: "marker — симлінк на правильний marker"
+        result: "refused_correctly: store-marker-missing (close), код 1 (run), симлінк не переписано"
+        where: "store.mjs:68; N2c; M34"
+      - idea: "marker — жорсткий лінк на чужий marker; підміна між lstat і read"
+        result: "not_tested (межа G4, рівносильно копії) → C3T11-R2-5"
+        where: "store.mjs:68-69"
+      - idea: "закріплений id з пробілом, табуляцією, \\n; first_hash з пробілом чи \\n; min_seq '007', '5\\n', '+1', '1 '"
+        result: "refused_correctly: installation-unknown (у JS `$` без прапорця m не збігається перед \\n)"
+        where: "close.mjs:355-361; I4/N10, N9; M31–M33"
+      - idea: "report_filed з msg_id іншого донесення при правильних ref і ledger_hash"
+        result: "refused_correctly: ledger-events-mismatch[kind-mismatch]"
+        where: "close.mjs:389; N13c; M28"
+      - idea: "випадковий installation_id, що його сканер журналу вважає телефоном"
+        result: "refused_correctly: перегенерація. scanObject({installation_id}) рівносильне скануванню detail запису installation (ops.* на hex дає збіг лише через phone_ua у хвості)"
+        where: "store.mjs:16-22; scanner.mjs:19; N36; M35"
+      - idea: "хеш запису закінчується на 380+9 цифр → `prev` наступного запису"
+        result: "not_tested: статично fail-closed DoS, close назавжди ledger-corrupt; існувало до T-0011 → C3T11-R2-3"
+        where: "ledger.mjs:140-144; close.mjs:331-339"
+      - idea: "мігрований журнал: перепис хвоста і installation_adopted при правильних first_hash і min_seq"
+        result: "bypass_found, задокументовано (DESIGN:315,341; N38)"
+        where: "ledger.mjs:165"
+      - idea: "свіжий журнал на новому шляху при тому самому marker-і, без first_hash і min_seq"
+        result: "bypass_found, задокументовано (DESIGN:340; N37). З min_seq або відкритою ескалацією сховища → refused_correctly"
+        where: "ledger.mjs:19-38; close.mjs:376-377,454"
+      - idea: "витік шляхів або значень через нову причину в stderr"
+        result: "refused_correctly: лише 3 фіксовані коди з router.mjs:64; стара гілка e.message без redact → C3T11-R2-8"
+        where: "j4.mjs:244-248"
+
+    scope_check:
+      delta_files: "d331d97..ecabb7e: bridge/{README.md, bin/j4.mjs, docs/DESIGN.md, src/store.mjs, test/t0011.test.mjs}, tasks/T-0011/{decisions-register.md, tools/mutate.mjs} — усе в scope.in (order.yaml:28-42) або tasks/T-0011"
+      outside_allowed_vs_base_49226f9: "немає (git diff --name-only, поза bridge/, tasks/T-0011, reports/T-0011, CONTRACT — порожньо)"
+      acceptance_config_github_unchanged: "true (git diff 0610635..ecabb7e і 49226f9..ecabb7e -- bridge/src/acceptance.mjs bridge/config .github → порожньо)"
+      contract: "у дельті не змінено; від бази — ті самі +3/-1 (§4, 9а.3), що й у раунді 1"
+      tests_only_strengthened: >
+        true. Інші тест-файли в дельті не змінено. У t0011 вилучено 6 рядків: 2 імпорти (розширено) і рядки I4/N10 та N9, замінені
+        надмножинами значень; асертів не прибрано. Додано 7 тестів і 4 регекс-асерти stderr.
+      out_of_scope_tests_round1: "e2e.test.mjs, t0006.test.mjs — без змін, питання до JE (C3T11-11)"
+      node_check: "OK: store, ledger, close, router, j4.mjs, t0011.test.mjs, mutate.mjs"
+      mutants_M26_M37: >
+        12/12 нееквівалентні; кожного вбиває саме релевантний тест: M26→N23, M27→N31, M28→N13c, M29/M30→N39 (асерт незміненого журналу),
+        M31→I4/N10, M32/M33→N9, M34→N2c, M35→N36, M36→N35, M37→N2b/N11/N11b/N27. M01–M25 і RUNS не змінено.
+        Результат — у scratchpad (5-mutants), не в mutants.yaml.
+
+    verdict: passed   # єдине mandatory раунду 1 (C3T11-1) виправлено; нових mandatory немає; R2-1, R2-2, R2-3 — optional, решта — нотатки
+
+    limits:
+      - "Тільки статичне читання: жодного тесту, мутатора чи j4.mjs не запускав (бюджет 0). Динамічні твердження (зелені 210/212 і 78/78 від nobody, 12/12 мутантів, 5,2 с N39) взято з наданих J3 свідчень (grep підсумків), а не з власного прогону."
+      - "close.mjs рядки 1-79, 105-317 і router.mjs поза 15-74 у раунді 2 не читав (дельта їх не змінює). t0011.test.mjs поза 30-150 бачив лише через diff і grep."
+      - "Не перевіряв, чи events.jsonl має власний ланцюг або сканер, через які N13c міг би падати з іншої причини (контрольний прогін зелений). Не перевіряв, чи appendAdmEvent сканує ledger_hash тим самим правилом (DESIGN:346 це стверджує)."
+      - "Оцінку C3T11-R2-3 (≈3,55·10⁻⁶ на запис, накопичення) виведено з регексу scanner.mjs:19 аналітично, на випадкових хешах не міряв. Довжину реального журналу не знаю (у репозиторії його немає)."
+      - "Поведінку на macOS/Windows (link, lstat, fsync теки) не оцінював: хмарна сесія Linux."
+      - "Ця рецензія не замінює рішень J5/JE: C3T11-11 (межі scope) і G6 (реальний adopt) лишаються відкритими."
+- seq: 4
+  round: 3
+  subject: 3c87dd07513be097e754ae6175dd82ed227fae6e
+  scope_of_review: "дельта ecabb7e..3c87dd0 (лише DESIGN.md і README.md) + узагальнення на всю гілку"
+  requested_at: "2026-10-29T01:59:40Z"
+  received_at: "2026-10-29T02:01:50Z"
+  mandatory: 0
+  optional: 0
+  notes: 4
+  verdict: passed
+  review_status: complete
+  note_j3: "Раунд 3 — той самий рецензент (агент, контекст раундів 1–2 збережено), тільки читання. Реакція J3 — seq 5."
+  c3_report_verbatim: |
+    review_status: complete
+    round: 3
+    subject: 3c87dd07513be097e754ae6175dd82ed227fae6e   # дельта ecabb7e..3c87dd0; узагальнення — вся гілка
+    files_read:
+      - scratchpad/c3-t0011-r2/6-docs-round3.diff      # дельта, у ліміт не входить
+      - bridge/docs/DESIGN.md                          # лише grep -n (рядки 328–348) + дельта
+      - reports/T-0011/mutants.yaml                    # grep: заголовок, 37 записів, статуси M26–M37
+      - reports/T-0011/calls-ledger.yaml               # лише diff ecabb7e..HEAD
+      - reports/T-0011/c3-review.yaml                  # git show HEAD, grep seq/round
+      # Звіряв із кодом, прочитаним у раунді 2 (j4.mjs, store.mjs, ledger.mjs, scanner.mjs, close.mjs); на 3c87dd0 код не змінився (див. scope_check).
+      # Тестів, скриптів і node --check не запускав: дельта — лише .md/.yaml/.txt.
+
+    round3_dispositions:
+      - id: C3T11-R2-1
+        status: fixed
+        evidence: >
+          (а) DESIGN:335. У «Доводить» тепер є уточнення «нижче закріпленого `--ledger-min-seq` (якщо його закріплено)» і «з іншим першим
+          записом (лише якщо закріплено `--ledger-first-hash`)». Це збігається з close.mjs:376-377: обидві перевірки діють лише за наявного
+          значення.
+          (б) DESIGN:344: «новий порожній журнал … прив'язується автоматично будь-якою командою роутера … а не окремим adopt». Збігається з
+          ledger.mjs:19,22 і router.mjs:31.
+          (в) Стару фразу «marker, журнал і середовище close» вилучено. Замість неї DESIGN:348 «Підсумок меж довіри» узгоджений із :337:
+          середовище підробляти не треба, ловить лише M7 для синхронізованих подій.
+      - id: C3T11-R2-2 (г)
+        status: fixed
+        evidence: >
+          DESIGN:328 «Якщо журнал непорожній, а файла `installation.json` у `J4_HOME` немає … `home-not-j4-store` / `home-unreadable`
+          (код 3)» і README:31 дослівно відповідають j4.mjs:173-178: умова `existsSync(ledger) && size>0 && !existsSync(marker)`, далі
+          `inspectJ4Home` і `code: hs.reason`, вихід 3. Слова «непривʼязаного» прибрано.
+      - id: C3T11-R2-2 (а–в, залишки)
+        status: documented_ok
+        evidence: >
+          DESIGN:328 «Захист неповний». (а) Хибний J4_LEDGER: перевірка пропускається (файла немає), `new Ledger` створює файл
+          (ledger.mjs:17-18), adopt пише `installation` (ledger.mjs:54) — збігається. (б) Прив'язаний журнал і загублений marker:
+          inspectJ4Home проходить, `new Store` створює marker (store.mjs:42-59), далі `other` → `ledger-bound-to-other-installation`, вихід 3
+          (j4.mjs:191-193) — збігається. (в) J4_HOME з чужим marker-ом: перевірка пропускається (marker є), prив'язка до чужого id. Це
+          правда лише для непривʼязаного журналу — див. C3T11-R3-1 (note).
+          Додано організаційну вимогу: JE звіряє J4_HOME/J4_LEDGER перед реальним adopt. Код не змінено, як і заявлено.
+      - id: C3T11-R2-3
+        status: documented_ok
+        evidence: >
+          DESIGN:346 тепер називає `dropped_sha256` і поле `prev` у verifyLedger: `ledger-corrupt`, `close` відмовляє на всьому журналі,
+          поведінка до T-0011, код не змінено. Ймовірності звірено. Хвіст `380` + 9 цифр у 64-hex (\b лише в кінці рядка, scanner.mjs:19) дає
+          16⁻³·(10/16)⁹ = 3,553·10⁻⁶ на значення («≈ 3,6·10⁻⁶»). На 1000 записів 1−(1−p)^1000 ≈ 0,355 % («≈ 0,36 %»), на 10⁴ — 3,49 %
+          («≈ 3,5 %»). Позначку «аналітична оцінка, не мірялась» додано. Окрему задачу поза T-0011 названо.
+          Дрібні уточнення формулювань — C3T11-R3-2 (note).
+      - id: C3T11-R2-4
+        status: documented_ok
+        evidence: >
+          DESIGN:347: теку не fsync-ують; ім'я marker-а може зникнути, тоді новий marker → `ledger-binding-mismatch`, fail-closed, ручна
+          процедура (2). Збігається з store.mjs:53-59 (link без fsync теки) і router.mjs:25,29-32,63.
+      - id: C3T11-R2-5
+        status: documented_ok
+        evidence: >
+          DESIGN:347: вікно між lstat і читанням — межа G4; «жорсткий лінк на чужий marker приймається, що рівносильне його копії» — правда.
+          `lstatSync().isFile()` для жорсткого лінка дає true (store.mjs:68), вміст валідний → приймається.
+      - id: C3T11-R2-6 (а)
+        status: fixed
+        evidence: >
+          mutants.yaml@3c87dd0 містить 37 записів M01–M37 + control (127 тестів, 0 failed, dispatch_attempt 0). M26–M37 — усі KILLED,
+          dispatch_attempt 0. Заголовок чесно називає немутоване: fsync, гонки без замка. git ls-files тепер містить c3-review.yaml,
+          full-run-3-ecabb7e.txt і t0010-t0011-nobody-ecabb7e.txt; робоче дерево чисте.
+      - id: C3T11-R2-6 (б, в)
+        status: not_fixed
+        evidence: >
+          Залишки, прийнятні. «M26–M36» у mutate.mjs:84 — косметика. «≈ 4·10⁻⁶» у store.mjs:14 — це правильне округлення 3,55·10⁻⁶ до
+          однієї значущої цифри, не помилка.
+      - id: C3T11-R2-6 (г)
+        status: fixed
+        evidence: >
+          README:31, коди adopt. 3 — `ledger-bound-to-other-installation` (j4.mjs:191-193), `home-not-j4-store`/`home-unreadable`
+          (:174-178), `installation-mismatch[store-marker-missing]` (:182-185; симлінк, тека чи зіпсований файл → installation() = null).
+          4 — стоп-кран (:166-169). 1 — без --human (:165, throw), `ledger-partial-line` (ledger.mjs:47-50), `lock-timeout`
+          (store.mjs:193-196); усі три через main().catch. 0 — adopted/already. Список виходу 1 неповний — C3T11-R3-3 (note).
+      - id: C3T11-R2-7
+        status: not_fixed
+        evidence: >
+          Залишок без змін: у spawnCli немає timeout, немає мутанта для ensureMarker → newInstallationId, F-4 не в RUNS. Заголовок
+          mutants.yaml:4 відкрито каже, що «гонки між процесами без замка» не мутовані. Для рецензії не блокує.
+      - id: C3T11-R2-8
+        status: not_fixed
+        evidence: "Залишок до T-0011 (e.message без redact у j4.mjs:247), поза дельтою. Не блокує."
+
+    findings:
+      - id: C3T11-R3-1
+        severity: note
+        file: bridge/docs/DESIGN.md:328
+        claim: >
+          Пункт (в) «`J4_HOME` іншої установки з marker-ом … прив'язує журнал до чужого id необоротно» правдивий лише для непривʼязаного
+          журналу. Прив'язаний журнал дає `ledger-bound-to-other-installation`, вихід 3, без запису (ledger.mjs:53; j4.mjs:191-193).
+        fix: "Уточнити: «прив'язує непривʼязаний журнал до чужого id необоротно (прив'язаний — відмова)»."
+      - id: C3T11-R3-2
+        severity: note
+        file: bridge/docs/DESIGN.md:346
+        claim: >
+          (а) «Збіг у будь-якому хеші ланцюга дає ledger-corrupt» трохи ширше за код. verifyLedger сканує `prev`, а не `hash`
+          (ledger.mjs:140,144), тому хеш голови перевіряється лише після наступного запису. Висновок «назавжди» після продовження журналу
+          правильний. (б) Для `dropped_sha256` у записі `installation` (ledger.mjs:33-37) збіг дає `ledger-leak` у конструкторі роутера на
+          кожному старті: блокується весь журнал, а не «конкретне значення». Імовірність мізерна (збій × 3,6·10⁻⁶).
+          Гарантій не перебільшено; це лише точність опису.
+        fix: "Необов'язково: «(хеш запису стає видимим сканеру як `prev` наступного)»; для dropped_sha256 — «блокує прив'язку цього журналу»."
+      - id: C3T11-R3-3
+        severity: note
+        file: bridge/README.md:31
+        claim: >
+          Для adopt код 1 описано як «немає --human, ledger-partial-line, lock-timeout». Насправді це будь-який виняток через main().catch:
+          `ledger-leak`, коли first_hash підпадає під правило сканера (ledger.mjs:95-100), SyntaxError на зіпсованому рядку журналу
+          (ledger.mjs:64), EISDIR тощо.
+        fix: "Дописати «… та інший виняток (напр. ledger-leak)»."
+      - id: C3T11-R3-4
+        severity: note
+        file: reports/T-0011/c3-review.yaml:13; reports/T-0011/calls-ledger.yaml (state)
+        claim: >
+          (а) `j3_reaction` посилається на `#seq=2`, але у файлі лише seq 1; рецензій раундів 2 і 3 там немає. (б) Облік викликів:
+          `used: 153`, `forecast_next_full_run: 48`, `remaining_to_180: 27`, `halt_rule: used + next > 180 → HALT`. Будь-яка наступна зміна
+          коду з повним прогоном перевищить стелю 180 і за правилом обліку дасть HALT. Для цієї дельти (лише документація) прогін не
+          потрібен.
+        fix: "Дописати в c3-review.yaml seq 2 і seq 3 (дослівно, ручна ланка M-2). Будь-яку подальшу зміну коду погоджувати з JE з огляду на ліміт."
+
+    scope_check:
+      changed_files_ecabb7e_to_HEAD: "bridge/README.md (+1/-1), bridge/docs/DESIGN.md (+6/-6), reports/T-0011/{c3-review.yaml, calls-ledger.yaml, mutants.yaml, evidence/full-run-3-ecabb7e.txt, evidence/t0010-t0011-nobody-ecabb7e.txt}"
+      code_tests_config_contract_github_tasks_unchanged: "true: git diff --name-only ecabb7e HEAD -- bridge/src bridge/bin bridge/test bridge/config CONTRACT_v0_4.md .github tasks → порожньо (перевірив сам)"
+      outside_allowed: "немає (лише bridge/docs, bridge/README.md, reports/T-0011)"
+      working_tree: "чисте (git status --short порожній)"
+      g4_check: >
+        Нових перебільшень гарантій немає. DESIGN:335 тепер умовний. DESIGN:336 (не автентифікує by, --human і особу JE) не змінено.
+        DESIGN:348 лише звужує заяву про захист і узгоджений із :337.
+
+    verdict:
+      delta_3c87dd0: passed      # кожне нове твердження звірено з кодом; R3-1…R3-4 — нотатки
+      branch_overall: passed     # ecabb7e (раунд 2: passed) + документальна дельта; нових mandatory немає
+      open_outside_c3: ["C3T11-11 — межі scope.in (e2e, t0006), рішення JE", "G6 — реальний adopt і значення, рішення JE", "R2-3 (сканер і хеші ланцюга) — окрема задача поза T-0011"]
+
+    limits:
+      - "Тільки статичне читання. Мутацій і тестів не запускав; статуси 37/37 KILLED і control 127/0 взято з mutants.yaml (дані J3)."
+      - "Код у раунді 3 повторно не читав: звіряв із прочитаним у раунді 2. Що він не змінився, підтверджено git diff (порожньо)."
+      - "Повний текст DESIGN розд. 20 на 3c87dd0 не перечитував: лише дельта і рядки 328–348 через grep. Решта розділу та сама, що в раунді 2 (git diff показує зміни лише в цих рядках)."
+      - "Не перевіряв, що закомічений c3-review.yaml дослівно збігається з моїм звітом раунду 1 (звірив лише заголовок seq 1)."
+      - "Ймовірності R2-3 перевірені аналітично, на випадкових хешах не міряні."
+      - "Ця рецензія не замінює рішень J5/JE."
+- seq: 5
+  by: J3
+  responds_to: "seq 3 (раунд 2) і seq 4 (раунд 3)"
+  fixed_in: 3c87dd07513be097e754ae6175dd82ed227fae6e
+  note: "Реакція J3 (не рецензія). Мандаторних зауважень у раундах 2–3 немає. Документація виправлена в 3c87dd0 за R2-1, R2-2(г), R2-3, R2-4, R2-5, R2-6(а, г) — C3 раунд 3 підтвердив."
+  dispositions:
+    C3T11-R2-1: "виправлено (DESIGN:335, 344, 348)"
+    C3T11-R2-2: "формулювання (г) виправлено; поведінку adopt при хибному J4_LEDGER / загубленому marker-і / чужому J4_HOME кодом не змінено — залишок у DESIGN:328, питання до J5/JE (повторний повний прогін у ліміт не вміщується: використано 153/180)"
+    C3T11-R2-3: "описано в DESIGN:346 (prev, dropped_sha256, накопичення); зміна сканера — окрема задача поза T-0011"
+    C3T11-R2-4_5: "описано в DESIGN:347"
+    C3T11-R2-6: "(а), (г) виправлено; (б), (в) — косметика коментарів у коді, не міняю, щоб не зсувати SHA, на якому проведено прогін №3 і мутанти"
+    C3T11-R2-7_8: "залишки без змін: timeout у spawnCli, мутант ensureMarker, F-4 у RUNS; redact(e.message) — поза T-0011"
+    C3T11-R3-1_2_3: "прийнято як нотатки без нового коміту в bridge/ (кожна зміна bridge/ зсуває контрольний SHA і потребує нового кола C3); перелічено в 001.yaml (not_verified/open_for_je)"
+    C3T11-R3-4: "виправлено цим записом (seq 2–5 дописано дослівно, ручна ланка M-2)"
+  limits_for_accountability: "C3 у цій задачі — незалежна read-only сесія-агент, яку запускав J3; особа C3 засобами J4 не автентифікується (F-9). Запис review_finished у tasks/T-0011/events.jsonl робить J3 (ручна ланка M-2), як у T-0010/T-0012."
