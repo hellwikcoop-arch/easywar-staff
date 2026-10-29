@@ -1,0 +1,31 @@
+{
+  "_status": "ЧЕРНЕТКА J3 — НЕ НАДІСЛАНО. msg_id/thread_id/created_at/hop/body_sha256 ставить J4 під час надсилання; надсилання лише після ресурсного дозволу JE (c3-route-2.md).",
+  "protocol": "j4.msg/0.1",
+  "task_id": "T-0017",
+  "task_version": 2,
+  "contract": {
+    "version": "v0.4",
+    "sha256": "2fdc2f9d1e6652a2574ed72c40daed612055f4e8c9a9e6ad2010f625cfa855de"
+  },
+  "subject": {
+    "kind": "commit",
+    "ref": "c2d8d4fc199ea520c57c0ebe78094757c24a6cbb"
+  },
+  "from": "J3",
+  "to": "C3",
+  "kind": "request",
+  "intent": "review_request",
+  "decision_level": "B",
+  "data_class": "synthetic",
+  "body": {
+    "summary": "T-0017 / G12: формальний read-only огляд C3 протоколу C2 (PR EasyWAR #180) на c2d8d4f; спроба №2; перший файл — бриф c3-g12-brief.md; max_read_files 25.",
+    "text": "Спроба №1 (29.10, окрема сесія) — incomplete/null, не зарахована (tasks/T-0017/c3-review-attempt-1.md). Прочитати ПЕРШИМ tasks/T-0017/c3-g12-brief.md; ліміт reviewer.max_read_files = 25 (поправка A-1, JE 29.10); при вичерпанні — review_status incomplete і перелік unread. Об'єкт: EasyWAR PR #180, head c2d8d4fc199ea520c57c0ebe78094757c24a6cbb, чекліст docs/evidence/collectives/2026-10-29-c2-g12-checklist.md (пп. 1, 7, 15 обов'язкові). Вхід: U1–U3, A1–A7 спроби №1 (перевірені J3 у c3-review-attempt-1.md) — підтвердити/спростувати й класифікувати (блокер G12 / умова C2p-C3b / посилення / документація). Read-only: без змін коду, без claim, без злиття; G12 не закривати без J5. Лише синтетичні дані.",
+    "refs": [
+      "tasks/T-0017/c3-g12-brief.md",
+      "tasks/T-0017/c3-review-attempt-1.md",
+      "tasks/T-0017/order.yaml",
+      "docs/evidence/collectives/2026-10-29-c2-g12-checklist.md@c2d8d4fc199ea520c57c0ebe78094757c24a6cbb"
+    ],
+    "decision_needed": []
+  }
+}
