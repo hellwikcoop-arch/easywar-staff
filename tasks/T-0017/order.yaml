@@ -52,7 +52,9 @@ amendments:
   - id: A-1
     proposed_by: J3
     base_version: 1
-    change: {field: resources.reviewer.max_read_files, from: 15, to: 25}
+    kind: clarification   # ратифікація чинного значення, не зміна поля (корекція 29.10, seq 19)
+    change: {field: resources.reviewer.max_read_files, from: 25, to: 25, ratifies: 25}
+    correction: "Первісний запис A-1 мав change {from: 15, to: 25}; це помилка J3: у наказі version 1 (6d685d1) поле вже дорівнювало 25, а 15 — лише значення за замовчуванням CONTRACT_v0_4.md, яке сприйняв рецензент спроби №1. Рішення JE «Так, 25 файлів» ратифікує чинні 25 для нового огляду на c2d8d4f і поля з 15 не змінює. Вміст наказу у version 1 і 2 однаковий; номер version 2 залишено, бо на нього посилаються події seq 10–18 і повідомлення J4 M-T-0017-0001/0002 — минулі події не переписуються (CONTRACT розділ 4)."
     reason: "спроба C3 №1 (29.10, session_01UgydCJmxbR3d4boBPP3aL7) прочитала 17 файлів (19 з AGENTS/CLAUDE) і зупинилась на ліміті 15 із CONTRACT_v0_4.md; обов'язковий перелік брифу G12 = 12 файлів + бриф + AGENTS/CLAUDE ≈ 15, для перевірки контексту (lib.rs, Cargo.toml, office_library.rs::KdfParams) потрібно більше. У цьому наказі з оформлення вже стоїть 25, але наказу ще немає в main; поправка фіксує 25 як рішення JE, щоб значення не залежало від гілки"
     status: approved
     decided_by: JE
