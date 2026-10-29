@@ -1,0 +1,21 @@
+task_id: T-0017
+report_no: 13
+kind: deviation
+deviation: budget_overrun
+by: J3
+recorded_at: "2026-10-29T16:18:00+00:00"
+limit: {max_calls: 195, source: "order.yaml version 4, поправка A-3 (JE 15:53:59Z)", changed: false}
+used:
+  at_j5_acceptance: {calls: 211, accuracy: estimate, source: "рішення J5 16:15Z (≈211/195, +16)"}
+  final: {calls: 217, accuracy: estimate, note: "+≈6 після рішення JE 16:15:48Z: перевірка HEAD/бази, злиття #19, цей запис і PR; точного лічильника немає"}
+overrun: {calls: 22, accuracy: estimate}
+when: "після seq 42 (done, ≈195/195), 16:03–16:20Z"
+cause: "адміністративна інтеграція T-0017 у main за розпорядженнями J5 (T-0017-FINAL), самоперевірка, підготовка брифу й запуск C3, злиття PR #19 за рішенням JE; J3 не запросив поправку бюджету до виконання"
+calls_breakdown:
+  - "≈8: перевірка main, staff PR #14 (лише опис), гілка t-0017/final, draft PR #19, підписка"
+  - "≈3: самоперевірка з чистого клона, звірка комітів злиття EasyWAR"
+  - "≈5: бриф C3, чернетка відхилення, картки рішень, запуск C3"
+  - "≈6: перевірка HEAD/бази, злиття #19 (e9f710c), цей запис"
+c3_session: {calls: 5, limit: 15, files_read: 4, limit_files: 10, accuracy: exact, note: "окремий ліміт сесії C3 за дозволом J5 16:12Z і JE (картка)"}
+paid_api_calls: {count: 0, detail: "J4 не запускався; OpenAI/J5 через J4 і платні CI не викликались; C3 — окремий агент Claude без платного API"}
+status: "адміністративне відхилення; ліміт 195 не змінюється і заднім числом не вважається дозволеним (рішення J5 16:09Z п. 5, 16:15Z п. 4)"
