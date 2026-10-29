@@ -1,22 +1,36 @@
-# Донесення 005 по T-0011: незалежний технічний висновок C5.1 (Codex) на питання tasks/T-0011/q-j5-subject-checks.md.
-# Передано JE з чату «АВТОНОМНІСТЬ» у тред J3 29.10.2026 13:38:45Z; записав J3 без транскрипту.
-# Це НЕ висновок і НЕ acceptance J5: роль J5 не приписується. J5 content і JE key_decision лишаються відкритими.
+# Донесення 005 J3 по T-0011: ДОПОВНЕННЯ до корекції 004.yaml — спостережений merge-ref CI run 2 і повторна суха перевірка бар'єра (аудит ШТАБу, JE 2026-10-29T13:29Z).
+# 003.yaml і 004.yaml не змінюються (CONTRACT v0.4 §4, §8: виправлення — новим записом із supersedes і reason). Нових викликів адаптера 0, нового CI 0.
 task: T-0011
 report: 005
-kind: technical_opinion
-by: C5.1
-recorded_by: J3
-relayed_by: JE
-at: 2026-10-29T13:38:45+00:00
-question: tasks/T-0011/q-j5-subject-checks.md
+kind: correction_addendum
 current_subject: a9baf25893aa8caa2748a99406072281d24f27fb
-findings:
-  - "тотожність дерев НЕ виконує буквальну вимогу CONTRACT v0.4 §0.8 і §6 п. 1 та acceptanceReady для current_subject a9baf25"
-  - "CI run 40820727606: 212/212 на PR head fa5e060, не на merge-коміті a9baf25"
-  - "корекція reports/T-0011/004.yaml слушна"
-recommendation_for_je:
-  do: "окремо дозволити один локальний синтетичний прогін точно `node --test \"bridge/test/*.test.mjs\"` на чистому checkout a9baf25"
-  budget: "підняти ліміт T-0011 щонайменше до 297 (249 + 48 за чинним обліком calls-ledger.yaml)"
-  record: "SHA, лог прогону, фактичні витрати (з перевіркою dispatch_attempt)"
-  not_recommended: ["новий CI", "виняток за тотожністю дерев"]
-status: "рекомендація; без рішення JE прогін не запускається"
+supersedes: "reports/T-0011/004.yaml#checks_as_executed[ci-run-2].how (фраза «SHA merge-ref не зафіксовано») і reports/T-0011/003.yaml#checks[ci-run-2].basis (фраза «merge-ref GitHub не бачено»)"
+reason: "Журнал job 123272337552 (CI run 2) прочитано (читання GitHub API + завантаження логу; нового запуску немає). У ньому зафіксовано, який саме коміт тестувався."
+
+observed:
+  run: {id: 40820727606, job: 123272337552, head_sha: fa5e06014814e6e800ce3b5ad6f822a41a9284f0}
+  checkout: "git fetch ... origin +e020802f5daa075cc6de1792f8aca3fdc0abd77f:refs/remotes/pull/15/merge; HEAD is now at e020802 Merge fa5e06014814e6e800ce3b5ad6f822a41a9284f0 into 7f56fcf34af290cbb68a20b3d60995b2d990c70d"
+  tested_commit: e020802f5daa075cc6de1792f8aca3fdc0abd77f    # merge-ref GitHub, створений автоматично; це НЕ a9baf25
+  tests: "node --test 'bridge/test/*.test.mjs': tests 212, pass 212, fail 0, cancelled 0, skipped 0"
+  tree_comparison: {tested_commit_tree: 3c63e46d6156a70601553f6771bd77478278d75e, a9baf25_tree: 3c63e46d6156a70601553f6771bd77478278d75e, equal: true}
+  evidence_ref: "reports/T-0011/evidence/ci-run2-merge-ref.txt"
+  meaning: "CI run 2 тестував повне дерево, байт-у-байт тотожне дереву a9baf25 (однакові батьки 7f56fcf і fa5e060). Це найсильніший наявний доказ тотожності, але SHA протестованого коміту (e020802) ≠ SHA subject (a9baf25)"
+
+what_does_not_change:
+  - "жодна перевірка не виконувалась на самому a9baf25; буквально п. 1 (CONTRACT v0.4 §6, рядок 327) не виконано; CONTRACT не має положення про зарахування за тотожністю дерев (grep «тотожн|еквівалент|дерев» — порожньо)"
+  - "рішення, чи тотожність дерев (e020802 → a9baf25) і тотожність коду з ecabb7e достатні, належить J5/JE (tasks/T-0011/q-j5-subject-checks.md; 004.yaml ways_to_close_p1); J3 його не приймає"
+  - "checks на a9baf25 виконаними не вважати; «бракує лише J5+JE» — невірно"
+
+barrier_dry_run_rechecked:   # чиста функція acceptanceReady() над events.jsonl (seq 1–11) і checks із реальними SHA; 0 викликів адаптера
+  literal_real_subjects: {ready: false, missing: [checks-not-on-subject-or-failed, acceptance-J5-content-missing, acceptance-JE-key_decision-missing]}
+  hypothetical_if_j5_je_accept_tree_identity: {ready: false, missing: [acceptance-J5-content-missing, acceptance-JE-key_decision-missing], status: "лише гіпотеза за умови окремого рішення J5/JE; не факт виконаних перевірок"}
+  note: "acceptance.mjs (c.subject === subject) не змінюється; зарахування за тотожністю потребувало б або явного рішення JE (виняток), або зміни бар'єра окремим наказом"
+
+record_defects_found:
+  - "events.jsonl seq 11 (корекція 004): at = «2026-10-29T13:40:00+00:00» — формат відрізняється від решти (Z) і час пізніший за фактичний запис (коміт 21e99bb о 13:33:09Z); readTaskEvents його приймає. Подію не переписано (append-only); seq 12 має фактичний час запису, тож at(seq 12) < at(seq 11) — розбіжність відома, виправлення — на рішення JE"
+  - "PR #180 (EasyWAR) з застарілими рядками про C3 merge і G06 — інший тред/репозиторій, у цьому треді не змінюється"
+
+j3_technical_seq10: "без змін: запис лишається в журналі (J3 його не відкликає сам); його підстава — тотожність вмісту (004.yaml j3_technical_seq10)"
+
+budget: {used: 249, limit: 250, this_report: {adapter_calls: 0, ci_events: 0}}
+not_done: ["acceptance J5 і JE не створювались", "done не встановлено", "close/adopt не запускались", "нових прогонів і CI не було", "PR #16 не злито"]
