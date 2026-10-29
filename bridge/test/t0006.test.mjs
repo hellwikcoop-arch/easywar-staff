@@ -196,7 +196,7 @@ const ok = (subject = SHA_A) => ({
   subject,
   checks: [{ subject, passed: true, evidence_ref: 'log' }],
   reviews: [{ by: 'C3', subject, review_status: 'complete', verdict: 'passed', evidence_ref: 'r' }],
-  acceptances: [{ by: 'J3', role: 'technical', subject, evidence_ref: 'a', result: 'accepted' }, { by: 'J5', role: 'content', subject, evidence_ref: 'b', result: 'accepted' }],
+  acceptances: [{ by: 'J3', role: 'technical', subject, evidence_ref: 'a', result: 'accepted', scope: 'full' }, { by: 'J5', role: 'content', subject, evidence_ref: 'b', result: 'accepted', scope: 'full' }],
 });
 
 test('бар\'єр приймання: усе на одному SHA', () => {
@@ -221,9 +221,9 @@ test('done лише ADM і лише після бар\'єра; докази з e
   assert.equal(requestDone({ by: 'ADM', ...ok() }).allowed, true);
   const root = tmpStaff();
   const lines = [
-    { event: 'review_finished', task_id: 'T-0900', by: 'C3', subject: SHA_A, verdict: 'passed', ref: 'reports/x.yaml' },
-    { event: 'acceptance', task_id: 'T-0900', by: 'J3', role: 'technical', subject: SHA_A, ref: 'reports/y.yaml' },
-    { event: 'acceptance', task_id: 'T-0901', by: 'J5', role: 'content', subject: SHA_A, ref: 'чужа задача' },
+    { event: 'review_finished', task_id: 'T-0900', by: 'C3', subject: SHA_A, review_status: 'complete', verdict: 'passed', ref: 'reports/x.yaml' },
+    { event: 'acceptance', task_id: 'T-0900', by: 'J3', role: 'technical', subject: SHA_A, result: 'accepted', scope: 'full', ref: 'reports/y.yaml' },
+    { event: 'acceptance', task_id: 'T-0901', by: 'J5', role: 'content', subject: SHA_A, result: 'accepted', scope: 'full', ref: 'чужа задача' },
   ];
   fs.appendFileSync(path.join(root, 'tasks', 'T-0900', 'events.jsonl'), `${lines.map((l) => JSON.stringify(l)).join('\n')}\n`);
   const ev = evidenceFromEvents(root, 'T-0900');
@@ -237,13 +237,13 @@ import { validateMessage } from '../src/protocol.mjs';
 
 test('F-1: пізніше відхилення скасовує приймання; лише явне accepted', () => {
   const base = ok();
-  base.acceptances.push({ by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'c', result: 'rejected' });
+  base.acceptances.push({ by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'c', result: 'rejected', scope: 'full' });
   assert.ok(acceptanceReady(base).missing.includes('acceptance-J5-content-not-accepted'));
   const pending = ok();
   pending.acceptances[1].result = 'pending';
   assert.ok(acceptanceReady(pending).missing.includes('acceptance-J5-content-not-accepted'));
   const fixed = ok();
-  fixed.acceptances.push({ by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'd', result: 'rejected' }, { by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'e', result: 'accepted' });
+  fixed.acceptances.push({ by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'd', result: 'rejected', scope: 'full' }, { by: 'J5', role: 'content', subject: SHA_A, evidence_ref: 'e', result: 'accepted', scope: 'full' });
   assert.equal(acceptanceReady(fixed).ready, true);
 });
 

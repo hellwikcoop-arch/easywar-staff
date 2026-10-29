@@ -37,11 +37,12 @@ function writeOrder(root, { verify = null } = {}) {
 
 function fullAcceptance(root, subject = SHA_A) {
   addEvent(root, { event: 'review_finished', by: 'C3', subject, review_status: 'complete', verdict: 'passed', ref: 'r' });
-  addEvent(root, { event: 'acceptance', by: 'J3', role: 'technical', subject, result: 'accepted', ref: 'a' });
-  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject, result: 'accepted', ref: 'b' });
+  addEvent(root, { event: 'acceptance', by: 'J3', role: 'technical', subject, result: 'accepted', scope: 'full', ref: 'a' });
+  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject, result: 'accepted', scope: 'full', ref: 'b' });
 }
 
-function writeEvidence(root, text = `checks: {subject: ${SHA_A}, result: pass}\n`) {
+// T-0012 (R11-13, C3H-8): запис без cmd більше не є доказом навіть без verify — фікстура містить cmd
+function writeEvidence(root, text = `- {cmd: "${CMD}", subject: ${SHA_A}, result: pass}\n`) {
   fs.mkdirSync(path.join(root, 'reports'), { recursive: true });
   fs.writeFileSync(path.join(root, 'reports', 'checks.yaml'), text);
   return 'reports/checks.yaml';
@@ -212,6 +213,7 @@ test('T-0010 A5: нечитна тека черги — Store.list кидає EA
     assert.equal(r.code, 1, r.stderr);
     assert.match(r.stderr, /EACCES/);
     assert.equal(r.json, null, 'жодного «ok: true» зі steps: 0');
+    assert.equal(fs.existsSync(path.join(t.home, 'lock')), false, 'замок обробника знято після відмови (T-0012 R-12 в)');
     noDispatch(t);
   } finally {
     fs.chmodSync(dir, 0o700);
@@ -344,7 +346,9 @@ test('T-0010 C1: F-T9-22 — форми, що раніше проходили е
   for (const [name, text] of Object.entries(bad)) {
     const r = evidenceResult(text, { verify: name === 'cmd в одинарних лапках зі SHA' ? [] : [CMD] });
     assert.equal(r.ok, false, name);
-    assert.deepEqual(r.missing, NOT, name);
+    // T-0012: до коду бар'єра додаються причини розбору доказів (evidence-*)
+    assert.equal(r.missing[0], NOT[0], name);
+    assert.ok(r.missing.slice(1).every((m) => m.startsWith('evidence-')), `${name}: ${JSON.stringify(r.missing)}`);
   }
 });
 
@@ -371,9 +375,11 @@ test('T-0010 C2: F-T9-22 — справжні форми запису (reports/T
     const r = evidenceResult(text);
     assert.equal(r.ok, true, `${name}: ${JSON.stringify(r)}`);
   }
-  // прості форми без cmd — коли наказ не вимагає verify
-  assert.equal(evidenceResult(`{subject: ${SHA_A}, result: pass}\n`, { verify: null }).ok, true);
-  assert.equal(evidenceResult(`checks: {subject: ${SHA_A}, result: pass}\n`, { verify: [] }).ok, true);
+  // прості форми без cmd — до T-0012 приймалися без verify; тепер потрібен хоча б один запис із cmd (R11-13, C3H-8)
+  assert.deepEqual(evidenceResult(`{subject: ${SHA_A}, result: pass}\n`, { verify: null }).missing, [...NOT, 'evidence-no-cmd-record']);
+  assert.deepEqual(evidenceResult(`checks: {subject: ${SHA_A}, result: pass}\n`, { verify: [] }).missing, [...NOT, 'evidence-no-cmd-record']);
+  assert.equal(evidenceResult(`checks: {cmd: "echo A", subject: ${SHA_A}, result: pass}\n`, { verify: [] }).ok, true);
+  assert.equal(evidenceResult(`- {cmd: "${CMD}", subject: ${SHA_A}, result: pass}\n`, { verify: null }).ok, true);
   // команда зі знаком # усередині лапок — це команда, а не коментар
   assert.equal(evidenceResult(`- {cmd: "echo B # x", subject: ${SHA_A}, result: pass}\n`, { verify: ['echo B # x'] }).ok, true);
   // доказ записується з sha256 файлу

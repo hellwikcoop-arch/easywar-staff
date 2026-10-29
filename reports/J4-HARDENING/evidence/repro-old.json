@@ -1,0 +1,171 @@
+{
+  "bridge": "/home/user/easywar-staff/bridge",
+  "dispatch_attempt": 0,
+  "results": [
+    {
+      "id": "S16-1",
+      "defect": "F-T9-16",
+      "outcome": "ready"
+    },
+    {
+      "id": "S16-2",
+      "defect": "F-T9-16",
+      "outcome": "ready"
+    },
+    {
+      "id": "S16-3",
+      "defect": "F-T9-16",
+      "outcome": "not-ready[review-C3-not-passed]"
+    },
+    {
+      "id": "S16-4",
+      "defect": "F-T9-16",
+      "outcome": "ready"
+    },
+    {
+      "id": "S16-5",
+      "defect": "F-T9-16",
+      "outcome": "ready"
+    },
+    {
+      "id": "S16-6",
+      "defect": "F-T9-16 (контроль)",
+      "outcome": "ready"
+    },
+    {
+      "id": "S16-7",
+      "defect": "F-T9-16 (контроль: accepted_with_restrictions, як T-0006 seq 12)",
+      "outcome": "not-ready[acceptance-J5-content-not-accepted]"
+    },
+    {
+      "id": "SC1-0",
+      "defect": "SCOPE-1 (acceptance без поля scope, як T-0005…T-0010)",
+      "outcome": "ready"
+    },
+    {
+      "id": "SC1-1",
+      "defect": "SCOPE-1",
+      "outcome": "ready"
+    },
+    {
+      "id": "SC1-2",
+      "defect": "SCOPE-1",
+      "outcome": "ready"
+    },
+    {
+      "id": "SC1-2b",
+      "defect": "SCOPE-1 (scope: limited + limits)",
+      "outcome": "ready"
+    },
+    {
+      "id": "SC1-3",
+      "defect": "SCOPE-1 (варіант: scope повний)",
+      "outcome": "ready"
+    },
+    {
+      "id": "SC1-4",
+      "defect": "SCOPE-1 (варіант: scope без відомої форми)",
+      "outcome": "ready"
+    },
+    {
+      "id": "R11-1",
+      "defect": "F-T10-11",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-2",
+      "defect": "F-T10-11",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-3",
+      "defect": "F-T10-11",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-4",
+      "defect": "F-T10-11 (контроль: збій → успіх тієї ж cmd)",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-5",
+      "defect": "F-T10-11 (контроль: збій іншої команди)",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-6",
+      "defect": "F-T10-11 (успіх варіантною, потім збій базовою)",
+      "outcome": "done"
+    },
+    {
+      "id": "R10-1",
+      "defect": "F-T10-10",
+      "outcome": "done"
+    },
+    {
+      "id": "R10-2",
+      "defect": "F-T10-10",
+      "outcome": "done"
+    },
+    {
+      "id": "R10-3",
+      "defect": "F-T10-10",
+      "outcome": "done"
+    },
+    {
+      "id": "R10-4",
+      "defect": "F-T10-10 (контроль: звичайний блок)",
+      "outcome": "refused:barrier-not-passed[checks-not-on-subject-or-failed]"
+    },
+    {
+      "id": "R12-1",
+      "defect": "F-T10-12 (порожній рядок усередині блоку)",
+      "outcome": "refused:barrier-not-passed[checks-not-on-subject-or-failed]"
+    },
+    {
+      "id": "S18-1",
+      "defect": "F-T9-18 (контроль: правильна пара)",
+      "outcome": "exit 3 open-escalation[escalation:E-T-0900-001]"
+    },
+    {
+      "id": "S18-2",
+      "defect": "F-T9-18 (хибна наявна ціла пара)",
+      "outcome": "exit 0 done"
+    },
+    {
+      "id": "S18-3",
+      "defect": "F-T9-18 (правильний J4_HOME, чужий журнал)",
+      "outcome": "exit 3 open-escalation[escalation:E-T-0900-001]"
+    },
+    {
+      "id": "S18-4",
+      "defect": "F-T9-18 (чужий J4_HOME, правильний журнал)",
+      "outcome": "exit 3 open-escalation[escalation:E-T-0900-001]"
+    },
+    {
+      "id": "S18-5",
+      "defect": "F-T9-18 (обрізаний журнал: лише seq 1, ескалація зникла)",
+      "outcome": "exit 3 open-escalation[escalation:E-T-0900-001]"
+    },
+    {
+      "id": "S18-6",
+      "defect": "F-T9-18 (знімок сховища до ескалації: порожній J4_HOME тієї ж форми)",
+      "outcome": "exit 0 done"
+    },
+    {
+      "id": "R11-7",
+      "defect": "F-T10-11 (успіх, далі збій із cmd: \"\")",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-8",
+      "defect": "F-T10-11 (verify порожній: дві cmd, остання другої — збій)",
+      "outcome": "done"
+    },
+    {
+      "id": "R11-9",
+      "defect": "F-T10-11 (контроль: збій базовою, далі успіх варіантною, що містить вимогу)",
+      "outcome": "done"
+    }
+  ]
+}

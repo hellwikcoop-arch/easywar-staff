@@ -1,0 +1,47 @@
+# Облік викликів адаптера J4 для T-0012 (одиниця — як у T-0009/T-0010: dispatch_attempt у журналі J4 + прямий adapter.call()). Лише додавання рядків.
+# Ліміт: 150 (програма JE 2026-10-28 08:11; наказ 08:04 — 200; проєкт JE-T12-01 — 240 не діє). HALT-поріг 144 — перед прогоном, який перевищив би 150.
+task: T-0012
+limits: {effective: 150, halt_threshold: 144, alternatives: {order_0804: 200, draft_je_t12_01: 240}, paid_usd: 0}
+counting_method:
+  - "повний прогін node --test 'bridge/test/*.test.mjs' = 48 (44 dispatch_attempt + 4 прямих; базове значення T-0009/T-0010, підтверджене в J4-HARDENING H-001)"
+  - "фільтровані прогони бар'єрних тестів (t0012, t0006 бар'єр, t0007 S6, t0009 C*, t0010) не диспетчеризують — 0, підтверджується сканером dispatch_attempt у тимчасових журналах після кожного прогону"
+  - "C3 за diff — 0 (без node --test); CI — 48 за подію (лише за окремим дозволом JE)"
+entries:
+  - id: T12-001
+    kind: actual
+    stage: B
+    run: "node --test bridge/test/t0012.test.mjs на базі 0f2cd0b (bridge/ == 96ff45a): 41 тест — 12 pass / 29 fail (дефекти F-T9-16, SCOPE-1, R-11, R-10 підтверджені; R10-4/R10-7/R12-1 червоні лише через нову діагностику evidence-* у missing)"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact, basis: "сканер /tmp/j4-t0012-*: 0 dispatch_attempt"}
+  - id: T12-002
+    kind: actual
+    stage: C
+    run: "перевірка фікстур після реалізації: node --test bridge/test/t0006.test.mjs, t0007, t0009 (×3: повний, повний, фільтр C4|C5), t0010 (×2) — усі 19/8/17/12 pass після оновлення фікстур доказів (cmd у записі, evidence-* у missing)"
+    calls: {dispatch: 28, direct: 0, total: 28, accuracy: exact, basis: "сканер dispatch_attempt у тимчасових журналах 08:35–08:40 UTC: t0006 = 19, t0007 = 3, t0009 = 2 на повний прогін (×3 = 6), t0010 = 0, фільтр C4|C5 = 0; прямих adapter.call() у цих файлах немає (лише gate.test.mjs, не запускався)"
+    deviation: "ВІДХИЛЕННЯ від методу обліку: t0006/t0007/t0009 запущено цілими файлами замість фільтра бар'єрних тестів — 28 викликів, яких прогноз (0) не передбачав. Записано як факт; ліміт не перевищено (28 ≤ 144). Далі — лише фільтри або один повний прогін із прогнозом."
+  - id: T12-003
+    kind: actual
+    stage: C
+    run: "мутації: 15 мутантів (reports/T-0012/mutants.yaml) × node --test t0012 + t0010 у копіях bridge/src на dc78287 — усі 15 убиті"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact, basis: "сканер dispatch_attempt у журналах, створених після коміту dc78287: 0 (t0010 сам стверджує noDispatch, t0012 — 0)"}
+  - id: T12-004
+    kind: actual
+    stage: C
+    run: "сумісність старих журналів: reports/J4-HARDENING/tools/compat-events.mjs (bridge 0f2cd0b → bridge dc78287) на tasks/T-0002…T-0010 — результат збігається з таблицею 4.3 і доказом J4-HARDENING (reports/T-0012/evidence/compat-events-dc78287.txt)"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact, basis: "лише читання журналів, адаптер не викликається"}
+  - id: T12-005
+    kind: forecast
+    stage: C
+    run: "ОДИН повний прогін node --test 'bridge/test/*.test.mjs' на dc78287 (контрольний SHA для C3/J5/J3)"
+    calls: {dispatch: 44, direct: 4, total: 48, accuracy: estimate, basis: "базове значення T-0009/T-0010 (44 dispatch + 4 прямих у gate.test.mjs); нові тести T-0012 — 0"}
+    check: "used 28 + next 48 = 76 ≤ 144 (HALT-поріг) ≤ 150 — дозволено"
+  - id: T12-006
+    kind: actual
+    stage: C
+    run: "повний прогін node --test 'bridge/test/*.test.mjs' на dc78287: 146 тестів — 144 pass / 0 fail / 2 skipped (T-0010 A4 і A5 — пропускаються під root; у CI виконуються), exit 0"
+    calls: {dispatch: 44, direct: 4, total: 48, accuracy: "dispatch exact (сканер журналів, створених після старту прогону: 44); direct — за базовим значенням gate.test.mjs (4), сканер їх не бачить", basis: "прогноз T12-005 підтверджено"}
+  - id: T12-007
+    kind: actual
+    stage: D
+    run: "C3 раунд 1 за diff (0 викликів, тестів не запускала) + node --test bridge/test/t0010.test.mjs від nobody на копії dc78287 (C3T12-2): 12/12, skipped 0"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact, basis: "сканер dispatch_attempt у журналах після старту прогону: 0"}
+state: {used: 76, forecast_next_full_run: 48, projected_after_full_run: 124, remaining_to_150: 74, remaining_to_200: 124, note: "другий повний прогін (124 ≤ 144) ще дозволений; третій (172) — HALT", paid_api_calls: 0, network_calls: 0, ci_runs: 0}

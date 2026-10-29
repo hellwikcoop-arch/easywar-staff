@@ -1,0 +1,55 @@
+# T-0012: донесення J3 (раунд 1) — реалізація G1–G4 на контрольному SHA, результати перевірок, що передається C3/J5/JE.
+task_id: T-0012
+from: J3
+to: J5
+cc: [JE, C3]
+stage: "реалізація завершена; C3 раунд 1 на dc78287 — passed (0 обов'язкових, 3 необов'язкових відкладено, 3 примітки; reports/T-0012/c3-review.yaml); технічне приймання J3 записано (events.jsonl seq 5); змістове J5 і остаточне JE — на тому ж SHA"
+base_sha: 0f2cd0b819f25d386311a9f16e3c78b6e923903f                # t-0010/stabilization (bridge/ == 96ff45a2)
+control_sha: dc7828752eab1c3e68e8d450c5d0c18293fc1b59             # коміт, що останнім змінює bridge/ і CONTRACT; наступні коміти — лише reports/T-0012/** і tasks/T-0012/**
+execution_branch: t-0012/acceptance-barrier                        # локальна гілка (без push/PR/CI — рішення Р-Т12-3); резервна копія — bundle у проєктних файлах
+authorization: "наказ JE 2026-10-28 08:04 п. 3 (G1–G4); програма JE 08:11 (ліміт 150)"
+
+changed_files_vs_base:
+  bridge: [bridge/src/acceptance.mjs, bridge/src/close.mjs, bridge/test/t0012.test.mjs (новий), bridge/test/t0006.test.mjs, bridge/test/t0007.test.mjs, bridge/test/t0009.test.mjs, bridge/test/t0010.test.mjs, bridge/docs/DESIGN.md, bridge/README.md]
+  contract: "CONTRACT_v0_4.md — один абзац після таблиці §4, одне речення в §6 п. 4"
+  outside: ["tasks/T-0012/**", "reports/T-0012/**"]
+untouched_confirmed: "bridge/src/store.mjs, bridge/src/ledger.mjs, bridge/bin/j4.mjs, bridge/config/**, .github/** — git diff 0f2cd0b..dc78287 порожній; старі tasks/*/events.jsonl не змінені (G3)"
+
+decisions_applied:
+  G1: "acceptance.mjs: читач без значень за замовчуванням; review-<who>-incomplete; CONTRACT §4 + §6 п. 4"
+  G2: "варіант B: scope: full обов'язковий; limited лишається в історії; full + непорожній limits → scope-contradictory; варіант C відкладено"
+  G3: "жодного переписування журналів; compat-events: T-0005…T-0010 стають not-ready (scope-not-full / review-incomplete), T-0006/T-0007 done → already до бар'єра"
+  G4: "R-11 + R-10 + R-12 у тому ж проході; close.mjs і t0010 у scope.in; R-13 не включено. Пізніший провальний/неоднозначний доказ скасовує раніший успіх (R11-1…3, 6, 7, 8, 15). R11-14 (інакше записана команда) — НЕ закрито: характеризація, залишковий ризик для рішення JE (Р-Т12-4)"
+
+checks:
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59, result: "144/144 pass, fail 0, skipped 2 (A4 і A5 пропущено під root); 146 тестів: 105 базових + 41 T-0012", by: J3, calls: "44 dispatch + 4 прямих (derived)", ref: reports/T-0012/evidence/full-run-dc78287.txt}
+  - {cmd: "node --test bridge/test/t0012.test.mjs", subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59, result: "41/41 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+  - {cmd: "node --test bridge/test/t0010.test.mjs (від користувача nobody, копія dc78287)", subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59, result: "12/12 pass, fail 0, skipped 0 (A4 і A5 виконані: замок знято після відмови); лічильник dispatch 0", by: J3, calls: 0, ref: reports/T-0012/evidence/t0010-nobody-dc78287.txt}
+  - {cmd: "node --test bridge/test/t0012.test.mjs", subject: 0f2cd0b819f25d386311a9f16e3c78b6e923903f, result: "12/41 pass, 29 fail (червоний на базі — дефекти F-T9-16, SCOPE-1, R-11, R-10 підтверджені до реалізації)", by: J3, calls: 0, note: "контроль «тести до змін»; не доказ готовності"}
+
+mutants:   # reports/T-0012/mutants.yaml
+  total: 15
+  killed: 15
+  survived: 0
+  adapter_calls: 0
+compat: "reports/T-0012/evidence/compat-events-dc78287.txt — збігається з таблицею 04-spec §4.3 і доказом J4-HARDENING (compat-events-t0012.txt)"
+
+calls_ledger:   # reports/T-0012/calls-ledger.yaml
+  limit: 150 (HALT 144)
+  used: 76
+  breakdown: "28 — відхилення (цілі файли t0006/t0007/t0009 замість фільтрів; записано T12-002), 48 — один повний прогін (T12-006); мутанти, compat, нові тести — 0"
+  paid: 0
+  network: 0
+  ci_runs: 0
+
+legacy_tests_updated: "16 фікстур scope: full / review_status: complete / result: accepted (t0006 5, t0007 3, t0009 5, t0010 2 + ok() у t0006); фікстури доказів без cmd доповнено cmd (R11-13); точні порівняння missing розширено причинами evidence-* (перевірка коду + префікс) — 0 тверджень видалено; A5 — замок знято після відмови (R-12 в)"
+not_verified:
+  - "CI для T-0012 не запускався (без дозволу JE); A4/A5 виконані локально від nobody (див. checks), не в CI"
+  - "macOS/Windows; реальні журнали J4 за межами репозиторію"
+  - "прямі adapter.call() у gate.test.mjs підраховані за базовим значенням (4), сканер їх не бачить"
+c3: "раунд 1: passed; C3T12-1 (посилання на compat у DESIGN §19 має бути reports/T-0012/evidence/compat-events-dc78287.txt), C3T12-3 (тести SC1-7/8 + мутант M16), C3T12-5/6 (формулювання) — відкладені до дельта-раунду; C3T12-2 закрито; C3T12-4 задокументовано (Р-Т12-11)"
+open_for_je:
+  - "Р-Т12-11: дельта-раунд для необов'язкових зауважень C3 зараз (новий SHA, один повний прогін → 124/150, дельта-C3 0) чи прийняти dc78287 з відкладеним"
+  - "Р-Т12-4: залишковий ризик R11-14 (команда записана інакше) — прийняти як залишковий або дозволити канонізацію cmd окремим наказом"
+  - "Р-Т12-2: ліміт 150 (програма) чи 200 (наказ 08:04) — J3 веде 150"
+  - "дозвіл на draft PR із кодом і CI (Р-Т12-3) — лише після приймань C3/J5 і остаточного JE"

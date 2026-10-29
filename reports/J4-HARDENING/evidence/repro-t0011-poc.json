@@ -1,0 +1,101 @@
+{
+  "bridge": "<ізольована копія bridge/ з PoC>",
+  "dispatch_attempt": 0,
+  "results": [
+    {
+      "id": "I1",
+      "title": "контроль: правильна пара + закріплений id, відкрита ескалація",
+      "outcome": "exit 3 open-escalation[escalation:E-T-0900-001]"
+    },
+    {
+      "id": "I2",
+      "title": "контроль: правильна пара + закріплений id, ескалацій немає → done",
+      "outcome": "exit 0 done"
+    },
+    {
+      "id": "I3",
+      "title": "без закріпленого значення → відмова",
+      "outcome": "exit 3 installation-unknown[pinned]"
+    },
+    {
+      "id": "I4",
+      "title": "закріплене значення хибного формату",
+      "outcome": "exit 3 installation-unknown[pinned]"
+    },
+    {
+      "id": "I5",
+      "title": "хибна наявна ціла пара (інша установка, свій marker і журнал)",
+      "outcome": "exit 3 installation-mismatch[store-marker-mismatch,ledger-binding-mismatch]"
+    },
+    {
+      "id": "I6",
+      "title": "чужий J4_HOME без marker-а (лише тека escalations)",
+      "outcome": "exit 3 installation-mismatch[store-marker-missing]"
+    },
+    {
+      "id": "I7",
+      "title": "правильний J4_HOME, чужий журнал",
+      "outcome": "exit 3 installation-mismatch[ledger-binding-mismatch]"
+    },
+    {
+      "id": "I8",
+      "title": "чужий J4_HOME, правильний журнал",
+      "outcome": "exit 3 installation-mismatch[store-marker-mismatch]"
+    },
+    {
+      "id": "I9",
+      "title": "закріплено чужий id (помилка в рішенні JE) для правильної пари",
+      "outcome": "exit 3 installation-mismatch[store-marker-mismatch,ledger-binding-mismatch]"
+    },
+    {
+      "id": "I10",
+      "title": "обрізаний журнал (лишився лише запис установки), ескалація в сховищі",
+      "outcome": "exit 3 open-escalation[escalation:E-T-0900-001]"
+    },
+    {
+      "id": "I11",
+      "title": "знімок установки до ескалації: правильний marker, обрізаний журнал, порожнє сховище (вікно до синхронізації)",
+      "outcome": "exit 0 done"
+    },
+    {
+      "id": "I12",
+      "title": "те саме, але ескалацію синхронізовано в events.jsonl (ref seq=N) до обрізання",
+      "outcome": "exit 3 ledger-events-mismatch[event-seq-2:ledger-seq-3-mismatch]"
+    },
+    {
+      "id": "I13",
+      "title": "подія ADM у events.jsonl посилається на seq N, але хеш не збігається (підмінений журнал тієї ж установки)",
+      "outcome": "exit 3 ledger-events-mismatch[event-seq-2:ledger-seq-3-mismatch]"
+    },
+    {
+      "id": "I14",
+      "title": "подія ADM з installation_id іншої установки",
+      "outcome": "exit 3 ledger-events-mismatch[event-seq-2:installation-mismatch]"
+    },
+    {
+      "id": "I15",
+      "title": "контроль: ескалацію синхронізовано і вирішено JE → done",
+      "outcome": "exit 0 done"
+    },
+    {
+      "id": "I16",
+      "title": "повтор після done на чужій парі → відмова, а не already",
+      "outcome": "exit 0 done | потім exit 3 installation-mismatch[store-marker-mismatch,ledger-binding-mismatch]"
+    },
+    {
+      "id": "I17",
+      "title": "повтор після done на правильній парі → already",
+      "outcome": "exit 0 done"
+    },
+    {
+      "id": "I18",
+      "title": "міграція: стара установка (без marker-а, журнал без прив'язки) → close відмовляє; adopt → close працює; історія журналу збережена",
+      "outcome": "до adopt: exit 3 installation-mismatch[store-marker-missing,ledger-not-bound] | adopt: exit 0 ok | історія збережена: true | після adopt: exit 0 done"
+    },
+    {
+      "id": "I19",
+      "title": "adopt повторно — already; adopt журналу, прив'язаного до іншої установки — відмова",
+      "outcome": "exit 0 already | чужий журнал: exit 3 ledger-bound-to-other-installation"
+    }
+  ]
+}

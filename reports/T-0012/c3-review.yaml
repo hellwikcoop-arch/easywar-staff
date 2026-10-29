@@ -1,0 +1,95 @@
+# Рецензії C3 для T-0012. Текст C3 — дослівно (незалежний рецензент, лише читання, 0 викликів адаптера, ≤ 15 файлів; тестів не запускав).
+# Запис у tasks/T-0012/events.jsonl (review_finished) робить J3 — ручна ланка M-2, як у T-0010 (reports/T-0010/c3-reviews.yaml).
+- seq: 1
+  round: 1
+  subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59
+  requested_at: "2026-10-28T08:52:00Z"
+  received_at: "2026-10-28T09:00:00Z"
+  mandatory: 0
+  optional: 3
+  notes: 3
+  verdict: passed
+  review_status: complete
+  c3_report_verbatim: |
+    review_status: complete
+    subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59
+    files_read:
+      - bridge/src/acceptance.mjs (diff + повний файл на dc78287)
+      - bridge/src/close.mjs (diff + рядки 1–60, 130–380 на dc78287)
+      - bridge/test/t0012.test.mjs (повністю; 36 test() + цикл ×5 = 41)
+      - bridge/test/t0006.test.mjs (diff)
+      - bridge/test/t0007.test.mjs (diff)
+      - bridge/test/t0009.test.mjs (diff)
+      - bridge/test/t0010.test.mjs (diff + A5 рядки 201–221, C2 рядки 355–376)
+      - CONTRACT_v0_4.md (diff; заголовки розділів)
+      - bridge/docs/DESIGN.md (diff §17/§18/§19)
+      - bridge/README.md (diff)
+      - /home/user/easywar-staff/reports/J4-HARDENING/04-spec-T-0012.md (§4.1–4.11)
+      - tasks/T-0012/je-decision-T12-01.md (п. 3 G1–G4), tasks/T-0012/order.yaml, tasks/T-0012/decisions-register.md
+      - reports/T-0012/mutants.yaml
+      - reports/T-0012/evidence/compat-events-dc78287.txt
+      - reports/T-0012/evidence/full-run-dc78287.txt (підсумок: tests 146, pass 144, fail 0, skipped 2 — T-0010 A4, A5 під root)
+      - reports/T-0007/001.yaml, reports/T-0009/001.yaml, 003.yaml, reports/T-0010/003.yaml (записи доказів + verify з tasks/T-0007|T-0009|T-0010/order.yaml)
+    checked_ok:   # підтверджено з посиланнями, не «все добре» загалом
+      - "A/G1–§4.1: acceptance.mjs:72 `review_status: e.review_status ?? null`, :75 `result: e.result ?? null, scope: e.scope ?? null, limits: e.limits ?? null` — читач нічого не додає; :35 `review-${who}-incomplete` окремо від :36 `not-passed`; тести F16-1…8 + мутанти M1, M2, M4"
+      - "A/G2–§4.2 (варіант B): acceptance.mjs:48 `last.scope !== 'full'` → `scope-not-full`; :50 `hasLimits(last.limits)` → `scope-contradictory`; порядок перевірок missing → result/ref → scope → limits збігається з DESIGN §19; SC1-0…6, SC1-4 (limited у історії, пізніший full відкриває, пізніший limited закриває)"
+      - "A/G4–§4.4 (R-11): close.mjs:252–255 trim, порожній = null; :279 related = cmd===null || includes(req); :280 at(-1); :281–283 коди evidence-missing/-latest-without-cmd/-latest-failed; :272 evidence-no-cmd-record (C3H-8); :269 evidence-no-record-on-subject; :254 нерозпізнаний result = збій (resultIsPass). R11-1…15 покривають таблицю §4.4 (R11-7 — вимога спец., не PoC)"
+      - "A/§4.5 (R-10): close.mjs:249 regex тотожний спец. `/(?:^|:|-)[ \\t]*(?:(?:![^\\s]*|&[^\\s]+)[ \\t]+)*[|>][+\\-0-9]*$/`; R10-1…8 + M8; R-12: поведінку не змінено (M12 лише доводить наявний `raw.trim() === ''`), R12-1, README код 1 (README:29), C3H-13 контроль R10-8"
+      - "B/межі: `git diff 0f2cd0b dc78287 --stat` — 17 файлів: лише acceptance.mjs, close.mjs, 5 тестів, CONTRACT (4 рядки: §4 рядки 204–205, §6 п. 4 рядок 328), DESIGN, README, tasks/T-0012/**, reports/T-0012/**; store.mjs, ledger.mjs, bin/j4.mjs, bridge/config, .github — без змін"
+      - "C/старі тести: жодне `assert` не видалене. t0009: `assert.deepEqual(..., NOT)` ×13 → `notOnSubject` (перевіряє missing[0] === 'checks-not-on-subject-or-failed' І кожен наступний елемент має префікс `evidence-`); t0010 C1 аналогічно (рядки 349–351); фікстури без cmd замінені на записи з cmd + додано позитивний контроль (t0009 C4 `w2.yaml`, t0010 C2 два нові `ok === true`); t0006/t0007 — лише `scope: 'full'`/`review_status` додані"
+      - "D/реальні донесення (ручний прогін через evidenceRecords/evidenceVerdict з verify `node --test 'bridge/test/*.test.mjs'`): T-0007/001.yaml:19 → один relevant, pass (рядок 20 без subject — не запис); T-0009/003.yaml:24 pass, :25 cmd `--test-name-pattern … t0009.test.mjs` не містить вимоги → не relevant → ok; T-0009/001.yaml:23–24 — різні subject, по одному pass; T-0010/003.yaml:31 pass («skipped 2» не в списку лічильників), :32/:33 не relevant → ok (COMPAT-2 підтверджує). Заголовків блокових скалярів у цих файлах немає; `|`/`>-` лише в T-0009/005/007/calls-ledger, де записів на SHA немає"
+      - "E/мутанти: усі 9 із §4.6 присутні (M1–M9) + 6 додаткових; 15/15 killed; M9 доводить, що reasons справді потрапляють у missing"
+      - "F/R11-14: задекларовано відкритим у DESIGN §19 («рішення JE Р-Т12-4 очікується»), decisions-register Р-Т12-4 («відкритий — потребує рішення JE»), README («cmd пишіть в одній формі»); тест R11-14 — характеризація, не «закрито». Відповідає G4"
+      - "G/документація: коди причин у DESIGN §19 = коду; стару фразу §17 «Достатньо однієї команди… Відмова мовчазна без причини» прибрано (grep на dc78287 — 0 збігів); §18 «Залишається відкритим» оновлено; CONTRACT §4/§6 п. 4 узгоджені з acceptance.mjs"
+    findings:
+      - id: C3T12-1
+        severity: optional
+        file: bridge/docs/DESIGN.md:§19 (абзац «Сумісність (G3)»)
+        claim: Посилання на доказ сумісності вказує на теку, якої на dc78287 немає; фактичний доказ лежить в іншому місці
+        evidence: "`compat-events` у `reports/J4-HARDENING/evidence/`" — `git ls-tree -r dc78287 | grep -i compat` → порожньо; доказ на контрольному SHA — reports/T-0012/evidence/compat-events-dc78287.txt (файл у головному сховищі reports/J4-HARDENING/evidence/compat-events-t0012.txt у гілку не закомічений)
+        fix: Виправити посилання на `reports/T-0012/evidence/compat-events-<SHA>.txt` (або закомітити J4-HARDENING/evidence у гілку)
+      - id: C3T12-2
+        severity: optional
+        file: bridge/test/t0010.test.mjs:216 ; reports/T-0012/evidence/full-run-dc78287.txt:585
+        claim: Твердження R-12 (в) про знятий замок після відмови не виконувалося в зафіксованому прогоні на dc78287 — A5 пропущено під root; README (рядок 29 «замок обробника знято») і DESIGN §19 спираються на непрогнаний assert
+        evidence: "ok 98 - T-0010 A5: … # SKIP root читає будь-яку теку"; t0010.test.mjs:216 `assert.equal(fs.existsSync(path.join(t.home, 'lock')), false, '… (T-0012 R-12 в)')`
+        fix: Додати запис прогону t0010 від користувача без прав root на dc78287 (як reports/T-0010/003.yaml:32) або явно вказати в пакеті/limits, що A5 на контрольному SHA не виконано
+      - id: C3T12-3
+        severity: optional
+        file: bridge/src/acceptance.mjs:14-17 ; bridge/test/t0012.test.mjs (SC1-6)
+        claim: hasLimits перевірено лише для масиву з елементом; гілки «порожній масив → не межі» і «не-масив (рядок/об'єкт) → межі» без тестів; мутант `return Array.isArray(limits) && limits.length > 0` (рядкові limits пропускає як full) вижив би — його немає в mutants.yaml
+        evidence: `return !(Array.isArray(limits) && limits.length === 0);` — коментар обіцяє «рядок, число, об'єкт — теж межі», тест є лише для `limits: ['C не прийнято']`
+        fix: Додати SC1-7 (`scope: full, limits: []` → ready) і SC1-8 (`limits: "C"` та `limits: {a: 1}` → scope-contradictory); мутант M16 у mutants.yaml
+      - id: C3T12-4
+        severity: note
+        file: CONTRACT_v0_4.md:204-205 ; tasks/T-0012/order.yaml (red_lines, scope.in)
+        claim: Картка обмежує зміну §4 «одним рядком», фактично додано абзац із 1 рядка тексту + порожній рядок (2 вставлені рядки); JE G1 кількості рядків не обмежує, зміст у §4 — порушення формальне
+        evidence: diff `+Для review_finished і acceptance поля review_status, result і scope обов'язкові …` + `+` (порожній)
+        fix: Задокументувати в decisions-register (Р-Т12-9) або прибрати «один рядок» із red_lines поправкою картки
+      - id: C3T12-5
+        severity: note
+        file: bridge/src/close.mjs:279 ; bridge/docs/DESIGN.md:§19 (R-11, залишковий ризик)
+        claim: Клас залишкового ризику R11-14 ширший, ніж задекларовано: «іншою командою» є також запис, чий cmd — підрядок вимоги (`node --test`), або з іншим порядком прапорців; у DESIGN названо лише лапки/подвійний пробіл/регістр
+        evidence: `records.filter((r) => r.cmd === null || r.cmd.includes(req))` — скорочений cmd не містить req, тому його збій ігнорується як R11-5
+        fix: Розширити формулювання в DESIGN §19 і Р-Т12-4 («будь-який cmd, що не є надрядком вимоги»)
+      - id: C3T12-6
+        severity: note
+        file: bridge/src/close.mjs:275
+        claim: У гілці без verify текст cmd береться з файла доказів і без обрізання копіюється в `missing` (вихід CLI / подія відмови) — довільний рядок з файла потрапляє в діагностику
+        evidence: "reasons.push(`evidence-latest-failed:${cmd || '<без cmd>'}`)" (у гілці з verify — лише req із наказу)
+        fix: Задокументувати (DESIGN §19) або обрізати cmd до N символів у причині
+    verdict: passed
+    limits:
+      - "Тести не запускалися (бюджет 0); висновки про зелений прогін і мутанти — лише з reports/T-0012/evidence/full-run-dc78287.txt і mutants.yaml, які закомічені пізніше за dc78287 (за природою доказу)"
+      - "T-0010 A4/A5 у зафіксованому прогоні пропущені (root) — див. C3T12-2"
+      - "Не читав bin/j4.mjs і events.mjs: чи журналюється `missing` події відмови (вплив C3T12-6) — не перевірено; tools/compat-events.mjs і 07-draft-tests не читав (поза 15 файлами)"
+      - "Файл reports/T-0009/002.yaml і решту T-0009/*.yaml перевірено лише grep-ом на записи із subject і заголовки блоків, не читанням повністю"
+  j3_response:
+    mandatory: "немає — виправлень коду не потрібно; контрольний SHA dc78287 лишається"
+    C3T12-2: "ВИКОНАНО без зміни SHA: node --test bridge/test/t0010.test.mjs від користувача nobody на копії dc78287 — 12/12 pass, skipped 0 (A4 і A5 виконані, замок знято), dispatch 0; reports/T-0012/evidence/t0010-nobody-dc78287.txt"
+    C3T12-4: "задокументовано — decisions-register Р-Т12-11 (абзац із одного речення + порожній рядок; зміст у межах G1)"
+    C3T12-1: "ВІДКЛАДЕНО до наступного контрольного SHA (правка лише документації в bridge/docs/DESIGN.md; зміна SHA вимагала б ще одного повного прогону — 48 викликів, 76 → 124/150). Правильне посилання: reports/T-0012/evidence/compat-events-dc78287.txt; зафіксовано тут і в 001.yaml"
+    C3T12-3: "ВІДКЛАДЕНО з тієї ж причини: тести SC1-7/SC1-8 і мутант M16 підготовлені як текст у decisions-register Р-Т12-11; поведінка коду (рядок/об'єкт limits → contradictory, [] → ready) підтверджена читанням hasLimits; виконати в дельта-раунді, якщо JE/J5 дозволять другий повний прогін, або в наступній задачі, що торкає acceptance.mjs"
+    C3T12-5: "прийнято — формулювання залишкового ризику розширено в Р-Т12-4 (будь-який cmd, що не є надрядком вимоги, у т. ч. скорочений чи з іншим порядком прапорців); DESIGN §19 — у дельта-раунді"
+    C3T12-6: "прийнято як відомий — лише в гілці без verify; cmd у missing походить із файла доказів у сховищі штабу (той самий автор, що й докази); обрізання/документування — у дельта-раунді"
+    decision_for_je_j5: "дельта-раунд (C3T12-1, 3, 5, 6 — один коміт документації й тестів, новий SHA, один повний прогін → 124/150, дельта-C3 0) чи прийняти dc78287 з відкладеними необов'язковими зауваженнями — див. 001.yaml open_for_je"

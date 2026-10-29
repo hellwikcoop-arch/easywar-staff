@@ -34,14 +34,18 @@ function order(root, { key = false, review = 'code', id = T } = {}) {
 
 function evidence(root, subject = SHA_A) {
   fs.mkdirSync(path.join(root, 'reports'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'reports', 'checks.yaml'), `checks: {subject: ${subject}, result: pass}\n`);
+  // T-0012 (R11-13, C3H-8): запис без cmd більше не є доказом навіть без verify — фікстура містить cmd
+  fs.writeFileSync(path.join(root, 'reports', 'checks.yaml'), `- {cmd: "node --test 'bridge/test/*.test.mjs'", subject: ${subject}, result: pass}\n`);
   return 'reports/checks.yaml';
 }
 
+// T-0012: до коду бар'єра додаються причини розбору доказів (evidence-*) — перевіряємо код і префікс причин
+const notOnSubject = (r, msg) => { assert.equal(r.missing[0], 'checks-not-on-subject-or-failed', msg); assert.ok(r.missing.length >= 1 && r.missing.slice(1).every((m) => m.startsWith('evidence-')), `${msg ?? ''} ${JSON.stringify(r.missing)}`); };
+
 function fullAcceptance(root, subject = SHA_A) {
   addEvent(root, { event: 'review_finished', by: 'C3', subject, review_status: 'complete', verdict: 'passed', ref: 'r' });
-  addEvent(root, { event: 'acceptance', by: 'J3', role: 'technical', subject, result: 'accepted', ref: 'a' });
-  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject, result: 'accepted', ref: 'b' });
+  addEvent(root, { event: 'acceptance', by: 'J3', role: 'technical', subject, result: 'accepted', scope: 'full', ref: 'a' });
+  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject, result: 'accepted', scope: 'full', ref: 'b' });
 }
 
 function cliEnv(root, extra = {}) {
@@ -202,13 +206,13 @@ test('T-0009 C1: close відмовляє без повного комплект
 
   assert.deepEqual(close().missing, ['review-C3-missing', 'acceptance-J3-technical-missing', 'acceptance-J5-content-missing']);
   addEvent(root, { event: 'review_finished', by: 'C3', subject: SHA_A, review_status: 'complete', verdict: 'passed', ref: 'r' });
-  addEvent(root, { event: 'acceptance', by: 'J3', role: 'technical', subject: SHA_A, result: 'accepted', ref: 'a' });
-  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject: SHA_B, result: 'accepted', ref: 'b' });
+  addEvent(root, { event: 'acceptance', by: 'J3', role: 'technical', subject: SHA_A, result: 'accepted', scope: 'full', ref: 'a' });
+  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject: SHA_B, result: 'accepted', scope: 'full', ref: 'b' });
   assert.deepEqual(close().missing, ['acceptance-J5-content-missing'], 'J5 на іншому SHA не зараховано');
-  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject: SHA_A, result: 'accepted', ref: 'b2' });
+  addEvent(root, { event: 'acceptance', by: 'J5', role: 'content', subject: SHA_A, result: 'accepted', scope: 'full', ref: 'b2' });
   // перевірки: файл без контрольного SHA, відсутній файл, шлях поза сховищем
   fs.writeFileSync(path.join(root, 'reports', 'other.yaml'), `subject: ${SHA_B}\n`);
-  assert.deepEqual(close(SHA_A, 'reports/other.yaml').missing, ['checks-not-on-subject-or-failed']);
+  assert.deepEqual(close(SHA_A, 'reports/other.yaml').missing, ['checks-not-on-subject-or-failed', 'evidence-no-record-on-subject']);   // T-0012: причина розбору
   assert.deepEqual(close(SHA_A, 'reports/none.yaml').missing, ['checks-not-on-subject-or-failed']);
   assert.deepEqual(close(SHA_A, '../outside.yaml').missing, ['checks-not-on-subject-or-failed']);
   assert.deepEqual(close(SHA_A, null).missing, ['checks-missing']);
@@ -332,18 +336,18 @@ test('T-0009 C4: checks — не згадка SHA, а рядок result: pass н
   const NOT = ['checks-not-on-subject-or-failed'];
 
   const a = setup(`  verify: ["${CMD}"]`);
-  assert.deepEqual(a.close(a.file('mention.yaml', `note: контрольний SHA ${SHA_A}\n`)).missing, NOT);                                       // лише згадка
-  assert.deepEqual(a.close(a.file('nopass.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "75/76 pass, 1 fail"}\n`)).missing, NOT);    // є fail
-  assert.deepEqual(a.close(a.file('failfirst.yaml', `- {fail: 3, cmd: "${CMD}", subject: ${SHA_A}, result: pass}\n`)).missing, NOT);         // fail до result
-  assert.deepEqual(a.close(a.file('othercmd.yaml', `- {cmd: "інша команда", subject: ${SHA_A}, result: "pass"}\n`)).missing, NOT);          // немає команди verify
-  assert.deepEqual(a.close(a.file('othersha.yaml', `- {cmd: "${CMD}", subject: ${SHA_B}, result: "pass"}\n`)).missing, NOT);                 // інший SHA
+  notOnSubject(a.close(a.file('mention.yaml', `note: контрольний SHA ${SHA_A}\n`)));                                       // лише згадка
+  notOnSubject(a.close(a.file('nopass.yaml', `- {cmd: "${CMD}", subject: ${SHA_A}, result: "75/76 pass, 1 fail"}\n`)));    // є fail
+  notOnSubject(a.close(a.file('failfirst.yaml', `- {fail: 3, cmd: "${CMD}", subject: ${SHA_A}, result: pass}\n`)));         // fail до result
+  notOnSubject(a.close(a.file('othercmd.yaml', `- {cmd: "інша команда", subject: ${SHA_A}, result: "pass"}\n`)));          // немає команди verify
+  notOnSubject(a.close(a.file('othersha.yaml', `- {cmd: "${CMD}", subject: ${SHA_B}, result: "pass"}\n`)));                 // інший SHA
   // симлінк на файл поза сховищем і файл у каталозі-симлінку поза сховищем — відмова, хоч вміст «ідеальний»
   const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'j4-outside-'));
   fs.writeFileSync(path.join(outside, 'good.yaml'), `- {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass"}\n`);
   fs.symlinkSync(path.join(outside, 'good.yaml'), path.join(a.root, 'reports', 'link.yaml'));
   fs.symlinkSync(outside, path.join(a.root, 'reports', 'dirlink'));
-  assert.deepEqual(a.close('reports/link.yaml').missing, NOT);
-  assert.deepEqual(a.close('reports/dirlink/good.yaml').missing, NOT);
+  notOnSubject(a.close('reports/link.yaml'));
+  notOnSubject(a.close('reports/dirlink/good.yaml'));
   assert.equal(taskEvents(a.root).filter((e) => e.event === 'state_changed').length, 0);
   const text = `- {cmd: "${CMD}", subject: ${SHA_A}, result: "76/76 pass, fail 0", by: J3}\n`;
   const good = a.close(a.file('good.yaml', text));
@@ -358,20 +362,22 @@ test('T-0009 C4: checks — не згадка SHA, а рядок result: pass н
   // `#` усередині лапок — не коментар: друга команда verify не губиться; коментар після значення прибирається
   const c = setup('  verify: ["echo A", "echo B # x"]   # коментар');
   assert.deepEqual(orderGate(c.root, T).verify, ['echo A', 'echo B # x']);
-  assert.deepEqual(c.close(c.file('onlyA.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n`)).missing, NOT);
+  notOnSubject(c.close(c.file('onlyA.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n`)));
   assert.equal(c.close(c.file('both.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n- {cmd: "echo B # x", subject: ${SHA_A}, result: pass}\n`)).ok, true);
 
   // verify без відступу діє; нечитаний (блоковий) verify і порожній ключ — безпечна відмова
   const d = setup('verify: ["echo A"]');
-  assert.deepEqual(d.close(d.file('x.yaml', `- {cmd: "echo B", subject: ${SHA_A}, result: pass}\n`)).missing, NOT);
+  notOnSubject(d.close(d.file('x.yaml', `- {cmd: "echo B", subject: ${SHA_A}, result: pass}\n`)));
   for (const bad of ['  verify:\n    - "echo A"', '  verify: [echo A]', '  verify: ["echo A", ]', '  verify: null']) {
     const e = setup(bad);
-    assert.equal(e.close(e.file('y.yaml', `{subject: ${SHA_A}, result: pass}\n`)).code, 'order-verify-unreadable', bad);
+    assert.equal(e.close(e.file('y.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n`)).code, 'order-verify-unreadable', bad);
   }
   // явно порожній список — команд не вимагається, але рядок із pass на subject усе одно потрібен
   const f = setup('  verify: []');
-  assert.deepEqual(f.close(f.file('z.yaml', `note: ${SHA_A}\n`)).missing, NOT);
-  assert.equal(f.close(f.file('w.yaml', `{subject: ${SHA_A}, result: pass}\n`)).ok, true);
+  notOnSubject(f.close(f.file('z.yaml', `note: ${SHA_A}\n`)));
+  // T-0012 (R11-13, C3H-8): запис без cmd більше не є доказом і без verify; потрібен хоча б один запис із cmd
+  assert.deepEqual(f.close(f.file('w.yaml', `{subject: ${SHA_A}, result: pass}\n`)).missing, ['checks-not-on-subject-or-failed', 'evidence-no-cmd-record']);
+  assert.equal(f.close(f.file('w2.yaml', `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n`)).ok, true);
 });
 
 test('T-0009 C5: ескалація з журналу J4 видна при порожньому сховищі J4; resolved у журналі її знімає; гонка двох close дає один done', async () => {
@@ -398,7 +404,7 @@ test('T-0009 C5: ескалація з журналу J4 видна при по�
   const root2 = tmpStaff();
   order(root2);
   const ref2 = evidence(root2);
-  fs.writeFileSync(path.join(root2, ref2), `checks: {subject: ${SHA_A}, result: pass}\nchecks: {subject: ${SHA_B}, result: pass}\n`);
+  fs.writeFileSync(path.join(root2, ref2), `- {cmd: "echo A", subject: ${SHA_A}, result: pass}\n- {cmd: "echo A", subject: ${SHA_B}, result: pass}\n`);   // T-0012: запис із cmd
   fullAcceptance(root2, SHA_A);
   fullAcceptance(root2, SHA_B);
   prepareJ4(root2);
@@ -531,13 +537,13 @@ test('T-0009 C8: F-T9-13/14/17 — «not passed», порожній відбір
 
   write([`  verify: ["${CMD}"]`]);
   ['not passed', 'Not Passed', '0 passed', '0 pass, 0 fail', '0/76 pass', 'pass: 0', 'tests 0 pass 0 fail 0'].forEach((result, i) => {
-    assert.deepEqual(close(`bad${i}.yaml`, `- {cmd: "${CMD}", subject: ${SHA_A}, result: "${result}"}\n`).missing, NOT, result);
+    notOnSubject(close(`bad${i}.yaml`, `- {cmd: "${CMD}", subject: ${SHA_A}, result: "${result}"}\n`), result);
   });
   assert.equal(taskEvents(root).filter((e) => e.event === 'state_changed').length, 0);
 
   // SHA лише всередині значення cmd, без поля subject, — не доказ на subject
   write(['  verify: []']);
-  assert.deepEqual(close('incmd.yaml', `- {cmd: "echo ${SHA_A}", result: pass}\n`).missing, NOT);
+  notOnSubject(close('incmd.yaml', `- {cmd: "echo ${SHA_A}", result: pass}\n`));
 
   // кілька ключів verify: — невідомо, який діє, тому відмова
   write([`  verify: ["${CMD}"]`, '  verify: ["echo B"]']);

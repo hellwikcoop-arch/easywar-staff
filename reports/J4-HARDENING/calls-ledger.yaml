@@ -1,0 +1,33 @@
+# Облік викликів адаптера J4 у місії J4 AUTONOMY HARDENING (підготовка, не завдання з наказом). Лише додавання рядків.
+# Одиниця — як у T-0009/T-0010: dispatch_attempt у журналі J4 + прямий adapter.call(). Платних і мережевих викликів немає.
+# Облік T-0009 (194/250) і T-0010 (144/150) НЕ зачеплено: жоден прогін тут не входить до їхніх ledger-ів.
+mission: J4-AUTONOMY-HARDENING
+date: 2026-10-27
+limit: {value: null, note: "ліміт місії наказом не задано; облік ведеться для прозорості й як урок для T-0011/T-0012"}
+counting_method:
+  - "лічильник tasks/T-0009/tools/call-counter.mjs бачить лише модуль репозиторію (патчить bridge/src/ledger.mjs за відносним шляхом); копії PoC він не рахує"
+  - "тому для копій — сканер усіх *.jsonl у /tmp на подію dispatch_attempt (python, 05-experiments.md §5.7); тимчасові теки тестів видаляються, тож число з часом лише меншає — беремо максимум спостережений"
+entries:
+  - id: H-001
+    kind: actual
+    run: "контроль бази: повний прогін node --test 'bridge/test/*.test.mjs' на 0f2cd0b (bridge/ = 96ff45a)"
+    result: "105 тестів: 103 pass, 2 skipped (A4, A5 під root); на CI (run 40537188604, job 122305507120, 0f2cd0b) — 105 pass, 0 skipped, за логом"
+    calls: {dispatch: 44, direct: 4, total: 48, accuracy: exact_by_baseline}
+  - id: H-002
+    kind: actual
+    run: "занадто широкий фільтрований прогін на копії poc11 (recovery, escalation, T-0007 S1–S5 тощо) — помилка планування"
+    result: "stub-адаптер викликався; лічильник копію не бачив"
+    calls: {dispatch: 156, direct: 0, total: 156, accuracy: estimate_upper_bound, basis: "сканер /tmp: 200 dispatch_attempt разом з H-001 (156 stub + 44 live-fake); повторний скан пізніше — 100 (теки видалено)"}
+    lesson: "лише фільтри без диспетчеризації: t0006 «бар'єр|done лише|F-1», t0007 S6, t0009 C|E|H|Q2|Q3, t0010; після кожного — сканер"
+  - id: H-003
+    kind: actual
+    run: "tools/repro.mjs ×N (старий код і poc12), tools/repro-t0011.mjs ×N (старий і poc11), tools/compat-events.mjs, фільтровані барʼєрні тести на poc12 (t0006 6, t0007 1, t0009 8, t0010 12), чернетки тестів"
+    result: "інструменти самі перевіряють dispatch_attempt = 0 у створених журналах; сканер після барʼєрних фільтрів — 0 нових"
+    calls: {dispatch: 0, direct: 0, total: 0, accuracy: exact}
+state:
+  cumulative: {dispatch_max_observed: 200, direct: 4, total_upper_bound: 204}
+  paid_api_calls: 0
+  network_calls: 0
+  t0009_budget_touched: false
+  t0010_budget_touched: false
+  ci_runs_triggered: 0
