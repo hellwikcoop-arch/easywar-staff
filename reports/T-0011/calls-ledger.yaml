@@ -1,7 +1,7 @@
 # Облік викликів адаптера J4 для T-0011 (одиниця — як у T-0009/T-0010/T-0012: dispatch_attempt у журналі J4 + прямий adapter.call()). Лише додавання рядків.
-# Ліміт: 180 (JE-T12-01 п. 4). Перевірка перед кожним прогоном з диспетчеризацією: used + next ≤ 180. Не обнуляти.
+# Ліміт: 180 (JE-T12-01 п. 4), з 2026-10-29T04:55:36Z — 250 за рішенням JE (Р-Т11-24). Перевірка перед кожним прогоном з диспетчеризацією: used + next ≤ ліміт. Не обнуляти.
 task: T-0011
-limits: {effective: 180, halt_rule: "used + next > 180", paid_usd: 0}
+limits: {effective: 250, halt_rule: "used + next > 250", paid_usd: 0, previous: 180, raised_by: "JE, 2026-10-29T04:55:36Z, картка «PR + CI, ліміт до 250» (Р-Т11-24)"}
 counting_method:
   - "повний прогін node --test 'bridge/test/*.test.mjs' = 48 (44 dispatch_attempt + 4 прямих у gate.test.mjs); базове значення T-0009/T-0010/T-0012"
   - "фільтровані прогони запускаються через tasks/T-0011/tools/run-counted.sh (ізольований TMPDIR + сканер dispatch_attempt); результат сканера записується в entries"
@@ -34,4 +34,5 @@ entries:
   - {n: 19, label: full3, cmd: "node --test 'bridge/test/*.test.mjs' (ecabb7e — новий контрольний SHA)", dispatch_attempt: 44, direct: 4, used_after: 153, note: "212 тестів: 210 pass, 0 fail, 2 skipped (A4/A5 під root); 44 dispatch (сканер) + 4 прямих (gate.test.mjs); evidence/full-run-3-ecabb7e.txt"}
   - {n: 20, label: t0010-t0011-nobody, cmd: "t0010 + t0011 від nobody на копії ecabb7e (git archive)", dispatch_attempt: 0, direct: 0, used_after: 153, note: "78/78 pass, skipped 0 (A4 і A5 виконані); evidence/t0010-t0011-nobody-ecabb7e.txt"}
   - {n: 21, label: mutants-all, cmd: "node tasks/T-0011/tools/mutate.mjs (усі 37 на ecabb7e)", dispatch_attempt: 0, direct: 0, used_after: 153, note: "результат — reports/T-0011/mutants.yaml"}
-state: {used: 153, forecast_next_full_run: 48, projected_after_full_run: 201, remaining_to_180: 27, paid_api_calls: 0, network_calls: 0, ci_runs: 0, halt_rule: "used + next > 180 → HALT: ще один повний прогін (201) і CI (48 → 201) не вміщуються; лише фільтровані прогони з нульовою диспетчеризацією"}
+  - {n: 22, label: ci-pr-open, cmd: "CI j4-bridge (pull_request) на draft PR t-0011/installation-identity → main; запускається відкриттям PR", dispatch_attempt: 44, direct: 4, used_after: 201, note: "ПЛАН за рішенням JE 04:55:36Z (Р-Т11-24): 153 + 48 = 201 ≤ 250; фактичний результат і run id — у reports/T-0011/ci.yaml після завершення"}
+state: {used: 153, planned_after_ci: 201, limit: 250, remaining_to_limit_after_ci: 49, paid_api_calls: 0, network_calls: 0, ci_runs: 0, halt_rule: "used + next > 250 → HALT: після першого CI лишається 49 — вміщується ще одна подія CI (249), повний локальний прогін (48) теж, але не обидва"}
