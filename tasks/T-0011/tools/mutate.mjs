@@ -81,6 +81,33 @@ export const MUTANTS = [
     from: "installationId: o.installation ?? process.env.J4_INSTALLATION_ID,", to: "installationId: o.installation ?? process.env.J4_INSTALLATION_ID ?? Store.open(home).installation()?.installation_id," }] },
   { id: 'M25', what: 'друга, суперечлива прив\'язка журналу не скасовує прив\'язку', file: 'bridge/src/ledger.mjs', patches: [{
     from: "return adopted.some((e) => e.detail.installation_id !== id) ? null : { installation_id: id, seq: first.seq };", to: "return { installation_id: id, seq: first.seq };" }] },
+  // M26–M36: за результатами рецензії C3 (раунд 1, C3T11-6, -8, -9, -2, -5) — порядок M11, msg_id, формат закріплених значень, замки, нові перевірки
+  { id: 'M26', what: 'звірка подій ADM раніше за ідемпотентність already (порядок M11)', file: 'bridge/src/close.mjs', patches: [{
+    from: "  const done = entries.filter((e) => e.event === 'state_changed' && e.state === 'done');\n",
+    to: "  const ep26 = reconcileEvents({ entries, ledgerEntries, installationId, binding: ident.binding });\n  if (ep26.length) return refuse('ledger-events-mismatch', ep26);\n  const done = entries.filter((e) => e.event === 'state_changed' && e.state === 'done');\n" }] },
+  { id: 'M27', what: 'закріплені значення перевіряються раніше за читання events.jsonl (порядок M11)', file: 'bridge/src/close.mjs', patches: [{
+    from: "  let entries;\n  try {\n    entries = readTaskEvents(staffRoot, taskId).entries;",
+    to: "  const u27 = pinnedProblems({ installationId, ledgerFirstHash, ledgerMinSeq });\n  if (u27.length) return refuse('installation-unknown', u27);\n  let entries;\n  try {\n    entries = readTaskEvents(staffRoot, taskId).entries;" }] },
+  { id: 'M28', what: 'report_filed звіряється із записом журналу без порівняння msg_id', file: 'bridge/src/close.mjs', patches: [{
+    from: " && rec.kind === 'report' && rec.msg_id === e.msg_id,", to: " && rec.kind === 'report'," }] },
+  { id: 'M29', what: 'прив\'язка порожнього журналу (bindIfEmpty) без замка журналу', file: 'bridge/src/ledger.mjs', patches: [{
+    from: "  bindIfEmpty(installationId) {\n    withFileLock(`${this.file}.lock`, () => {", to: "  bindIfEmpty(installationId) {\n    ((fn) => fn())(() => {" }] },
+  { id: 'M30', what: 'adopt без замка журналу', file: 'bridge/src/ledger.mjs', patches: [{
+    from: "  adopt(installationId, now) {\n    return withFileLock(`${this.file}.lock`, () => {", to: "  adopt(installationId, now) {\n    return ((fn) => fn())(() => {" }] },
+  { id: 'M31', what: 'закріплений installation_id обрізається (trim) перед перевіркою формату', file: 'bridge/src/close.mjs', patches: [{
+    from: "!INSTALLATION_ID.test(installationId)) missing.push('pinned');", to: "!INSTALLATION_ID.test(String(installationId).trim())) missing.push('pinned');" }] },
+  { id: 'M32', what: 'закріплений ledger_first_hash обрізається (trim) перед перевіркою формату', file: 'bridge/src/close.mjs', patches: [{
+    from: "typeof ledgerFirstHash === 'string' && SHA256.test(ledgerFirstHash)", to: "typeof ledgerFirstHash === 'string' && SHA256.test(ledgerFirstHash.trim())" }] },
+  { id: 'M33', what: 'ledger_min_seq допускає ведучі нулі ("007")', file: 'bridge/src/close.mjs', patches: [{
+    from: "/^[1-9][0-9]*$/.test(seq)", to: "/^0*[1-9][0-9]*$/.test(seq)" }] },
+  { id: 'M34', what: 'marker, що є симлінком, приймається (lstat/isFile вилучено)', file: 'bridge/src/store.mjs', patches: [{
+    from: "      if (!fs.lstatSync(file).isFile()) return null; // симлінк, тека, пристрій — не marker (C3T11-9)\n", to: '' }] },
+  { id: 'M35', what: 'згенерований installation_id не перевіряється сканером журналу', file: 'bridge/src/store.mjs', patches: [{
+    from: "    if (!scanObject({ installation_id: id }).length) return id;", to: "    return id;" }] },
+  { id: 'M36', what: 'adopt не перевіряє сховище J4 для непорожнього непривʼязаного журналу', file: 'bridge/bin/j4.mjs', patches: [{
+    from: "if (fs.existsSync(ledgerFile) && fs.statSync(ledgerFile).size > 0 && !fs.existsSync(path.join(home, 'installation.json'))) {", to: "if (false) {" }] },
+  { id: 'M37', what: 'CLI не друкує причини відмови роутера (missing) у stderr', file: 'bridge/bin/j4.mjs', patches: [{
+    from: "const why = Array.isArray(e.missing) && e.missing.length ? ` [${e.missing.join(', ')}]` : '';", to: "const why = '';" }] },
 ];
 
 const RUNS = [

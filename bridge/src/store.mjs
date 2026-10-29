@@ -3,11 +3,23 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { scanObject } from './scanner.mjs';
 
 // T-0011: ідентифікатор установки J4 — 32 hex, локальний випадковий, у J4_HOME/installation.json. Нікуди не передається і не є
 // installation_id лічильника встановлень EasyWAR (AGENTS.md, Q13): це різні речі з однаковою назвою поля.
 export const INSTALLATION_ID = /^[0-9a-f]{32}$/;
 export const MARKER_FORMAT = 'j4.installation/1';
+
+// T-0011 (C3T11, перевірка сканером): випадковий id не має збігатися з правилами сканера журналу (напр. ops.phone_ua: хвіст `380` + 9 цифр,
+// ≈ 4·10⁻⁶ на id), інакше запис прив'язки в журнал назавжди відмовляв би `ledger-leak`. Id, який сканер відхиляє, відкидається й генерується
+// знову; `rand` підміняється лише в тестах.
+export function newInstallationId(rand = randomBytes) {
+  for (let i = 0; i < 64; i += 1) {
+    const id = rand(16).toString('hex');
+    if (!scanObject({ installation_id: id }).length) return id;
+  }
+  throw Object.assign(new Error('installation-id-generation-failed'), { code: 'installation-id-generation-failed' });
+}
 
 export class Store {
   // create: false — сховище лише для читання (Store.open): підтек і marker-а не створює, запис і замки відхиляє (T-0010, F-T9-20).
@@ -28,9 +40,16 @@ export class Store {
   ensureMarker() {
     const file = this.p('installation.json');
     if (fs.existsSync(file)) return;
-    const body = { installation_id: randomBytes(16).toString('hex'), created_at: new Date().toISOString(), format: MARKER_FORMAT };
+    const body = { installation_id: newInstallationId(), created_at: new Date().toISOString(), format: MARKER_FORMAT };
     const tmp = `${file}.new-${process.pid}-${randomBytes(4).toString('hex')}`;
-    fs.writeFileSync(tmp, `${JSON.stringify(body, null, 2)}\n`, { mode: 0o600 });
+    // fsync до link: після втрати живлення marker не лишається порожнім (існуючий порожній файл не переписується й давав би вічну відмову)
+    const fd = fs.openSync(tmp, 'w', 0o600);
+    try {
+      fs.writeSync(fd, `${JSON.stringify(body, null, 2)}\n`);
+      fs.fsyncSync(fd);
+    } finally {
+      fs.closeSync(fd);
+    }
     try {
       fs.linkSync(tmp, file);
     } catch (e) {
@@ -45,7 +64,9 @@ export class Store {
   installation() {
     let m;
     try {
-      m = JSON.parse(fs.readFileSync(this.p('installation.json'), 'utf8'));
+      const file = this.p('installation.json');
+      if (!fs.lstatSync(file).isFile()) return null; // симлінк, тека, пристрій — не marker (C3T11-9)
+      m = JSON.parse(fs.readFileSync(file, 'utf8'));
     } catch {
       return null;
     }

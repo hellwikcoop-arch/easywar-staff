@@ -168,6 +168,16 @@ async function main() {
         process.exitCode = 4;
         break;
       }
+      // C3T11-2: marker не створюється в довільній теці — для непорожнього журналу J4_HOME має бути вже наявним сховищем J4 або мати marker
+      // (нова установка з порожнім чи відсутнім журналом створює сховище сама). Помилка в J4_HOME не прив'язує журнал до випадкового marker-а.
+      if (fs.existsSync(ledgerFile) && fs.statSync(ledgerFile).size > 0 && !fs.existsSync(path.join(home, 'installation.json'))) {
+        const hs = inspectJ4Home(home);
+        if (!hs.ok) {
+          out({ ok: false, code: hs.reason });
+          process.exitCode = 3;
+          break;
+        }
+      }
       const marker = new Store(home).installation();
       if (!marker) {
         out({ ok: false, code: 'installation-mismatch', missing: ['store-marker-missing'] });
@@ -232,6 +242,8 @@ async function main() {
 }
 
 main().catch((e) => {
-  process.stderr.write(`j4: ${e.code ?? e.message}\n`);
+  // T-0011: відмова роутера (installation-mismatch) несе причини — оператор розрізняє store-marker-missing / ledger-not-bound / ledger-binding-mismatch
+  const why = Array.isArray(e.missing) && e.missing.length ? ` [${e.missing.join(', ')}]` : '';
+  process.stderr.write(`j4: ${e.code ?? e.message}${why}\n`);
   process.exitCode = 1;
 });

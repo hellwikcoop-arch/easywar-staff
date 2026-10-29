@@ -8,9 +8,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { BRIDGE_DIR, loadConfig } from '../src/policy.mjs';
-import { Store } from '../src/store.mjs';
+import { Store, newInstallationId } from '../src/store.mjs';
 import { Ledger, verifyLedger } from '../src/ledger.mjs';
 import { J4 } from '../src/router.mjs';
 import { closeTask } from '../src/close.mjs';
@@ -168,6 +168,7 @@ test('T-0011 N2b: зіпсований marker не переписується м
   const before = read(s.ledger);
   const r = cli(s, ['run', '--once', '--mode', 'stub']);
   assert.equal(r.status, 1, detail(r));
+  assert.match(r.stderr, /^j4: installation-mismatch \[store-marker-missing\]$/m, 'оператор бачить причину (C3T11-5)');
   assert.equal(read(path.join(s.home, 'installation.json')), 'не json', 'marker не переписано');
   unchanged(s.ledger, before);
 });
@@ -204,9 +205,9 @@ test('T-0011 I3b: бібліотечний closeTask без installationId → i
   assert.ok(r.missing.includes('pinned'));
 });
 
-test('T-0011 I4/N10: закріплене значення хибного формату (not-an-id, великі літери, 31 символ, 33 символи) → installation-unknown[pinned]', () => {
+test('T-0011 I4/N10: закріплене значення хибного формату (not-an-id, великі літери, 31 і 33 символи, пробіл/табуляція/перенос рядка навколо правильного id) → installation-unknown[pinned]', () => {
   const s = staff();
-  for (const v of ['not-an-id', 'ABCDEF'.repeat(6).slice(0, 32), s.id.slice(1), `${s.id}0`, '']) {
+  for (const v of ['not-an-id', 'ABCDEF'.repeat(6).slice(0, 32), s.id.slice(1), `${s.id}0`, '', `${s.id}\n`, ` ${s.id}`, `${s.id} `, `\t${s.id}`]) {
     expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: v }), 'installation-unknown', 'pinned');
   }
   assert.equal(doneCount(s), 0);
@@ -246,6 +247,7 @@ test('T-0011 N11: run --once із журналом, прив\'язаним до 
   const s = staff(); const a = alienPair(s); const before = read(a.ledger);
   const r = cli(s, ['run', '--once', '--mode', 'stub'], { J4_LEDGER: a.ledger });
   assert.equal(r.status, 1, detail(r));
+  assert.match(r.stderr, /^j4: installation-mismatch \[ledger-binding-mismatch\]$/m, 'оператор бачить причину (C3T11-5)');
   unchanged(a.ledger, before);
 });
 
@@ -254,6 +256,7 @@ test('T-0011 N11b: run --once після втрати marker-а (журнал п
   const before = read(s.ledger);
   const r = cli(s, ['run', '--once', '--mode', 'stub']);
   assert.equal(r.status, 1, detail(r));
+  assert.match(r.stderr, /^j4: installation-mismatch \[ledger-binding-mismatch\]$/m, 'новий marker замість загубленого: причина — прив\'язка журналу до іншого id (C3T11-8б, DESIGN)');
   unchanged(s.ledger, before);
 });
 
@@ -269,6 +272,7 @@ test('T-0011 N27 (неповна пара): marker є, журнал непоро
   const s = staff({ router: false }); oldLedger(s, 3); const before = read(s.ledger);
   const r1 = cli(s, ['run', '--once', '--mode', 'stub']);
   assert.equal(r1.status, 1, detail(r1));
+  assert.match(r1.stderr, /^j4: installation-mismatch \[ledger-not-bound\]$/m, 'оператор бачить причину (C3T11-5)');
   unchanged(s.ledger, before, 'run на неповній парі журнал не змінює');
   expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id }), 'installation-mismatch', 'ledger-not-bound');
   const ad = cli(s, ['adopt', '--human']);
@@ -404,8 +408,8 @@ test('T-0011 N7: ledger_first_hash іншого журналу → installation-
 
 test('T-0011 N9: ledger_min_seq не додатне ціле і ledger_first_hash хибного формату → installation-unknown (fail-closed на вході)', () => {
   const s = staff();
-  for (const v of ['abc', '-1', '1.5', '0', ' 1', '1e2']) expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER_MIN_SEQ: v }), 'installation-unknown', 'ledger-min-seq');
-  for (const v of ['xyz', 'F'.repeat(64), 'f'.repeat(63)]) expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER_FIRST_HASH: v }), 'installation-unknown', 'ledger-first-hash');
+  for (const v of ['abc', '-1', '1.5', '0', ' 1', '1e2', '007', '5\n', '1 ', '+1']) expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER_MIN_SEQ: v }), 'installation-unknown', 'ledger-min-seq');
+  for (const v of ['xyz', 'F'.repeat(64), 'f'.repeat(63), ` ${'f'.repeat(64)}`, `${'f'.repeat(64)}\n`]) expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER_FIRST_HASH: v }), 'installation-unknown', 'ledger-first-hash');
   assert.equal(doneCount(s), 0);
 });
 
@@ -634,4 +638,131 @@ test('T-0011 N34: закріплене значення — прапорець �
   const t = staff();
   expectRefusal(cli(t, [...CLOSE, '--installation', wrong], { J4_INSTALLATION_ID: t.id }), 'installation-mismatch', 'store-marker-mismatch');
   assert.equal(doneCount(t), 0);
+});
+
+// ---------- Тести за результатами рецензії C3 (раунд 1; reports/T-0011/c3-review.yaml) ----------
+
+const spawnCli = (s, args, extra = {}) => new Promise((resolve) => {
+  const env = { ...process.env, J4_STAFF_ROOT: s.root, J4_HOME: s.home, J4_LEDGER: s.ledger, J4_MONTHLY_BUDGET: path.join(s.root, 'monthly.json'), ...extra };
+  for (const k of ['J4_HALT', 'J4_ALLOW_LIVE', 'J4_APPROVAL', 'J4_TASK_EVENTS', 'J4_INSTALLATION_ID', 'J4_LEDGER_MIN_SEQ', 'J4_LEDGER_FIRST_HASH']) if (!(k in extra)) delete env[k];
+  const child = spawn(process.execPath, [CLI, ...args], { env, stdio: ['ignore', 'pipe', 'pipe'] });
+  let stdout = ''; let stderr = '';
+  child.stdout.on('data', (d) => { stdout += d; });
+  child.stderr.on('data', (d) => { stderr += d; });
+  child.on('close', (status) => resolve({ status, stdout, stderr }));
+});
+
+test('T-0011 N2c (C3T11-9): marker — симлінк на правильний marker → store-marker-missing (симлінк не marker); цілий файл за тим самим шляхом приймається', () => {
+  const s = staff();
+  const real = path.join(s.root, 'real-marker.json');
+  const link = path.join(s.home, 'installation.json');
+  fs.copyFileSync(link, real);
+  fs.rmSync(link);
+  fs.symlinkSync(real, link);
+  assert.equal(Store.open(s.home).installation(), null);
+  expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id }), 'installation-mismatch', 'store-marker-missing');
+  const r = cli(s, ['run', '--once', '--mode', 'stub']);
+  assert.equal(r.status, 1, detail(r));
+  assert.equal(fs.lstatSync(link).isSymbolicLink(), true, 'симлінк не замінено мовчки');
+  fs.rmSync(link);
+  fs.copyFileSync(real, link);
+  expectDone(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id }));
+});
+
+test('T-0011 N13c (C3T11-6в): подія report_filed з msg_id іншого донесення (ref і ledger_hash правильні) → ledger-events-mismatch[kind-mismatch]', async () => {
+  const s = staff();
+  assert.equal(s.j4.submit(draft(s.root, { kind: 'report', intent: 'status', body: { summary: 'синтетичне донесення' } }), { origin: 'agent_cli' }).ok, true);
+  assert.deepEqual((await s.j4.process()).events.failed, 0);
+  const rep = read(eventsFile(s)).split('\n').filter(Boolean).map((l) => JSON.parse(l)).find((e) => e.event === 'report_filed');
+  assert.ok(rep?.msg_id, 'report_filed має msg_id');
+  const before = read(eventsFile(s));
+  edit(eventsFile(s), (t) => t.replace(`"msg_id":"${rep.msg_id}"`, '"msg_id":"M-T-0900-9999"'));
+  assert.notEqual(read(eventsFile(s)), before, 'підміну msg_id застосовано');
+  expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id }), 'ledger-events-mismatch', /^event-seq-\d+:ledger-seq-\d+-kind-mismatch$/);
+});
+
+test('T-0011 N35 (C3T11-2): adopt непорожнього непривʼязаного журналу з хибним J4_HOME (немає сховища J4) → home-not-j4-store (код 3); marker не створено, журнал не змінено; нова установка створюється', () => {
+  const s = staff({ router: false, marker: false }); oldLedger(s, 3); const before = read(s.ledger);
+  const gone = path.join(s.root, 'wrong-home');
+  const r1 = cli(s, ['adopt', '--human'], { J4_HOME: gone });
+  assert.equal(r1.status, 3, detail(r1));
+  assert.equal(r1.json.code, 'home-not-j4-store');
+  assert.equal(fs.existsSync(gone), false, 'хибну теку не створено');
+  const bare = path.join(s.root, 'bare-home'); fs.mkdirSync(bare);
+  const r2 = cli(s, ['adopt', '--human'], { J4_HOME: bare });
+  assert.equal(r2.status, 3, detail(r2));
+  assert.equal(r2.json.code, 'home-not-j4-store');
+  assert.deepEqual(fs.readdirSync(bare), [], 'порожня тека лишилась порожньою');
+  unchanged(s.ledger, before);
+  // контроль: справжнє сховище J4 без marker-а (стара установка) приєднується
+  const ok = cli(s, ['adopt', '--human']);
+  assert.equal(ok.status, 0, detail(ok));
+  // контроль: порожній журнал і відсутня тека — нова установка, adopt створює сховище і пише installation seq 1
+  const fresh = staff({ router: false, marker: false });
+  const freshHome = path.join(fresh.root, 'fresh-home');
+  fs.writeFileSync(fresh.ledger, '');
+  const nf = cli(fresh, ['adopt', '--human'], { J4_HOME: freshHome });
+  assert.equal(nf.status, 0, detail(nf));
+  assert.equal(entriesOf(fresh.ledger)[0].event, 'installation');
+  assert.equal(Store.open(freshHome).installation().installation_id, nf.json.installation_id);
+});
+
+test('T-0011 N36 (сканер): newInstallationId відкидає id, який сканер журналу вважає телефоном (хвіст 380+9 цифр), і генерує знову; 64 невдалі спроби → виняток', () => {
+  const badId = `${'0'.repeat(20)}380123456789`;
+  const goodId = 'ab'.repeat(16);
+  const seq = [badId, badId, goodId]; let calls = 0;
+  const id = newInstallationId(() => Buffer.from(seq[calls++], 'hex'));
+  assert.equal(id, goodId);
+  assert.equal(calls, 3);
+  assert.throws(() => newInstallationId(() => Buffer.from(badId, 'hex')), (e) => e.code === 'installation-id-generation-failed');
+  assert.match(newInstallationId(), /^[0-9a-f]{32}$/);
+});
+
+test('T-0011 N37 (ЗАЛИШОК, характеризація, C3T11-1б): свіжий порожній журнал на новому шляху при тому самому marker-і проходить перевірку ідентичності без --ledger-min-seq; відкриту ескалацію сховища журнал не знає → відмова', () => {
+  const s = staff();
+  const fresh = path.join(s.root, 'fresh-ledger.jsonl');
+  assert.equal(cli(s, ['run', '--once', '--mode', 'stub'], { J4_LEDGER: fresh }).status, 0);
+  assert.equal(entriesOf(fresh)[0].detail.installation_id, s.id, 'новий журнал прив\'язано до того самого marker-а');
+  expectDone(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER: fresh }));
+  expectRefusal(cli(s, [...CLOSE], { J4_INSTALLATION_ID: s.id, J4_LEDGER: fresh, J4_LEDGER_MIN_SEQ: '5' }), 'installation-mismatch', 'ledger-truncated-below-min-seq');
+  const t = staff(); escalate(t);
+  const freshT = path.join(t.root, 'fresh-ledger.jsonl');
+  assert.equal(cli(t, ['run', '--once', '--mode', 'stub'], { J4_LEDGER: freshT }).status, 0);
+  expectRefusal(cli(t, CLOSE, { J4_INSTALLATION_ID: t.id, J4_LEDGER: freshT }), 'installation-mismatch', 'store-ledger-escalation-unknown');
+});
+
+test('T-0011 N38 (ЗАЛИШОК, характеризація, C3T11-1а): мігрований журнал — перерахований хвіст разом із прив\'язкою installation_adopted у голові проходить із правильними ledger_first_hash і ledger_min_seq (хеш seq 1 не змінюється)', () => {
+  const s = staff({ router: false, marker: false }); oldLedger(s, 3);
+  assert.equal(cli(s, ['adopt', '--human']).status, 0);
+  const id = Store.open(s.home).installation().installation_id;
+  const genuine = entriesOf(s.ledger);
+  const forged = path.join(s.root, 'forged.jsonl');
+  fs.writeFileSync(forged, `${read(s.ledger).split('\n')[0]}\n`);
+  const f = new Ledger(forged);
+  f.append({ event: 'test_entry', at: AT, detail: { n: 'підміна-2' } });
+  f.append({ event: 'test_entry', at: AT, detail: { n: 'підміна-3' } });
+  f.append({ event: 'installation_adopted', at: AT, detail: { installation_id: id, first_hash: genuine[0].hash, adopted_at_seq: 3 } });
+  assert.equal(verifyLedger(forged).ok, true);
+  assert.notEqual(entriesOf(forged)[1].hash, genuine[1].hash, 'хвіст справді інший');
+  expectDone(cli(s, CLOSE, { J4_INSTALLATION_ID: id, J4_LEDGER: forged, J4_LEDGER_FIRST_HASH: genuine[0].hash, J4_LEDGER_MIN_SEQ: String(genuine.length) }));
+});
+
+test('T-0011 N39 (C3T11-6г): замок журналу — adopt і прив\'язка порожнього журналу при `run --once` чекають замка живого процесу й відмовляють lock-timeout, нічого не записавши; після звільнення працюють', async () => {
+  const s = staff({ router: false }); fs.writeFileSync(s.ledger, '');
+  const s2 = staff({ router: false, marker: false }); oldLedger(s2, 2);
+  const lockOf = (x) => `${x.ledger}.lock`;
+  const hold = (x) => fs.writeFileSync(lockOf(x), JSON.stringify({ pid: process.pid, at: Date.now(), nonce: 'test-holder' }));
+  hold(s); hold(s2);
+  const before2 = read(s2.ledger);
+  const [run, adopt] = await Promise.all([spawnCli(s, ['run', '--once', '--mode', 'stub']), spawnCli(s2, ['adopt', '--human'])]);
+  assert.equal(run.status, 1, run.stderr);
+  assert.match(run.stderr, /lock-timeout/);
+  assert.equal(read(s.ledger), '', 'порожній журнал не прив\'язано без замка');
+  assert.equal(adopt.status, 1, adopt.stderr);
+  assert.match(adopt.stderr, /lock-timeout/);
+  assert.equal(read(s2.ledger), before2, 'adopt без замка нічого не дописав');
+  fs.rmSync(lockOf(s)); fs.rmSync(lockOf(s2));
+  assert.equal(cli(s, ['run', '--once', '--mode', 'stub']).status, 0);
+  assert.equal(entriesOf(s.ledger)[0].event, 'installation');
+  assert.equal(cli(s2, ['adopt', '--human']).status, 0);
 });
