@@ -1,0 +1,48 @@
+# Донесення J3 після аудиту R0 (перенумеровано 018 → 020 при злитті з setup/staff-bootstrap; 018/019 — записи сесії T-0010) і рішень JE від 29.10.2026 (tasks/T-0002/je-decision-R0.md).
+task_id: T-0002
+task_version: 3
+seq: 20
+author: J3
+kind: milestone
+at: 2026-10-28T23:50:00+00:00
+subject: {kind: commit, ref: cf08ac449e1c66b57ba48aac11d8cdf1756170b5}
+situation:
+  current_step: "рішення JE зареєстровано; C1d чекає J5 (і відповіді JE щодо злиття); C1c чекає task_accepted C5.1; R3 — чернетка наказу подана J5"
+  tool_results_refs:
+    - "reports/E8-R0/R0_PACKAGE.md (пакет A–F аудиту R0)"
+    - "https://github.com/hellwikcoop-arch/EasyWAR/pull/160"
+    - "tasks/T-0002/je-decision-R0.md"
+  done:
+    - "аудит R0 (read-only): стан C1a–C1d, реєстр рішень, граф залежностей, матриця файлів, чернетки R1–R3"
+    - "A-2: max_calls 210 → 225 (JE, 29.10), історичні витрати збережено, task_version 3"
+    - "JE-13 записано як рішення JE: LAN-first, C6a перед C4"
+    - "T-0004 активовано рішенням JE (JE-T10) без дубля; бюджет зарезервовано; передача C5.1 — ручна (маршрут J4 не перевірено)"
+    - "наказ R3 (C2a + P1) підготовлено: tasks/E8-R3/order.draft.yaml; номер і ліміт — J5/JE"
+verified:
+  - {claim: "EasyWAR main = cf08ac449e1c66b57ba48aac11d8cdf1756170b5; PR #160 head = 923e1bc19d106a6f65a5a903d21c16c275abb380, base = cf08ac4, mergeable_state clean, checks success, audit success (run 39836049078)", evidence: {kind: log, ref: "GitHub API, сеанс J3 29.10"}, subject_ref: 923e1bc19d106a6f65a5a903d21c16c275abb380}
+  - {claim: "локально на main: node --test (C1a, C1b, межі) 39/39; npm run test:unit 1480/1480; на 923e1bc: node --test (C1d, межі) 24/24", evidence: {kind: log, ref: "сеанс J3 29.10, reports/E8-R0/R0_PACKAGE.md A.4–A.5"}, subject_ref: cf08ac449e1c66b57ba48aac11d8cdf1756170b5}
+  - {claim: "src/collective-core.js і src/collective-pair-core.js відсутні в усіх 157 віддалених гілках EasyWAR; гілки codex/t-0004* немає; активних claim на board немає", evidence: {kind: log, ref: "git ls-tree по всіх гілках, сеанс J3 29.10"}, subject_ref: cf08ac449e1c66b57ba48aac11d8cdf1756170b5}
+  - {claim: "подія acceptance J5 content для C1d у tasks/T-0002/events.jsonl відсутня (остання seq 35)", evidence: {kind: file, ref: "tasks/T-0002/events.jsonl"}, subject_ref: 923e1bc19d106a6f65a5a903d21c16c275abb380}
+claimed:
+  - {claim: "C5.1 (Codex) доступний і прийме T-0004", status: not_verified, note: "немає інструмента/маршруту в сесії J3"}
+deviation:
+  type: scope
+  detail: "п. 5 наказу JE (злиття PR #160 «відповідно до чинного дозволу JE»): чинний JE-T5 забороняє злиття без приймання J5; J3 не зливав і поставив JE питання (картка в треді). Злиття — після відповіді JE або події acceptance J5 на 923e1bc"
+report_fields:
+  T0002_budget_limit: 225
+  T0002_used: "≈181 (estimate)"
+  T0002_remaining: "≈44 (estimate); резерв C1c (C3+J3) 16, R2 ≈5, буфер ≈23"
+  T0004_status: "activated by JE 2026-10-29; task_accepted: none; Codex_branch: codex/t-0004-c1c-membership (не існує); ADM_route: not_verified"
+  JE13_status: "recorded: LAN-first, C6a before C4"
+  R3_order: "tasks/E8-R3/order.draft.yaml — number/limit pending J5/JE"
+  PR160_merge: "pending: JE answer or J5 acceptance"
+usage:
+  calls: {value: 181, accuracy: estimate, note: "без змін у цій сесії: R0 і реєстрація — поза лімітом T-0002 (окремий наказ JE E8-R0-READINESS без ліміту)"}
+  tokens: {value: null, accuracy: unknown}
+  cost_usd: {value: null, accuracy: unknown}
+remaining_risks:
+  - "Codex недоступний або не приймає T-0004 → C1c через J3 потребує нового наказу (R0 F.1 варіант Б)"
+  - "нестабільний Rust-тест у CI (2 випадки) — без рішення JE"
+  - "Dependabot #165/#169 змінюють Cargo.lock → злити/закрити до C2 (R4)"
+  - "документи в main досі кажуть «JE-02 відкрито» — правка рядків статусу в R3"
+next_action: "J5: приймання змісту C1d на 923e1bc, номер і ліміт для R3; JE: відповідь на картку про злиття #160; JE/J5: ручна передача T-0004 виконавцю C5.1"

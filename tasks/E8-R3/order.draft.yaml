@@ -1,0 +1,109 @@
+# ЧЕРНЕТКА наказу R3 (C2a + P1), підготовлена J3 за п. 4 рішення JE від 29.10.2026 (tasks/T-0002/je-decision-R0.md).
+# НЕ НАКАЗ до призначення номера T-XXXX, max_calls і події task_created (J5/JE). Виконання не почато.
+# R3 = C2a (криптографічний контракт і перелік крейтів) + P1 (мережеві межі й сховище секретів).
+# Переважно документи й тести; єдиний код — networkPolicy у Rust без нових IPC-команд. Cargo.lock у main НЕ змінюється.
+
+id: T-XXXX
+version: 1
+parent_task_id: null            # новий наказ; залежить від JE-01 розширеного (F.4)
+title: "R3 / E8 C2a + P1 — криптопрофіль, перелік крейтів, мережеві межі й сховище секретів (контракти без реалізації крипто)"
+
+intent:
+  purpose: >-
+    Дати JE все для рішень JE-15/16/18/21 і дати C2/C3/C3b/C6a єдиний контракт: формати ключів,
+    конверта й векторів; перший шар політики networkPolicy(profile, purpose); адаптер сховища секретів;
+    перелік ресурсів для CSP. Без цього C2 не має права чіпати Cargo.lock (К9), а C6a — відкривати listener (P1).
+  end_state:
+    - "docs/adr/collective-crypto.md: статус «Подано JE», таблиця крейтів з назвою, версією, ліцензією, датою останнього релізу, станом аудиту (RUSTSEC), результатом cargo audit у ТИМЧАСОВІЙ гілці без злиття; версія протоколу; AAD = усі відкриті поля; відкриті поля лише випадкові ID, епоха, версія, крипто-параметри (К4), без class_hint; expiry — варіанти для JE-16; політика nonce; anti-replay (op_id + digest); формат test vectors (JSON, однаковий для JS і Rust, G06)"
+    - "docs/adr/collective-pairing.md: JE-02 записано як рішення JE (21.10, je-order T-0002) замість «відкрито»; те саме в docs/COLLECTIVES_PLAN.md §6, §10 — лише рядки статусу (F.15)"
+    - "docs/adr/network-and-secret-boundaries.md (новий, план P1): networkPolicy(profile, purpose) → allowed/denied з переліком purpose (weather_online, model_install, app_update, signal_daemon — наявні; collective_lan, collective_base44 — майбутні, denied за замовчуванням); secretStore.read/write/delete(purpose, profile) — варіанти JE-18 (файл + Argon2id за зразком office_library.rs vs системне сховище) з порівнянням; правило «вікно з даними не має мережі»"
+    - "перелік ресурсів для CSP (legacy air/rocket/index, WASM Офісу, worker, 3D .glb, map-assets, Open-Meteo, оновлення) — як додаток ADR; це вхід для рішення JE-21, CSP у tauri.conf.json НЕ змінюється в R3"
+    - "src-tauri/src/network_policy.rs (новий, pub mod у lib.rs без команд): чиста функція networkPolicy + тести; наявні виклики reqwest НЕ переписуються (лише таблиця відповідності в ADR); clippy/fmt/test зелені; Cargo.toml не змінено"
+    - "tests/network-boundary.test.mjs (новий): текстовий контракт — у src/*.js немає прямих мережевих викликів поза дозволеним переліком; capabilities: office-editor без мережі; main без shell/http плагінів; CSP лишається null → тест фіксує це як відомий ризик P2-1 (не падає, друкує)"
+    - "подання JE: перелік крейтів (F.5), варіант сховища (F.6), варіант CSP (F.7) — одним документом reports/<T>/je-decision-request.md"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "Cargo.toml/Cargo.lock у main не змінюються; cargo audit — у тимчасовій гілці, яку не зливають і не штовхають як PR"
+    - "без криптографічного коду, без ключів, без listener, без змін CSP/capabilities/build.rs/generate_handler!"
+    - "без змін AGENTS.md, legacy HTML, міграцій, office_library.rs, office-editor.json"
+    - "ADR лишаються «Запропоновано/Подано» — не записувати рекомендації як рішення JE"
+
+mission: "Підготувати і подати JE контракти C2a і P1 з доказами (audit, перелік ресурсів), додати networkPolicy і тест меж без зміни поведінки застосунку."
+
+scope:
+  in:
+    - docs/adr/collective-crypto.md
+    - docs/adr/collective-pairing.md               # лише рядки статусу JE-02
+    - docs/adr/network-and-secret-boundaries.md    # новий
+    - docs/adr/README.md                           # рядок для нового ADR
+    - docs/COLLECTIVES_PLAN.md                     # §6, §9, §10 — рядки статусу
+    - docs/plans/2026-10-21-easywar-platform-release.md   # відмітки P1
+    - src-tauri/src/network_policy.rs              # новий, без IPC
+    - src-tauri/src/lib.rs                         # лише `pub mod network_policy;`
+    - tests/network-boundary.test.mjs              # новий
+  out:
+    - "Cargo.toml, Cargo.lock (main), tauri.conf.json, capabilities/*, build.rs, generate_handler!, міграції, src/*.js, legacy HTML, AGENTS.md"
+    - "реалізація крипто (C2), PAKE (C2p), listener (C6a), сховище секретів як код (після JE-18 — у C2)"
+
+context_refs:
+  - "EasyWAR main cf08ac449e1c66b57ba48aac11d8cdf1756170b5"
+  - "docs/adr/collective-crypto.md (чернетка), docs/COLLECTIVES_PLAN.md §4, §6, §9 (G06, G09, G11), К4, К9"
+  - "docs/plans/2026-10-21-easywar-platform-release.md §P1; docs/BACKLOG.md P2-1, P2-16"
+  - "docs/plans/2026-10-21-easywar-sync-pair-mesh-review.md розділи 3 (ADR-C05), 5 (JE-15…18, JE-21)"
+  - "src-tauri/src/office_library.rs (Argon2id-обгортка — зразок для JE-18), src-tauri/src/desktop_shell.rs (is_app_url/is_external_link), weather_online.rs, model_install.rs, app_update.rs, signal_daemon.rs (наявні мережеві виклики)"
+  - "tests/office-isolation.test.mjs (зразок файлового тесту меж)"
+  - "Dependabot PR #169 chacha20poly1305 0.11 (база для переліку)"
+materials:
+  - "reports/E8-R0/R0_PACKAGE.md"
+
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: true                 # ризикова область (секрети, CSP) — за критерієм §23 п. 5 контракту
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: true            # JE-15/16/18/21 — рішення JE; ADR набувають чинності лише після JE
+
+checks:
+  subject_kind: commit
+  verify:
+    - "cargo test --locked --manifest-path src-tauri/Cargo.toml network_policy"
+    - "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings"
+    - "cargo fmt --manifest-path src-tauri/Cargo.toml --check"
+    - "node --test tests/network-boundary.test.mjs tests/office-isolation.test.mjs tests/desktop-frontend.test.mjs"
+    - "npm run test:unit; node script/assistant_index.mjs не потрібен (USER_GUIDE не змінюється)"
+    - "git diff --name-only origin/main...HEAD — лише scope.in; Cargo.lock без змін"
+    - "cargo audit у тимчасовій гілці з кандидатами крейтів — результат як текст в ADR (гілка видалена або не злита)"
+    - "CI desktop-build: checks і audit — success"
+  review_kind: code
+
+# Очікувані результати: позитивні — networkPolicy дозволяє лише відомі purpose для профілю з увімкненою інтеграцією;
+# негативні — невідомий purpose → denied; collective_* → denied до C3b; профіль без пароля → denied для collective_*;
+# тест меж знаходить штучно доданий fetch у src/sensitivity-core.js (мутант) і падає.
+# Ризики: перелік ресурсів для CSP неповний → JE-21 «закрити» зламає legacy/WASM/3D: тому в R3 лише перелік, зміна CSP — окремий PR
+# після JE; cargo audit покаже advisory у кандидатах → замінити кандидата, не глушити. Відкат — revert PR (документи + модуль без викликів).
+# Дозволи JE до старту: F.4 (розширення JE-01 на R3). Рішення JE після R3: F.5 (JE-15), F.6 (JE-18), F.7 (JE-21), JE-16.
+# Паралель: з R1 і R2 — дозволена (немає спільного запису, крім рядків статусу в COLLECTIVES_PLAN.md §8 → R3 їх не чіпає).
+
+resources:
+  max_calls: NOT_AUTHORIZED     # оцінка потреби ≈60–80 (2–3 сеанси: ADR ×2, audit-гілка, Rust-модуль, тест, C3)
+  max_tokens: null
+  max_cost_usd: null
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "2–3 сеанси", accuracy: estimate}
+
+reporting:
+  milestones:
+    - "ADR crypto з таблицею крейтів і результатом audit — подано J5"
+    - "ADR network-and-secret-boundaries + networkPolicy + тест — PR відкрито, CI зелений"
+    - "C3 passed; J3 technical; J5 content; пакет рішень JE-15/16/18/21 переданий JE"
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+amendments: []
