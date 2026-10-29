@@ -21,6 +21,7 @@ calls:
   limit: 250
 not_verified:
   - "CI запускається на merge-ref PR з main 7f56fcf; на самій гілці без PR окремо не запускався"
+  - "УТОЧНЕННЯ 2026-10-29 (аудит ШТАБу): run 2 тестував merge-ref e020802 («Merge fa5e060 into 7f56fcf»), 212/212; його дерево 3c63e46… = дерево merge-коміту a9baf25, але SHA різні; на a9baf25 тест не запускався (evidence/ci-run2-merge-ref.txt)"
   - "змістове приймання J5 і остаточне JE цим результатом не замінюються"
 run_2:
   workflow: j4-bridge (подія pull_request, synchronize)
