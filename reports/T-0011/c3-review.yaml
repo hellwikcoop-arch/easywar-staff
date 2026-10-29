@@ -1,0 +1,307 @@
+# Рецензії C3 для T-0011. Текст C3 — дослівно (незалежний рецензент, лише читання, 0 викликів адаптера, ≤ 15 файлів; тестів не запускав).
+# Запис у tasks/T-0011/events.jsonl (review_finished) робить J3 — ручна ланка M-2, як у T-0010/T-0012. Особа C3 засобами J4 не автентифікується (F-9).
+- seq: 1
+  round: 1
+  subject: 061063598d49c6584e1e6b6c7328fce1948fd8b9
+  requested_at: "2026-10-29T01:26:00Z"
+  received_at: "2026-10-29T01:38:00Z"
+  mandatory: 1
+  optional: 9
+  notes: 3
+  verdict: changes_requested
+  review_status: complete
+  j3_reaction: "reports/T-0011/c3-review.yaml#seq=2 (відповідь J3 і виправлення — після цього запису)"
+  c3_report_verbatim: |
+    review_status: complete
+    subject: 061063598d49c6584e1e6b6c7328fce1948fd8b9
+    files_read:
+      - scratchpad/c3-t0011/1-src-and-cli.diff        # store/ledger/close/router/j4.mjs (diff -U20)
+      - bridge/test/t0011.test.mjs                    # повністю, 637 рядків, 59 тестів
+      - scratchpad/c3-t0011/2-legacy-tests.diff
+      - scratchpad/c3-t0011/3-docs.diff               # CONTRACT, DESIGN розд. 20, README
+      - bridge/src/close.mjs                          # рядки 290-473 повністю; рядки 1-289 лише через diff
+      - bridge/src/ledger.mjs                         # повністю
+      - bridge/src/router.mjs                         # рядки 1-80, 194-263, 455-564 (+ grep по цьому ж файлу)
+      - /home/user/easywar-staff/reports/J4-HARDENING/03-spec-T-0011.md
+      - tasks/T-0011/je-decision-T11-01.md
+      - tasks/T-0011/order.yaml
+      - tasks/T-0011/decisions-register.md
+      - reports/T-0011/mutants.yaml
+      - tasks/T-0011/tools/mutate.mjs
+      - reports/T-0011/evidence/red-base-t0011.txt
+      - reports/T-0011/evidence/full-run-2-0610635.txt
+      # Крім цього: git diff --name-only/--stat/--numstat/-U0 (лише читання), node --check (7 файлів), grep -n/-c по файлах зі списку вище.
+      # store.mjs, j4.mjs, DESIGN.md, README.md бачив лише як diff-hunks.
+      # Жодного тесту чи скрипта проєкту не запускав. Усе про поведінку нижче виведено зі статичного читання.
+
+    findings:
+      - id: C3T11-1
+        severity: mandatory
+        file: bridge/docs/DESIGN.md:315 і :335
+        claim: >
+          Розд. 20 перебільшує гарантію прив'язки і занижує можливості нападника, тому розходиться зі специфікацією 3.8а (C3H-4).
+          (а) Рядок 315 стверджує, що зміна прив'язки вимагає перерахунку всього ланцюга, а це змінює перший хеш, який ловить
+          `ledger_first_hash`. Для мігрованого журналу це хибно. Прив'язка там є `installation_adopted` у голові (seq K+1), тож для її
+          підміни достатньо перерахувати записи від K+1 далі. Хеш seq 1 не змінюється, і закріплений `ledger_first_hash` її не ловить:
+          `ledgerBinding` вимагає лише `adopt.first_hash === entries[0].hash` (ledger.mjs:165). Це якраз випадок реальної установки.
+          Для журналу з `installation` у seq 1 перепис хвоста після seq 1 також лишає перший хеш незмінним.
+          (б) Рядок 335 каже, що нападник мусить писати «marker, журнал і середовище close». Закріплені значення публічні (рішення JE
+          у репозиторії, spec 3.8а), тож середовище close підробляти не треба. Досить запису в J4_HOME/J4_LEDGER і читання оригінального
+          журналу: можна зібрати «чисту» пару (marker = закріплене, seq 1 скопійовано, ланцюг перераховано, довжина ≥ min_seq).
+          Ловить її лише звірка вже синхронізованих подій (M7). Речення зі spec 3.8а до DESIGN не перенесено.
+        evidence: |
+          DESIGN.md:315 «змінити її без перерахунку всього ланцюга неможливо (`verify` виявляє), а повний перерахунок змінює перший хеш,
+          який ловить закріплений `ledger_first_hash`»
+          DESIGN.md:335 «нападник, що може одночасно писати marker, журнал і середовище `close`, пару підробить»
+          spec 3.8а «Закріплене значення публічне … Актор із правом запису в J4_HOME/J4_LEDGER і читанням оригінального журналу може
+          зібрати «чисту» пару … ловить лише M7»
+        fix: >
+          Переписати два речення. Прив'язка виявляє зміну без перерахунку хвоста. `ledger_first_hash` виявляє підміну лише seq 1 або
+          повну заміну журналу. Для мігрованого журналу перепис прив'язки в голові `ledger_first_hash` не виявляє. Закріплені значення
+          публічні, тому запису в J4_HOME/J4_LEDGER достатньо; ловить лише M7 і лише для синхронізованих подій. Додати, що без
+          `--ledger-first-hash` і `--ledger-min-seq` свіжий порожній журнал, прив'язаний до того самого marker-а (наприклад `J4_LEDGER`
+          на новий шлях при `run --once`, або клон `.j4`), проходить перевірку ідентичності. Це лише текст, код не змінюється.
+
+      - id: C3T11-2
+        severity: optional
+        file: bridge/bin/j4.mjs:171 (adopt); bridge/src/ledger.mjs:44-56
+        claim: >
+          `adopt` на хибному `--home`/`J4_HOME` створює повну структуру сховища і новий випадковий marker у довільній теці
+          (`new Store(home)`) і необоротно прив'язує непорожній журнал до нього. Перевірки `inspectJ4Home`, як у `close`, немає, режиму
+          «показати без запису» теж. Повторний `adopt` дасть `other`, `run`/`close` на справжньому сховищі відмовлять
+          (`ledger-binding-mismatch`). Відновлення можливе лише ручним записом `installation.json` з id із журналу, і воно ніде
+          не описане.
+        evidence: "const marker = new Store(home).installation();   // j4.mjs:171, далі led.adopt(...) на :178"
+        fix: >
+          Для непорожнього непривʼязаного журналу вимагати `inspectJ4Home(home).ok` (існуюче сховище) або явний прапорець. Додати
+          dry-run і описати ручне відновлення в DESIGN/README до реального adopt (G6).
+
+      - id: C3T11-3
+        severity: optional
+        file: bridge/src/router.mjs:31-32,52-65,520; bridge/src/ledger.mjs:46-50; bridge/docs/DESIGN.md:328
+        claim: >
+          Старий (непривʼязаний) журнал з обірваним останнім рядком не має підтримуваного шляху виходу. Конструктор роутера відмовляє
+          на непривʼязаному журналі до `process()` → `recover()` → `repairIfNeeded`. `adopt` відмовляє на `partial`
+          (`ledger-partial-line`). DESIGN каже «спершу відновлення», але жодна команда його не виконує для непривʼязаного журналу.
+          У router.mjs `repairIfNeeded` викликається лише в `recover()` (рядок 520); інші виклики в bridge/ не шукав. Тест N16
+          перевіряє тільки відмову, а не вихід із глухого кута. Наслідок: такий журнал доведеться правити вручну.
+        evidence: "adopt: if (partial !== null) { throw ledger-partial-line }; router: assertPairOfOneInstallation() кидає ledger-not-bound до recover()"
+        fix: >
+          Дозволити `adopt` викликати `repairUnlocked` під тим самим замком (воно фіксує `ledger_repaired` з розміром і sha256),
+          або задокументувати ручну процедуру. Додати тест «непривʼязаний журнал + обірваний хвіст → вихід».
+
+      - id: C3T11-4
+        severity: optional
+        file: bridge/src/router.mjs:203,206; bridge/src/close.mjs:131,454
+        claim: >
+          Рішення Р-Т11-12 (`store-ledger-escalation-unknown` замість `open-escalation`) слушне: обидва варіанти відмовляють, а ознака
+          чужого чи обрізаного журналу інформативніша. Але нова відмова спрацьовує і на справжній установці. `escalate()` пише
+          сховище першим (рядок 203), а `escalation_raised` у журнал лише потім (рядок 206), без спільного замка.
+          (1) `close` між двома записами, або після збою між ними, дає хибне `installation-mismatch` замість `open-escalation`.
+          `recover()` ескалацію в журнал не дописує, очищає лише `resolve`.
+          (2) CLI читає знімок журналу раніше за сховище і events, тому паралельний такт дає тимчасове `store-ledger-escalation-unknown`
+          або `ledger-seq-N-mismatch`. Це лише додаткові відмови, не хибне проходження.
+          Випадок «ескалацію створено, журнал дописано, events ще не синхронізовано» хибної відмови НЕ дає: `raised.has(id)`, відкрита
+          ескалація повертається як `open-escalation` (I1).
+        evidence: |
+          router.mjs:203 `this.store.writeJson(\`escalations/${id}.json\`, rec);` … :206 `this.log('escalation_raised', …)`
+          close.mjs:131 `if (st === 'open' && !raised.has(id)) storeOnly.add(id)`
+        fix: >
+          Задокументувати в DESIGN «Залишкові вікна», що `store-ledger-escalation-unknown` може бути тимчасовим або наслідком збою між
+          двома записами `escalate()`. Дія: повторити `close` або `resolve` ескалації. Не плутати з чужою парою.
+
+      - id: C3T11-5
+        severity: optional
+        file: bridge/bin/j4.mjs:234-235; bridge/src/router.mjs:64
+        claim: >
+          Відмова роутера (`installation-mismatch` з `missing[]`) на CLI виводиться як `j4: installation-mismatch` без причин.
+          `main().catch` друкує лише `e.code ?? e.message`. Оператор не відрізнить `store-marker-missing`, `ledger-not-bound` і
+          `ledger-binding-mismatch`, хоча дії різні (adopt чи відновлення marker-а). Тести N11/N11b/N27 перевіряють лише код виходу 1.
+        evidence: "process.stderr.write(`j4: ${e.code ?? e.message}\\n`);  // j4.mjs:235"
+        fix: "Для винятків із `missing` друкувати його в stderr (без шляхів) і додати перевірку тексту в N11/N11b."
+
+      - id: C3T11-6
+        severity: optional
+        file: bridge/test/t0011.test.mjs:207,405; reports/T-0011/mutants.yaml; tasks/T-0011/tools/mutate.mjs:86-89
+        claim: >
+          Прогалини в тестах і мутантах. Усі 25 мутантів убиті, еквівалентних серед них немає. Є кілька реальних дір.
+          (а) Твердження «не нормалізується (великі літери, пробіли — відмова)» перевірене лише для великих літер у `installation_id`
+          (I4/N10). Значень із пробілом чи `\n` для `installation_id` і `first_hash` та `"007"` для `min_seq` немає, тож мутант
+          `trim()` або регекс із ведучими нулями виживе.
+          (б) Нормативний порядок M11 має лише один мутант (M09: ідентичність після `already`). Для N23 (reconcile після `already`)
+          і N31 (`events-corrupt` раніше за закріплене значення) мутантів немає.
+          (в) `EXPECTED_RECORD.report_filed` не має тесту на `msg_id`: N13b міняє `ref`+hash на запис іншого виду, а підміна на інше
+          донесення (інший `msg_id`) нічого не ловить.
+          (г) Замок у `bindIfEmpty`/`adopt` не мутується: єдиний тест гонки (t0006 F-4) не входить у RUNS мутатора. Гонка
+          `adopt` ∥ `run --once` не тестується.
+        evidence: |
+          t0011.test.mjs:209 `['not-an-id', 'ABCDEF'…, s.id.slice(1), `${s.id}0`, '']`;  :407 `['abc','-1','1.5','0',' 1','1e2']`
+          close.mjs:389 `report_filed: (e, rec) => … && rec.msg_id === e.msg_id`
+        fix: >
+          Додати тестові значення (`${id}\n`, ` ${id}`, "007") і мутанти:
+          M26 reconcile перед `already`;
+          M27 `pinnedProblems` перед `readTaskEvents`;
+          M28 без порівняння `msg_id` для report_filed;
+          M29 `bindIfEmpty`/`adopt` без withFileLock або без повторного читання всередині замка (додати `-test-name-pattern F-4` у RUNS);
+          M30 `trim()` закріпленого значення;
+          M31 регекс `min_seq` з ведучими нулями.
+
+      - id: C3T11-7
+        severity: optional
+        file: bridge/docs/DESIGN.md:311,338
+        claim: >
+          Неточності в звітності. (а) «ворота G1–G6 вирішені JE», але order.yaml:57 тримає G6 відкритим
+          («окреме рішення JE, відкрито»). (б) «t0011.test.mjs (55)» — фактично 59 (`grep -c '^test('`). (в) «кожна перевірка червона на
+          базі й має мутант»: на базі червоні 52 із 59 тестів, 7 зелених — контролі (I1, I2, I11, I15, I17, N23, N31;
+          red-base-t0011.txt:12-19). Сирий прогін 59/59 червоний лише через відсутній `Store.installation()` у фікстурі, змістовна
+          класифікація — прогін із шимом. Мутанти для N23 і N31 див. C3T11-6. (г) Реєстр Р-Т11-8 і DESIGN називають «N24–N27»
+          crash/restart, але N25 (суперечливі прив'язки) і N27 (неповна пара) — не crash-тести.
+        evidence: "DESIGN.md:311 «ворота G1–G6 вирішені JE»; order.yaml:57 «G6 … відкрито»; DESIGN.md:338 «(55)»; grep -c → 59"
+        fix: "Виправити числа й формулювання («G1–G5 вирішені, G6 відкрито»; «52 червоні на базі + 7 контролів»)."
+
+      - id: C3T11-8
+        severity: optional
+        file: bridge/src/store.mjs:30-39,48
+        claim: >
+          (а) Marker пишеться без fsync (tmp → link), а seq 1 журналу fsync-ується в appendUnlocked. Після втрати живлення marker може
+          бути порожнім. `existsSync` тоді true, тож його не перепишуть, а `installation()` дає null і J4 назавжди відмовляє
+          (fail-closed, але без самовідновлення).
+          (б) Втрата marker-а: `new Store(home)` у конструкторі роутера (router.mjs:26) спершу створює НОВИЙ marker, і лише потім
+          роутер відмовляє (N11b). Ознака «marker загубився» підміняється правдоподібним іншим marker-ом; потім `close` покаже
+          `store-marker-mismatch`, а не `missing`. Оригінальний id лишається тільки в seq 1 журналу чи закріпленні, відновлення вручну
+          не описане.
+        evidence: "fs.writeFileSync(tmp, …, { mode: 0o600 }); try { fs.linkSync(tmp, file); }   // без fsync; existsSync(file) на :30"
+        fix: >
+          fsync tmp (і теки) перед link. У роутері не створювати marker, якщо журнал уже привʼязаний, а marker відсутній:
+          відмовляти з `store-marker-missing`. Або задокументувати ручне відновлення `installation.json`.
+
+      - id: C3T11-9
+        severity: note
+        file: bridge/src/store.mjs:48
+        claim: >
+          `installation()` читає marker через `readFileSync`, що йде за симлінком, без lstat/isFile. Симлінк `installation.json` на
+          чужий валідний marker приймається. Тека, порожній файл і не-JSON відмовляються (N2/N3). Для виконання потрібен запис у J4_HOME,
+          тобто це межа G4. Симлінк тестами не покритий.
+        evidence: "m = JSON.parse(fs.readFileSync(this.p('installation.json'), 'utf8'));"
+        fix: "Задокументувати або додати lstat().isFile() (і ELOOP-відмову) та тест."
+
+      - id: C3T11-10
+        severity: note
+        file: bridge/src/close.mjs:387-390,395-397
+        claim: >
+          Звірка подій не перевіряє, що запис журналу належить тій самій задачі (`rec.task_id`/`detail.task_id` не порівнюється).
+          Подія ADM типу escalation/report_filed, чий `ref` не відповідає `LEDGER_REF` (пробіл, інший регістр), мовчки пропускається
+          (`continue`), а не позначається `ref-malformed`. Наслідки малі. Escalation з невідомим id усе одно відкриває
+          `openEscalations`. Донесення на `done` не впливають. Але «навмисну підміну видимою» це послаблює: для ADM-подій цих видів
+          ref за контрактом 9а.3 обов'язковий.
+        evidence: "const m = LEDGER_REF.exec(typeof e.ref === 'string' ? e.ref : ''); if (!m) continue;"
+        fix: "Для `by: ADM` + `event ∈ {escalation, report_filed}` без валідного ref повертати проблему (історичних таких подій немає: 0 із 124)."
+
+      - id: C3T11-11
+        severity: optional
+        file: tasks/T-0011/order.yaml:35-40,87
+        claim: >
+          Поза буквальним `scope.in` змінено два тести: e2e.test.mjs (+6/-2) і t0006.test.mjs (+6/-1). Зміни мінімальні й вимушені
+          (без них падають твердження про список подій та про 12 записів), лише посилюють (додано перевірку seq 1 і збігу з marker-ом,
+          рівно одного запису прив'язки при 4 паралельних процесах). Інших файлів поза `scope.in` немає. `amendments: []` не оновлено,
+          тому відхилення зафіксовано лише в Р-Т11-19.
+        evidence: "git diff --name-only 49226f9..0610635 -- bridge CONTRACT_v0_4.md: 17 файлів; поза scope.in лише e2e.test.mjs і t0006.test.mjs"
+        fix: "Оформити amendment у order.yaml або отримати підтвердження JE до остаточного приймання."
+
+      - id: C3T11-12
+        severity: optional
+        file: bridge/README.md:29,31
+        claim: >
+          (а) `adopt` описано як «marker + запис installation_adopted», але для порожнього журналу пишеться `installation`
+          (ledger.mjs:54). (б) Немає кодів виходу adopt (3, 4, 1) і вікна I11 з процедурою закриття, яких вимагала spec §3.6.
+          (в) Рядок 29 згадує лише `run`. Але `send`/`submit`/`resolve` теж будують J4 і відмовляють на непривʼязаному журналі
+          (router.mjs:32). До реального adopt JE не зможе виконати `resolve` на старій установці (DESIGN:326 «інші команди» це каже,
+          README ні).
+        evidence: "README.md:31 «(marker + запис installation_adopted)»; ledger.mjs:54 `event: 'installation'` для порожнього журналу"
+        fix: "Уточнити README і додати порядок розгортання: спершу рішення JE про adopt (G6), потім робота роутера."
+
+      - id: C3T11-13
+        severity: note
+        file: bridge/src/ledger.mjs:22-38; bridge/src/router.mjs:29-32,52-65
+        claim: >
+          (а) `bindIfEmpty` у гілці обірваного першого рядка скорочує файл на місці (`fs.writeFileSync(this.file, '')`, :35), тоді як
+          `repairUnlocked` робить tmp+fsync+rename. Збій між скороченням і дописом seq 1 втрачає запис про відкинуті байти (sha256 і
+          розмір), журнал лишається порожнім (потім N17 допише seq 1).
+          (б) Кожне створення J4 тепер бере замок журналу і двічі парсить весь журнал (bindIfEmpty, assertPair), а журнал не ротується.
+          Вартість старту `run`/`send` росте з розміром журналу.
+        evidence: "fs.writeFileSync(this.file, '');   // ledger.mjs:35"
+        fix: "Для (а) писати атомарно або фіксувати відкинуте до скорочення. Для (б) дешева перевірка розміру перед замком."
+
+    counterexamples:
+      - idea: "marker — тека, порожній файл, не-JSON, масив, id 31 символ/верхній регістр, format j4.installation/2"
+        result: "refused_correctly: installation() → null → installation-mismatch[store-marker-missing]; run --once → код 1, marker не переписується"
+        where: "store.mjs:48-52; t0011.test.mjs:152 (N2/N3), :165 (N2b)"
+      - idea: "marker — симлінк на валідний marker іншої установки"
+        result: "bypass_found (межа G4: потрібен запис у J4_HOME); readFileSync іде за симлінком, тестом не покрито → C3T11-9"
+        where: "store.mjs:48"
+      - idea: "seq 1 — справжній `installation` потрібної установки, далі підроблений або обрізаний хвіст (ланцюг перераховано), ескалація ще не синхронізована"
+        result: >
+          bypass_found, задокументовано як I11/G4. `first_hash` не допомагає, бо seq 1 не змінюється. Закриває лише --ledger-min-seq
+          до закріпленого seq та M7 для синхронізованих подій. Текст DESIGN про це неточний → C3T11-1.
+        where: "t0011.test.mjs:296 (I11); ledger.mjs:160-163; DESIGN.md:315,335"
+      - idea: "`installation_adopted` з іншого журналу (first_hash не збігається з seq 1)"
+        result: "refused_correctly: ledger-not-bound. Якщо first_hash збігається (клон історії), це та сама установка за визначенням"
+        where: "ledger.mjs:165; t0011.test.mjs:529 (N22), M07"
+      - idea: "мігрований журнал: переписати `installation_adopted` у голові на потрібний id, перерахувавши хвіст від K+1"
+        result: "bypass_found (межа G4): first_hash seq 1 не змінюється, закріплений ledger_first_hash не виявляє → C3T11-1(а)"
+        where: "ledger.mjs:165-167"
+      - idea: "ledger_min_seq у формах \"007\", \"1e2\", \" 1\", \"0\", \"-1\", \"1.5\", порожній рядок, \"5\\n\""
+        result: >
+          refused_correctly: installation-unknown[ledger-min-seq], регекс /^[1-9][0-9]*$/ (у JS `$` не збігається перед \\n).
+          Тести перевіряють 'abc','-1','1.5','0',' 1','1e2'; "007" і "\\n" не перевіряють → C3T11-6
+        where: "close.mjs:356-363; t0011.test.mjs:407"
+      - idea: "подія ADM із ref j4-ledger#seq=N, де N — запис іншого виду"
+        result: "refused_correctly: ledger-events-mismatch[kind-mismatch] (escalation↔escalation_raised з тим самим id; report_filed↔message_accepted kind report)"
+        where: "close.mjs:387-390,405; t0011.test.mjs:345 (N13), :351 (N13b)"
+      - idea: "подія ADM, чий ref вказує на запис іншої задачі, або з ref не за регексом (пробіл, регістр)"
+        result: >
+          bypass_found, низький вплив. Задачу запису не звіряють, нерозпізнаний ref пропускають. Для escalation з id, невідомим
+          сховищу і журналу, openEscalations усе одно блокує. Для report_filed вплив нульовий → C3T11-10
+        where: "close.mjs:387-397"
+      - idea: "повтор close після done на чужій парі / без закріпленого значення"
+        result: "refused_correctly: ідентичність (428-432) раніше за already (433-434). На правильній парі зі застарілою подією ADM → already за задумом M11"
+        where: "close.mjs:428-435; t0011.test.mjs:567 (I16), :574 (N23)"
+      - idea: "гонка adopt ∥ run --once; TOCTOU між читанням журналу в CLI і closeTask"
+        result: >
+          adopt і bindIfEmpty працюють під замком журналу, marker створюється через link/EEXIST, а роутер не пише в
+          непривʼязаний непорожній журнал, тож гонка безпечна за читанням коду. Динамічно не перевіряв: тести заборонені, тест на
+          adopt ∥ run немає. TOCTOU дає лише додаткові тимчасові відмови (ledger-seq-N-mismatch, store-ledger-escalation-unknown),
+          не хибне проходження; пізня ескалація після читання сховища — F-T9-15, поза T-0011 → C3T11-4.
+        where: "ledger.mjs:22-38,44-57; store.mjs:30-39; router.mjs:31-32"
+      - idea: "`J4_LEDGER` на новий шлях при `run --once`: порожній журнал автоматично прив'язується до marker-а і проходить close без закріпленого first_hash"
+        result: >
+          Частково bypass_found. Ідентичність проходить. Захищає наявність відкритих ескалацій у сховищі (storeOnly) і синхронізованих
+          подій (ledger-seq-N-mismatch); без них — проходить. DESIGN про це мовчить → C3T11-1.
+        where: "ledger.mjs:19,22; router.mjs:31; close.mjs:376-377,454"
+      - idea: "довільне закріплене значення з прапорця й змінної (прапорець старший), порожня змінна"
+        result: "refused_correctly: порожній рядок не ігнорується (`??`, регекс не проходить) → installation-unknown; прапорець перемагає в обидва боки (N34)"
+        where: "j4.mjs:153; t0011.test.mjs:629"
+
+    scope_check:
+      out_of_scope_files: ["bridge/test/e2e.test.mjs", "bridge/test/t0006.test.mjs"]   # Р-Т11-19; мінімальні й вимушені; amendments: [] не оновлено
+      acceptance_mjs_unchanged: true     # git diff 49226f9..0610635 -- bridge/src/acceptance.mjs bridge/config .github → порожньо
+      contract_lines_changed: 2          # git diff --numstat: 3 додано (1 новий абзац §4, 1 порожній, 1 змінений рядок 9а.3), 1 видалено; інших розділів немає
+      # Поза bridge/ і CONTRACT змінено лише tasks/T-0011/** (6 файлів) і reports/T-0011/** (2).
+      # Пізніші коміти (HEAD d331d97) змінюють лише tasks/T-0011 і reports/T-0011; git diff 0610635..HEAD -- bridge CONTRACT_v0_4.md порожній.
+      # node --check OK: store, ledger, close, router, j4.mjs, t0011.test, helpers.
+      # Відповідність G1–G4 і spec (M1–M11): порядок closeTask збігається з M11. Коди відмов збігаються зі spec 3.5 і DESIGN.
+      #   `run --once` не отримує закріплених значень (відповідає DESIGN:326). `adopt` реалізує M10.
+      #   Розбіжність Р-Т11-12 вирішена на користь M7.4. G4 у DESIGN сформульовано прямо (334-335), окрім C3T11-1.
+      # Наявні тести лише посилені. Замінені твердження: C5 (ok:true → відмова, Р-Т11-15), C7 (усічений до нуля → відмова,
+      #   плюс новий кейс «лише запис прив'язки» → код 0), індекси журналу +1, закріплене значення у викликах close.
+      #   0 видалених перевірок. t0010 B2 лише копіює marker у чужу теку, дерево порівнюється як і раніше. Бездоганно-чистий bare-home
+      #   лишається в I6, без повного знімка дерева, але M06 це покриває.
+
+    verdict: changes_requested   # одне mandatory: C3T11-1 (текст DESIGN перебільшує гарантію прив'язки). Код і тести без mandatory-зауважень.
+
+    limits:
+      - "Жодного тесту чи скрипта не запускав (бюджет 0). Динамічну поведінку (гонки, crash-вікна, scanObject на довільному 32-hex, 205/203/2 і запуск t0010 A4/A5 від nobody) виведено лише з коду і доданих у пакет свідчень. Файл t0010-nobody-0610635.txt не читав."
+      - "close.mjs рядки 1-289 бачив лише через diff (openEscalations, коментарі), router.mjs рядки 81-193 і 264-454 не читав (T-0011 їх не змінює). j4.mjs, store.mjs, DESIGN.md, README.md — лише diff-hunks (-U20 і -U0)."
+      - "Не читав scanner.mjs, events.mjs, policy.mjs, bridge/config/**, order-j5.md, 09-plan, 05-experiments, t0006 F-4, t0009 base()/C7 повністю. Ризик, що scanObject колись відхилить випадковий 32-hex installation_id і назавжди заблокує конструктор (ledger-leak), не оцінив. Практично малий: сотні маркерів у прогонах і мутантах без збою. Варто один раз проганяти 10^5 випадкових id через scanObject."
+      - "Чи інші модулі, крім router.mjs, викликають repairIfNeeded (C3T11-3), не перевіряв."
+      - "CONTRACT: перевірив лише, що змінено §4 і 9а.3 двома рядками. Не перевіряв, чи sha256 контракту де-небудь закріплений (config/політики) і чи зміна сумісна з наявними повідомленнями."

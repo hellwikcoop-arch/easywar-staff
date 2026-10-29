@@ -1,0 +1,1282 @@
+TAP version 13
+# Subtest: J3 → J5 через J4: автоматична відповідь і докази
+ok 1 - J3 → J5 через J4: автоматична відповідь і докази
+  ---
+  duration_ms: 39.81843
+  type: 'test'
+  ...
+# Subtest: рівень доказів hash: без резюме в журналі
+ok 2 - рівень доказів hash: без резюме в журналі
+  ---
+  duration_ms: 22.422377
+  type: 'test'
+  ...
+# Subtest: J3 відповідає J5 у тій самій нитці з inbox
+ok 3 - J3 відповідає J5 у тій самій нитці з inbox
+  ---
+  duration_ms: 25.261852
+  type: 'test'
+  ...
+# Subtest: рівень C від J3 не йде до J5 до рішення JE
+ok 4 - рівень C від J3 не йде до J5 до рішення JE
+  ---
+  duration_ms: 46.920267
+  type: 'test'
+  ...
+# Subtest: відповідь J5 з decision_needed тримається до рішення JE
+ok 5 - відповідь J5 з decision_needed тримається до рішення JE
+  ---
+  duration_ms: 15.080453
+  type: 'test'
+  ...
+# Subtest: відповідь із секретом блокується, секрет не потрапляє в журнал
+ok 6 - відповідь із секретом блокується, секрет не потрапляє в журнал
+  ---
+  duration_ms: 13.295604
+  type: 'test'
+  ...
+# Subtest: чернетка з операційними шаблонами відхиляється без тексту в журналі
+ok 7 - чернетка з операційними шаблонами відхиляється без тексту в журналі
+  ---
+  duration_ms: 5.590823
+  type: 'test'
+  ...
+# Subtest: стоп-кран: J4_HALT і файл bridge/HALT
+ok 8 - стоп-кран: J4_HALT і файл bridge/HALT
+  ---
+  duration_ms: 12.560111
+  type: 'test'
+  ...
+# Subtest: без J4_ALLOW_LIVE платний адаптер не викликається
+ok 9 - без J4_ALLOW_LIVE платний адаптер не викликається
+  ---
+  duration_ms: 24.187142
+  type: 'test'
+  ...
+# Subtest: ворота: погодження JE обов'язкове, чинне і для цієї задачі
+ok 10 - ворота: погодження JE обов'язкове, чинне і для цієї задачі
+  ---
+  duration_ms: 62.212167
+  type: 'test'
+  ...
+# Subtest: погоджений живий шлях (fake fetch): запит, облік, вартість, без ключа в журналі
+ok 11 - погоджений живий шлях (fake fetch): запит, облік, вартість, без ключа в журналі
+  ---
+  duration_ms: 27.855778
+  type: 'test'
+  ...
+# Subtest: межа вартості з погодження: резерв понад max_cost_usd блокує виклик
+ok 12 - межа вартості з погодження: резерв понад max_cost_usd блокує виклик
+  ---
+  duration_ms: 12.568011
+  type: 'test'
+  ...
+# Subtest: HTTP 429/5xx тимчасові, 4xx — ні
+ok 13 - HTTP 429/5xx тимчасові, 4xx — ні
+  ---
+  duration_ms: 1.910469
+  type: 'test'
+  ...
+# Subtest: розбір відповіді Responses API
+ok 14 - розбір відповіді Responses API
+  ---
+  duration_ms: 0.647086
+  type: 'test'
+  ...
+# Subtest: Codex і Claude CLI: аргументи пісочниці
+ok 15 - Codex і Claude CLI: аргументи пісочниці
+  ---
+  duration_ms: 0.919192
+  type: 'test'
+  ...
+# Subtest: адаптер Codex (fake spawn) читає останнє повідомлення з файла -o
+ok 16 - адаптер Codex (fake spawn) читає останнє повідомлення з файла -o
+  ---
+  duration_ms: 9.093915
+  type: 'test'
+  ...
+# Subtest: ліміт викликів задачі: зупинка, auto_on_limit і ескалація JE
+ok 17 - ліміт викликів задачі: зупинка, auto_on_limit і ескалація JE
+  ---
+  duration_ms: 52.24664
+  type: 'test'
+  ...
+# Subtest: ліміт токенів задачі враховує резерв
+ok 18 - ліміт токенів задачі враховує резерв
+  ---
+  duration_ms: 16.090009
+  type: 'test'
+  ...
+# Subtest: тимчасова помилка: одна повторна спроба й успіх
+ok 19 - тимчасова помилка: одна повторна спроба й успіх
+  ---
+  duration_ms: 41.060632
+  type: 'test'
+  ...
+# Subtest: дві спроби вичерпано: третя лише за рішенням JE
+ok 20 - дві спроби вичерпано: третя лише за рішенням JE
+  ---
+  duration_ms: 43.057436
+  type: 'test'
+  ...
+# Subtest: невалідна відповідь агента повторюється один раз, далі ескалація
+ok 21 - невалідна відповідь агента повторюється один раз, далі ескалація
+  ---
+  duration_ms: 28.892719
+  type: 'test'
+  ...
+# Subtest: ліміт раундів нитки
+ok 22 - ліміт раундів нитки
+  ---
+  duration_ms: 43.039851
+  type: 'test'
+  ...
+# Subtest: ping-pong: повтор того самого повідомлення в нитці
+ok 23 - ping-pong: повтор того самого повідомлення в нитці
+  ---
+  duration_ms: 38.066759
+  type: 'test'
+  ...
+# Subtest: цикл очікування: J5 не може запитувати J3, поки J3 чекає на J5
+ok 24 - цикл очікування: J5 не може запитувати J3, поки J3 чекає на J5
+  ---
+  duration_ms: 25.195146
+  type: 'test'
+  ...
+# Subtest: глибина делегування й хопи
+ok 25 - глибина делегування й хопи
+  ---
+  duration_ms: 51.070355
+  type: 'test'
+  ...
+# Subtest: ліміт відкритих ниток на задачу
+ok 26 - ліміт відкритих ниток на задачу
+  ---
+  duration_ms: 11.901397
+  type: 'test'
+  ...
+# Subtest: J5 не може писати з CLI агента; JE не приймається з адаптера
+ok 27 - J5 не може писати з CLI агента; JE не приймається з адаптера
+  ---
+  duration_ms: 22.928148
+  type: 'test'
+  ...
+# Subtest: маршрути: недозволені ребра й види відхиляються
+ok 28 - маршрути: недозволені ребра й види відхиляються
+  ---
+  duration_ms: 19.12433
+  type: 'test'
+  ...
+# Subtest: задача C5.1 лише для прийнятої задачі
+ok 29 - задача C5.1 лише для прийнятої задачі
+  ---
+  duration_ms: 13.563532
+  type: 'test'
+  ...
+# Subtest: контракт має збігатися з файлом у сховищі
+ok 30 - контракт має збігатися з файлом у сховищі
+  ---
+  duration_ms: 8.631374
+  type: 'test'
+  ...
+# Subtest: відправника відповіді визначає адаптер, а не текст відповіді
+ok 31 - відправника відповіді визначає адаптер, а не текст відповіді
+  ---
+  duration_ms: 34.421618
+  type: 'test'
+  ...
+# Subtest: незалежність рецензента
+ok 32 - незалежність рецензента
+  ---
+  duration_ms: 0.533507
+  type: 'test'
+  ...
+# Subtest: жодна роль не має права злиття
+ok 33 - жодна роль не має права злиття
+  ---
+  duration_ms: 0.585331
+  type: 'test'
+  ...
+# Subtest: коректна чернетка проходить перевірку
+ok 34 - коректна чернетка проходить перевірку
+  ---
+  duration_ms: 2.795498
+  type: 'test'
+  ...
+# Subtest: прив'язка до задачі, коміту й контракту обов'язкова
+ok 35 - прив'язка до задачі, коміту й контракту обов'язкова
+  ---
+  duration_ms: 2.272841
+  type: 'test'
+  ...
+# Subtest: лише synthetic; рівень рішення A|B|C
+ok 36 - лише synthetic; рівень рішення A|B|C
+  ---
+  duration_ms: 1.130918
+  type: 'test'
+  ...
+# Subtest: межі тіла, посилання й decision_needed
+ok 37 - межі тіла, посилання й decision_needed
+  ---
+  duration_ms: 3.047603
+  type: 'test'
+  ...
+# Subtest: повне повідомлення вимагає полів, які ставить J4
+ok 38 - повне повідомлення вимагає полів, які ставить J4
+  ---
+  duration_ms: 0.920361
+  type: 'test'
+  ...
+# Subtest: канонічний JSON не залежить від порядку ключів
+ok 39 - канонічний JSON не залежить від порядку ключів
+  ---
+  duration_ms: 0.347054
+  type: 'test'
+  ...
+# Subtest: відповідь агента: строга схема
+ok 40 - відповідь агента: строга схема
+  ---
+  duration_ms: 0.351551
+  type: 'test'
+  ...
+# Subtest: сканер ловить секрети й операційні шаблони
+ok 41 - сканер ловить секрети й операційні шаблони
+  ---
+  duration_ms: 2.587331
+  type: 'test'
+  ...
+# Subtest: сканер не спрацьовує на SHA, хешах, датах і версіях
+ok 42 - сканер не спрацьовує на SHA, хешах, датах і версіях
+  ---
+  duration_ms: 0.606945
+  type: 'test'
+  ...
+# Subtest: redact прибирає секрети з тексту помилок
+ok 43 - redact прибирає секрети з тексту помилок
+  ---
+  duration_ms: 0.85842
+  type: 'test'
+  ...
+# Subtest: збій процесу під час виклику: результат невідомий, спроба зарахована, повтор без дубля
+ok 44 - збій процесу під час виклику: результат невідомий, спроба зарахована, повтор без дубля
+  ---
+  duration_ms: 57.887706
+  type: 'test'
+  ...
+# Subtest: збій після отримання відповіді: відновлення зі спулу без повторного виклику
+ok 45 - збій після отримання відповіді: відновлення зі спулу без повторного виклику
+  ---
+  duration_ms: 32.884355
+  type: 'test'
+  ...
+# Subtest: збій між записом у журнал і поданням відповіді: відповідь подається один раз
+ok 46 - збій між записом у журнал і поданням відповіді: відповідь подається один раз
+  ---
+  duration_ms: 35.618775
+  type: 'test'
+  ...
+# Subtest: обірваний останній рядок журналу відкидається з подією
+ok 47 - обірваний останній рядок журналу відкидається з подією
+  ---
+  duration_ms: 37.492377
+  type: 'test'
+  ...
+# Subtest: живий чужий замок не перехоплюється
+ok 48 - живий чужий замок не перехоплюється
+  ---
+  duration_ms: 10.845164
+  type: 'test'
+  ...
+# Subtest: підробка запису журналу виявляється
+ok 49 - підробка запису журналу виявляється
+  ---
+  duration_ms: 14.427599
+  type: 'test'
+  ...
+# Subtest: місячний облік: пороги 35/45/50 і блокування на 50
+ok 50 - місячний облік: пороги 35/45/50 і блокування на 50
+  ---
+  duration_ms: 19.485458
+  type: 'test'
+  ...
+# Subtest: резерв верхньої межі: запит, що може перевищити стелю, відхиляється заздалегідь
+ok 51 - резерв верхньої межі: запит, що може перевищити стелю, відхиляється заздалегідь
+  ---
+  duration_ms: 5.694347
+  type: 'test'
+  ...
+# Subtest: невідома вартість зараховується консервативно (весь резерв, estimate)
+ok 52 - невідома вартість зараховується консервативно (весь резерв, estimate)
+  ---
+  duration_ms: 6.212719
+  type: 'test'
+  ...
+# Subtest: облік переживає перезапуск і не скидається при зміні задачі; пошкоджений файл — відмова
+ok 53 - облік переживає перезапуск і не скидається при зміні задачі; пошкоджений файл — відмова
+  ---
+  duration_ms: 8.73031
+  type: 'test'
+  ...
+# Subtest: паралельні процеси з одним файлом не перевищують стелю
+ok 54 - паралельні процеси з одним файлом не перевищують стелю
+  ---
+  duration_ms: 204.463708
+  type: 'test'
+  ...
+# Subtest: живий виклик через J4: резерв, розрахунок, поріг і блок на $50 (fake fetch)
+ok 55 - живий виклик через J4: резерв, розрахунок, поріг і блок на $50 (fake fetch)
+  ---
+  duration_ms: 285.996501
+  type: 'test'
+  ...
+# Subtest: погодження JE не піднімає місячну стелю й мусить містити модель і ціну
+ok 56 - погодження JE не піднімає місячну стелю й мусить містити модель і ціну
+  ---
+  duration_ms: 86.238383
+  type: 'test'
+  ...
+# Subtest: збій живого виклику: резерв зараховано як оцінку; stub не потрапляє в місячний облік
+ok 57 - збій живого виклику: резерв зараховано як оцінку; stub не потрапляє в місячний облік
+  ---
+  duration_ms: 72.468078
+  type: 'test'
+  ...
+# Subtest: повідомлення агента не може встановити done; невідомий стан відхиляється
+ok 58 - повідомлення агента не може встановити done; невідомий стан відхиляється
+  ---
+  duration_ms: 56.623484
+  type: 'test'
+  ...
+# Subtest: бар'єр приймання: усе на одному SHA
+ok 59 - бар'єр приймання: усе на одному SHA
+  ---
+  duration_ms: 1.212686
+  type: 'test'
+  ...
+# Subtest: done лише ADM і лише після бар'єра; докази з events.jsonl
+ok 60 - done лише ADM і лише після бар'єра; докази з events.jsonl
+  ---
+  duration_ms: 3.17777
+  type: 'test'
+  ...
+# Subtest: F-1: пізніше відхилення скасовує приймання; лише явне accepted
+ok 61 - F-1: пізніше відхилення скасовує приймання; лише явне accepted
+  ---
+  duration_ms: 0.192252
+  type: 'test'
+  ...
+# Subtest: F-5: довжина й формат полів, що потрапляють у журнал
+ok 62 - F-5: довжина й формат полів, що потрапляють у журнал
+  ---
+  duration_ms: 4.49294
+  type: 'test'
+  ...
+# Subtest: F-4: паралельні процеси send не рвуть ланцюг журналу й не дублюють msg_id
+ok 63 - F-4: паралельні процеси send не рвуть ланцюг журналу й не дублюють msg_id
+  ---
+  duration_ms: 333.286232
+  type: 'test'
+  ...
+# Subtest: F-6: замок загиблого процесу не блокує облік назавжди
+ok 64 - F-6: замок загиблого процесу не блокує облік назавжди
+  ---
+  duration_ms: 5.412929
+  type: 'test'
+  ...
+# Subtest: F-7: ремонт журналу атомарний і зберігає цілі записи
+ok 65 - F-7: ремонт журналу атомарний і зберігає цілі записи
+  ---
+  duration_ms: 9.610018
+  type: 'test'
+  ...
+# Subtest: F-10: живий замок не знімається — ні порожній свіжий, ні старий живого pid; чужий замок не звільняється
+ok 66 - F-10: живий замок не знімається — ні порожній свіжий, ні старий живого pid; чужий замок не звільняється
+  ---
+  duration_ms: 226.021718
+  type: 'test'
+  ...
+# Subtest: F-11: ідентифікатори J4 з великими лічильниками приймаються
+ok 67 - F-11: ідентифікатори J4 з великими лічильниками приймаються
+  ---
+  duration_ms: 4.689094
+  type: 'test'
+  ...
+# Subtest: F-13: живий адаптер без стелі виходу або без max_output_tokens не допускається
+ok 68 - F-13: живий адаптер без стелі виходу або без max_output_tokens не допускається
+  ---
+  duration_ms: 5.276371
+  type: 'test'
+  ...
+# Subtest: T-0007 S1: маршрут J3 → J5 → J3 → J5 → J3 окремими процесами, без ручного пересилання
+ok 69 - T-0007 S1: маршрут J3 → J5 → J3 → J5 → J3 окремими процесами, без ручного пересилання
+  ---
+  duration_ms: 564.716026
+  type: 'test'
+  ...
+# Subtest: T-0007 S2: перезапуск — процес J4 загинув після виклику, новий процес завершує без повторного виклику
+ok 70 - T-0007 S2: перезапуск — процес J4 загинув після виклику, новий процес завершує без повторного виклику
+  ---
+  duration_ms: 354.465348
+  type: 'test'
+  ...
+# Subtest: T-0007 S3: рівень C утримується до JE; без --human і з CLI агента рішення не приймається
+ok 71 - T-0007 S3: рівень C утримується до JE; без --human і з CLI агента рішення не приймається
+  ---
+  duration_ms: 442.182948
+  type: 'test'
+  ...
+# Subtest: T-0007 S3b: відповідь J5 з decision_needed також утримується (без звернення до J3)
+ok 72 - T-0007 S3b: відповідь J5 з decision_needed також утримується (без звернення до J3)
+  ---
+  duration_ms: 35.195192
+  type: 'test'
+  ...
+# Subtest: T-0007 S4: ліміти — 20 викликів і 2 спроби в конфігурації; спроби й ліміт викликів зупиняють доставку
+ok 73 - T-0007 S4: ліміти — 20 викликів і 2 спроби в конфігурації; спроби й ліміт викликів зупиняють доставку
+  ---
+  duration_ms: 43.089373
+  type: 'test'
+  ...
+# Subtest: T-0007 S5: захист від циклів — повтор і цикл очікування
+ok 74 - T-0007 S5: захист від циклів — повтор і цикл очікування
+  ---
+  duration_ms: 245.034261
+  type: 'test'
+  ...
+# Subtest: T-0007 S6: бар'єр приймання — без C3, J3 і J5 на одному SHA done неможливий
+ok 75 - T-0007 S6: бар'єр приймання — без C3, J3 і J5 на одному SHA done неможливий
+  ---
+  duration_ms: 72.58642
+  type: 'test'
+  ...
+# Subtest: T-0007 S7: журнал доказів виявляє підміну запису
+ok 76 - T-0007 S7: журнал доказів виявляє підміну запису
+  ---
+  duration_ms: 131.32378
+  type: 'test'
+  ...
+# Subtest: T-0009 E1: J4 пише report_filed і escalation з ref на журнал J4; повтор не дублює; seq продовжується
+ok 77 - T-0009 E1: J4 пише report_filed і escalation з ref на журнал J4; повтор не дублює; seq продовжується
+  ---
+  duration_ms: 34.121616
+  type: 'test'
+  ...
+# Subtest: T-0009 E2: заборонені події й автори відхиляються; state_changed — лише через close
+ok 78 - T-0009 E2: заборонені події й автори відхиляються; state_changed — лише через close
+  ---
+  duration_ms: 3.398249
+  type: 'test'
+  ...
+# Subtest: T-0009 E3: пошкоджений журнал задачі не перезаписується; паралельні записи дають неперервний seq
+ok 79 - T-0009 E3: пошкоджений журнал задачі не перезаписується; паралельні записи дають неперервний seq
+  ---
+  duration_ms: 127.047289
+  type: 'test'
+  ...
+# Subtest: T-0009 E4: збій під час синхронізації — наступний прохід дописує без дублікатів
+ok 80 - T-0009 E4: збій під час синхронізації — наступний прохід дописує без дублікатів
+  ---
+  duration_ms: 20.035782
+  type: 'test'
+  ...
+# Subtest: T-0009 E5: ручний допис не губиться; службові поля не підміняються; null-рядок і done без subject відхиляються
+ok 81 - T-0009 E5: ручний допис не губиться; службові поля не підміняються; null-рядок і done без subject відхиляються
+  ---
+  duration_ms: 14.774447
+  type: 'test'
+  ...
+# Subtest: T-0009 C1: close відмовляє без повного комплекту на одному SHA; done лише після бар'єра
+ok 82 - T-0009 C1: close відмовляє без повного комплекту на одному SHA; done лише після бар'єра
+  ---
+  duration_ms: 20.53904
+  type: 'test'
+  ...
+# Subtest: T-0009 C2: відкрита ескалація JE, key_decision і пізніший changes_requested блокують close
+ok 83 - T-0009 C2: відкрита ескалація JE, key_decision і пізніший changes_requested блокують close
+  ---
+  duration_ms: 49.186105
+  type: 'test'
+  ...
+# Subtest: T-0009 C3: j4 close через CLI — повтор ідемпотентний, стоп-кран 4, відкрита ескалація блокує, resolved знімає, без J4_HOME/J4_LEDGER — відмова
+ok 84 - T-0009 C3: j4 close через CLI — повтор ідемпотентний, стоп-кран 4, відкрита ескалація блокує, resolved знімає, без J4_HOME/J4_LEDGER — відмова
+  ---
+  duration_ms: 540.05491
+  type: 'test'
+  ...
+# Subtest: T-0009 C4: checks — не згадка SHA, а рядок result: pass на subject і команди verify з наказу; симлінки, fail до result, \# у verify
+ok 85 - T-0009 C4: checks — не згадка SHA, а рядок result: pass на subject і команди verify з наказу; симлінки, fail до result, \# у verify
+  ---
+  duration_ms: 173.884557
+  type: 'test'
+  ...
+# Subtest: T-0009 C5: ескалація з журналу J4 видна при порожньому сховищі J4; resolved у журналі її знімає; гонка двох close дає один done
+ok 86 - T-0009 C5: ескалація з журналу J4 видна при порожньому сховищі J4; resolved у журналі її знімає; гонка двох close дає один done
+  ---
+  duration_ms: 140.251918
+  type: 'test'
+  ...
+# Subtest: T-0009 C6: CLI передає журнал J4 у перевірку ескалацій — ескалація лише в журналі видна при порожньому J4_HOME; resolved у журналі знімає
+ok 87 - T-0009 C6: CLI передає журнал J4 у перевірку ескалацій — ескалація лише в журналі видна при порожньому J4_HOME; resolved у журналі знімає
+  ---
+  duration_ms: 161.095614
+  type: 'test'
+  ...
+# Subtest: T-0009 C7: j4 close відмовляє без запису, якщо журнал J4 відсутній, обірваний, пошкоджений чи не файл, а J4_HOME — не сховище J4
+ok 88 - T-0009 C7: j4 close відмовляє без запису, якщо журнал J4 відсутній, обірваний, пошкоджений чи не файл, а J4_HOME — не сховище J4
+  ---
+  duration_ms: 809.591936
+  type: 'test'
+  ...
+# Subtest: T-0009 C8: F-T9-13/14/17 — «not passed», порожній відбір і SHA лише в cmd не є доказом; кілька verify: — відмова; ескалація без id має читну мітку
+ok 89 - T-0009 C8: F-T9-13/14/17 — «not passed», порожній відбір і SHA лише в cmd не є доказом; кілька verify: — відмова; ескалація без id має читну мітку
+  ---
+  duration_ms: 59.850773
+  type: 'test'
+  ...
+# Subtest: T-0009 Q1: один такт обробляє всю чергу, підхоплює мертвий замок і пише події; рівень C не рухається (2 виклики stub)
+ok 90 - T-0009 Q1: один такт обробляє всю чергу, підхоплює мертвий замок і пише події; рівень C не рухається (2 виклики stub)
+  ---
+  duration_ms: 507.927118
+  type: 'test'
+  ...
+# Subtest: T-0009 Q2: такт — замок живого обробника (75), стоп-кран (4), live заборонено; скрипт розкладу знімає змінні живого режиму й викликає run --once --mode stub
+ok 91 - T-0009 Q2: такт — замок живого обробника (75), стоп-кран (4), live заборонено; скрипт розкладу знімає змінні живого режиму й викликає run --once --mode stub
+  ---
+  duration_ms: 429.007493
+  type: 'test'
+  ...
+# Subtest: T-0009 Q3: невдалий запис події ADM — код виходу 6, один task_event_failed на ключ; черга не ламається
+ok 92 - T-0009 Q3: невдалий запис події ADM — код виходу 6, один task_event_failed на ключ; черга не ламається
+  ---
+  duration_ms: 292.135438
+  type: 'test'
+  ...
+# Subtest: T-0009 H1: канонічний bridge/HALT зупиняє run --once і close, навіть коли J4_STAFF_ROOT вказує на інше сховище
+ok 93 - T-0009 H1: канонічний bridge/HALT зупиняє run --once і close, навіть коли J4_STAFF_ROOT вказує на інше сховище
+  ---
+  duration_ms: 217.577294
+  type: 'test'
+  ...
+# Subtest: T-0010 A1: Store.list не ковтає помилки читання; відсутня тека — порожній список
+ok 94 - T-0010 A1: Store.list не ковтає помилки читання; відсутня тека — порожній список
+  ---
+  duration_ms: 28.147191
+  type: 'test'
+  ...
+# Subtest: T-0010 A2: inspectJ4Home розрізняє «не сховище» і «нечитне сховище» (F-T9-19)
+ok 95 - T-0010 A2: inspectJ4Home розрізняє «не сховище» і «нечитне сховище» (F-T9-19)
+  ---
+  duration_ms: 21.937599
+  type: 'test'
+  ...
+# Subtest: T-0010 A3: closeTask не падає винятком, коли сховище J4 нечитне, а відмовляє (escalation-source-unreadable)
+ok 96 - T-0010 A3: closeTask не падає винятком, коли сховище J4 нечитне, а відмовляє (escalation-source-unreadable)
+  ---
+  duration_ms: 70.818587
+  type: 'test'
+  ...
+# Subtest: T-0010 A4: J4_HOME без читного вмісту (не root) — CLI відмовляє home-unreadable
+ok 97 - T-0010 A4: J4_HOME без читного вмісту (не root) — CLI відмовляє home-unreadable # SKIP root читає будь-яку теку; випадок покрито A2 через підставну fs
+  ---
+  duration_ms: 0.231462
+  type: 'test'
+  ...
+# Subtest: T-0010 A5: нечитна тека черги — Store.list кидає EACCES, run --once відмовляє кодом 1, а не тихо «порожньо» (не root; C3 F-T10-1)
+ok 98 - T-0010 A5: нечитна тека черги — Store.list кидає EACCES, run --once відмовляє кодом 1, а не тихо «порожньо» (не root; C3 F-T10-1) # SKIP root читає будь-яку теку; перевіряється на CI й під користувачем без прав root
+  ---
+  duration_ms: 0.292672
+  type: 'test'
+  ...
+# Subtest: T-0010 B1: Store.open — лише читання: нічого не створює, запис і замок відхиляє
+ok 99 - T-0010 B1: Store.open — лише читання: нічого не створює, запис і замок відхиляє
+  ---
+  duration_ms: 3.021196
+  type: 'test'
+  ...
+# Subtest: T-0010 B2: j4 close не створює і не змінює жодного файла в J4_HOME (чужа тека, повний домашній каталог, повтор, відмова)
+ok 100 - T-0010 B2: j4 close не створює і не змінює жодного файла в J4_HOME (чужа тека, повний домашній каталог, повтор, відмова)
+  ---
+  duration_ms: 317.440938
+  type: 'test'
+  ...
+# Subtest: T-0010 C1: F-T9-22 — форми, що раніше проходили евристику, більше не є доказом перевірок
+ok 101 - T-0010 C1: F-T9-22 — форми, що раніше проходили евристику, більше не є доказом перевірок
+  ---
+  duration_ms: 518.375418
+  type: 'test'
+  ...
+# Subtest: T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймаються
+ok 102 - T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймаються
+  ---
+  duration_ms: 262.42657
+  type: 'test'
+  ...
+# Subtest: T-0010 D1: ledger-changed-during-read ловиться детерміновано (хук afterVerify між перевіркою і читанням)
+ok 103 - T-0010 D1: ledger-changed-during-read ловиться детерміновано (хук afterVerify між перевіркою і читанням)
+  ---
+  duration_ms: 14.651867
+  type: 'test'
+  ...
+# Subtest: T-0010 D2: J4_HOME/escalations — файл; рядок `null` у журналі; витік у записі журналу: CLI відмовляє, нічого не пише
+ok 104 - T-0010 D2: J4_HOME/escalations — файл; рядок `null` у журналі; витік у записі журналу: CLI відмовляє, нічого не пише
+  ---
+  duration_ms: 206.10525
+  type: 'test'
+  ...
+# Subtest: T-0010 E1: повтор close після done — already:true лише за читних джерел; інакше відмова без запису (характеризація)
+ok 105 - T-0010 E1: повтор close після done — already:true лише за читних джерел; інакше відмова без запису (характеризація)
+  ---
+  duration_ms: 298.462447
+  type: 'test'
+  ...
+# Subtest: T-0011 I1: правильна пара + закріплений id, відкрита ескалація → open-escalation (поведінка без змін)
+ok 106 - T-0011 I1: правильна пара + закріплений id, відкрита ескалація → open-escalation (поведінка без змін)
+  ---
+  duration_ms: 108.317334
+  type: 'test'
+  ...
+# Subtest: T-0011 I2: правильна пара + закріплений id, без ескалацій → done
+ok 107 - T-0011 I2: правильна пара + закріплений id, без ескалацій → done
+  ---
+  duration_ms: 100.854875
+  type: 'test'
+  ...
+# Subtest: T-0011 I2b: закріплене значення через прапорець --installation (а не змінну середовища) діє так само
+ok 108 - T-0011 I2b: закріплене значення через прапорець --installation (а не змінну середовища) діє так само
+  ---
+  duration_ms: 105.504274
+  type: 'test'
+  ...
+# Subtest: T-0011 N1/N4: marker створюється один раз; новий журнал починається записом installation (seq 1) з тим самим id; ланцюг цілий
+ok 109 - T-0011 N1/N4: marker створюється один раз; новий журнал починається записом installation (seq 1) з тим самим id; ланцюг цілий
+  ---
+  duration_ms: 20.717263
+  type: 'test'
+  ...
+# Subtest: T-0011 N1b: Store.open (лише читання) marker не створює і сліду в теці не лишає
+ok 110 - T-0011 N1b: Store.open (лише читання) marker не створює і сліду в теці не лишає
+  ---
+  duration_ms: 6.602776
+  type: 'test'
+  ...
+# Subtest: T-0011 N2/N3: marker не JSON, масив, id 31 символ, великі літери, невідомий format, тека замість файла → store-marker-missing (відмова, не виняток)
+ok 111 - T-0011 N2/N3: marker не JSON, масив, id 31 символ, великі літери, невідомий format, тека замість файла → store-marker-missing (відмова, не виняток)
+  ---
+  duration_ms: 631.331506
+  type: 'test'
+  ...
+# Subtest: T-0011 N2b: зіпсований marker не переписується мовчки, а `run --once` на ньому відмовляє
+ok 112 - T-0011 N2b: зіпсований marker не переписується мовчки, а `run --once` на ньому відмовляє
+  ---
+  duration_ms: 104.711587
+  type: 'test'
+  ...
+# Subtest: T-0011 N5: журнал, чий seq 1 — не installation (стара установка без прив'язки) → ledger-not-bound
+ok 113 - T-0011 N5: журнал, чий seq 1 — не installation (стара установка без прив'язки) → ledger-not-bound
+  ---
+  duration_ms: 94.857277
+  type: 'test'
+  ...
+# Subtest: T-0011 N25: суперечливі прив'язки (seq 1 installation і пізніший installation_adopted іншої установки) → ledger-not-bound
+ok 114 - T-0011 N25: суперечливі прив'язки (seq 1 installation і пізніший installation_adopted іншої установки) → ledger-not-bound
+  ---
+  duration_ms: 94.398925
+  type: 'test'
+  ...
+# Subtest: T-0011 I3: без закріпленого значення → installation-unknown[pinned], нічого не записано
+ok 115 - T-0011 I3: без закріпленого значення → installation-unknown[pinned], нічого не записано
+  ---
+  duration_ms: 101.933767
+  type: 'test'
+  ...
+# Subtest: T-0011 I3b: бібліотечний closeTask без installationId → installation-unknown[pinned] (значення за замовчуванням немає)
+ok 116 - T-0011 I3b: бібліотечний closeTask без installationId → installation-unknown[pinned] (значення за замовчуванням немає)
+  ---
+  duration_ms: 5.553553
+  type: 'test'
+  ...
+# Subtest: T-0011 I4/N10: закріплене значення хибного формату (not-an-id, великі літери, 31 і 33 символи, пробіл/табуляція/перенос рядка навколо правильного id) → installation-unknown[pinned]
+ok 117 - T-0011 I4/N10: закріплене значення хибного формату (not-an-id, великі літери, 31 і 33 символи, пробіл/табуляція/перенос рядка навколо правильного id) → installation-unknown[pinned]
+  ---
+  duration_ms: 568.518388
+  type: 'test'
+  ...
+# Subtest: T-0011 I9: закріплено чужий id для правильної пари → відмова (помилка в рішенні JE не проходить тихо)
+ok 118 - T-0011 I9: закріплено чужий id для правильної пари → відмова (помилка в рішенні JE не проходить тихо)
+  ---
+  duration_ms: 65.51066
+  type: 'test'
+  ...
+# Subtest: T-0011 I5: хибна наявна ціла пара (інша установка) при відкритій ескалації → installation-mismatch, а не done
+ok 119 - T-0011 I5: хибна наявна ціла пара (інша установка) при відкритій ескалації → installation-mismatch, а не done
+  ---
+  duration_ms: 67.841338
+  type: 'test'
+  ...
+# Subtest: T-0011 I6: чужий J4_HOME без marker-а (лише тека escalations) → store-marker-missing; close marker у чужій теці не створює
+ok 120 - T-0011 I6: чужий J4_HOME без marker-а (лише тека escalations) → store-marker-missing; close marker у чужій теці не створює
+  ---
+  duration_ms: 70.295402
+  type: 'test'
+  ...
+# Subtest: T-0011 I7: правильний J4_HOME, чужий журнал → ledger-binding-mismatch
+ok 121 - T-0011 I7: правильний J4_HOME, чужий журнал → ledger-binding-mismatch
+  ---
+  duration_ms: 76.613756
+  type: 'test'
+  ...
+# Subtest: T-0011 I8: чужий J4_HOME, правильний журнал → store-marker-mismatch
+ok 122 - T-0011 I8: чужий J4_HOME, правильний журнал → store-marker-mismatch
+  ---
+  duration_ms: 84.7518
+  type: 'test'
+  ...
+# Subtest: T-0011 N11: run --once із журналом, прив'язаним до іншої установки → код 1, журнал не змінено
+ok 123 - T-0011 N11: run --once із журналом, прив'язаним до іншої установки → код 1, журнал не змінено
+  ---
+  duration_ms: 62.106876
+  type: 'test'
+  ...
+# Subtest: T-0011 N11b: run --once після втрати marker-а (журнал прив'язаний, сховище нове) → код 1, журнал не змінено
+ok 124 - T-0011 N11b: run --once після втрати marker-а (журнал прив'язаний, сховище нове) → код 1, журнал не змінено
+  ---
+  duration_ms: 61.374806
+  type: 'test'
+  ...
+# Subtest: T-0011 N11c: run --once на правильній парі → код 0 (контроль), прив'язка й ланцюг цілі
+ok 125 - T-0011 N11c: run --once на правильній парі → код 0 (контроль), прив'язка й ланцюг цілі
+  ---
+  duration_ms: 77.020349
+  type: 'test'
+  ...
+# Subtest: T-0011 N27 (неповна пара): marker є, журнал непорожній без прив'язки → run --once і close відмовляють; після adopt обидва працюють
+ok 126 - T-0011 N27 (неповна пара): marker є, журнал непорожній без прив'язки → run --once і close відмовляють; після adopt обидва працюють
+  ---
+  duration_ms: 339.171753
+  type: 'test'
+  ...
+# Subtest: T-0011 I10/N14: журнал обрізано до запису установки, ескалація лишилась у сховищі → installation-mismatch[store-ledger-escalation-unknown] (не done)
+ok 127 - T-0011 I10/N14: журнал обрізано до запису установки, ескалація лишилась у сховищі → installation-mismatch[store-ledger-escalation-unknown] (не done)
+  ---
+  duration_ms: 72.90068
+  type: 'test'
+  ...
+# Subtest: T-0011 N14b: open-ескалація у сховищі, якої журнал не знає, і без обрізання → installation-mismatch[store-ledger-escalation-unknown]
+ok 128 - T-0011 N14b: open-ескалація у сховищі, якої журнал не знає, і без обрізання → installation-mismatch[store-ledger-escalation-unknown]
+  ---
+  duration_ms: 67.507276
+  type: 'test'
+  ...
+# Subtest: T-0011 I11 (ЗАЛИШОК, характеризація): знімок журналу до несинхронізованої ескалації на чистому сховищі → done; закривається лише --ledger-min-seq (N8) і синхронізацією подій
+ok 129 - T-0011 I11 (ЗАЛИШОК, характеризація): знімок журналу до несинхронізованої ескалації на чистому сховищі → done; закривається лише --ledger-min-seq (N8) і синхронізацією подій
+  ---
+  duration_ms: 77.521872
+  type: 'test'
+  ...
+# Subtest: T-0011 N8: --ledger-min-seq більше за довжину обрізаного журналу → installation-mismatch[ledger-truncated-below-min-seq]
+ok 130 - T-0011 N8: --ledger-min-seq більше за довжину обрізаного журналу → installation-mismatch[ledger-truncated-below-min-seq]
+  ---
+  duration_ms: 177.586962
+  type: 'test'
+  ...
+# Subtest: T-0011 I12: ескалацію синхронізовано в events.jsonl, журнал обрізано, сховище порожнє → ledger-events-mismatch
+ok 131 - T-0011 I12: ескалацію синхронізовано в events.jsonl, журнал обрізано, сховище порожнє → ledger-events-mismatch
+  ---
+  duration_ms: 85.148861
+  type: 'test'
+  ...
+# Subtest: T-0011 I13: ledger_hash події не збігається із записом N (підмінений журнал тієї ж установки) → ledger-events-mismatch
+ok 132 - T-0011 I13: ledger_hash події не збігається із записом N (підмінений журнал тієї ж установки) → ledger-events-mismatch
+  ---
+  duration_ms: 79.26494
+  type: 'test'
+  ...
+# Subtest: T-0011 I14 (G2): подію синхронізовано з installation_id і ledger_hash; installation_id іншої установки → ledger-events-mismatch[installation-mismatch]
+ok 133 - T-0011 I14 (G2): подію синхронізовано з installation_id і ledger_hash; installation_id іншої установки → ledger-events-mismatch[installation-mismatch]
+  ---
+  duration_ms: 89.983078
+  type: 'test'
+  ...
+# Subtest: T-0011 N28 (G2): подія після прив'язки без installation_id → ledger-events-mismatch[installation-id-missing]
+ok 134 - T-0011 N28 (G2): подія після прив'язки без installation_id → ledger-events-mismatch[installation-id-missing]
+  ---
+  duration_ms: 91.941619
+  type: 'test'
+  ...
+# Subtest: T-0011 N30 (G2): подія з ref на журнал J4 без ledger_hash → ledger-events-mismatch
+ok 135 - T-0011 N30 (G2): подія з ref на журнал J4 без ledger_hash → ledger-events-mismatch
+  ---
+  duration_ms: 80.604194
+  type: 'test'
+  ...
+# Subtest: T-0011 N13: подія escalation посилається на запис N, що не escalation_raised з тим самим id → ledger-events-mismatch[kind-mismatch]
+ok 136 - T-0011 N13: подія escalation посилається на запис N, що не escalation_raised з тим самим id → ledger-events-mismatch[kind-mismatch]
+  ---
+  duration_ms: 79.771695
+  type: 'test'
+  ...
+# Subtest: T-0011 N13b: подія report_filed посилається на запис журналу іншого виду (escalation_raised) → ledger-events-mismatch[kind-mismatch]
+ok 137 - T-0011 N13b: подія report_filed посилається на запис журналу іншого виду (escalation_raised) → ledger-events-mismatch[kind-mismatch]
+  ---
+  duration_ms: 94.505125
+  type: 'test'
+  ...
+# Subtest: T-0011 N15: подія з ref на запис, якого в журналі немає (seq 99 при коротшому журналі) → ledger-events-mismatch
+ok 138 - T-0011 N15: подія з ref на запис, якого в журналі немає (seq 99 при коротшому журналі) → ledger-events-mismatch
+  ---
+  duration_ms: 61.196168
+  type: 'test'
+  ...
+# Subtest: T-0011 I15: ескалацію синхронізовано і вирішено, три джерела узгоджені → done (контроль)
+ok 139 - T-0011 I15: ескалацію синхронізовано і вирішено, три джерела узгоджені → done (контроль)
+  ---
+  duration_ms: 99.961376
+  type: 'test'
+  ...
+# Subtest: T-0011 N12: дві ескалації синхронізовано й вирішено; report_filed і escalation несуть installation_id → done
+ok 140 - T-0011 N12: дві ескалації синхронізовано й вирішено; report_filed і escalation несуть installation_id → done
+  ---
+  duration_ms: 119.190273
+  type: 'test'
+  ...
+# Subtest: T-0011 N6: правильний ledger_first_hash і ledger_min_seq (рівний довжині) → без змін (done)
+ok 141 - T-0011 N6: правильний ledger_first_hash і ledger_min_seq (рівний довжині) → без змін (done)
+  ---
+  duration_ms: 69.740712
+  type: 'test'
+  ...
+# Subtest: T-0011 N7: ledger_first_hash іншого журналу → installation-mismatch[ledger-first-hash-mismatch]
+ok 142 - T-0011 N7: ledger_first_hash іншого журналу → installation-mismatch[ledger-first-hash-mismatch]
+  ---
+  duration_ms: 125.773236
+  type: 'test'
+  ...
+# Subtest: T-0011 N9: ledger_min_seq не додатне ціле і ledger_first_hash хибного формату → installation-unknown (fail-closed на вході)
+ok 143 - T-0011 N9: ledger_min_seq не додатне ціле і ledger_first_hash хибного формату → installation-unknown (fail-closed на вході)
+  ---
+  duration_ms: 933.701526
+  type: 'test'
+  ...
+# Subtest: T-0011 N17: marker є, журнал порожній (збій між marker-ом і seq 1) → наступні роутери дописують seq 1 рівно один раз
+ok 144 - T-0011 N17: marker є, журнал порожній (збій між marker-ом і seq 1) → наступні роутери дописують seq 1 рівно один раз
+  ---
+  duration_ms: 3.882438
+  type: 'test'
+  ...
+# Subtest: T-0011 N24: збій посеред запису seq 1 (у журналі лише обірваний перший рядок) → роутер відкидає його, фіксує розмір і sha256, дописує installation seq 1
+ok 145 - T-0011 N24: збій посеред запису seq 1 (у журналі лише обірваний перший рядок) → роутер відкидає його, фіксує розмір і sha256, дописує installation seq 1
+  ---
+  duration_ms: 2.840528
+  type: 'test'
+  ...
+# Subtest: T-0011 N26: обірваний рядок після seq 1 → роутер стартує, repairIfNeeded дописує ledger_repaired, прив'язка (seq 1) ціла, close з закріпленим id працює
+ok 146 - T-0011 N26: обірваний рядок після seq 1 → роутер стартує, repairIfNeeded дописує ledger_repaired, прив'язка (seq 1) ціла, close з закріпленим id працює
+  ---
+  duration_ms: 69.97277
+  type: 'test'
+  ...
+# Subtest: T-0011 I18: стара установка (без marker-а, журнал без прив'язки) → відмова; adopt --human → close працює; історія збережена без змін
+ok 147 - T-0011 I18: стара установка (без marker-а, журнал без прив'язки) → відмова; adopt --human → close працює; історія збережена без змін
+  ---
+  duration_ms: 195.951942
+  type: 'test'
+  ...
+# Subtest: T-0011 I18b: adopt на порожньому журналі пише installation seq 1 (не installation_adopted)
+ok 148 - T-0011 I18b: adopt на порожньому журналі пише installation seq 1 (не installation_adopted)
+  ---
+  duration_ms: 60.423704
+  type: 'test'
+  ...
+# Subtest: T-0011 I19/N21: adopt повторно → already і журнал не росте; adopt журналу іншої установки → ledger-bound-to-other-installation (код 3)
+ok 149 - T-0011 I19/N21: adopt повторно → already і журнал не росте; adopt журналу іншої установки → ledger-bound-to-other-installation (код 3)
+  ---
+  duration_ms: 111.743072
+  type: 'test'
+  ...
+# Subtest: T-0011 N21b: два adopt поспіль на старій установці → перший приєднує, другий already; другий installation_adopted не з'являється
+ok 150 - T-0011 N21b: два adopt поспіль на старій установці → перший приєднує, другий already; другий installation_adopted не з'являється
+  ---
+  duration_ms: 114.993127
+  type: 'test'
+  ...
+# Subtest: T-0011 N16: adopt на журналі з обірваним останнім рядком → відмова, журнал не змінено
+ok 151 - T-0011 N16: adopt на журналі з обірваним останнім рядком → відмова, журнал не змінено
+  ---
+  duration_ms: 58.717948
+  type: 'test'
+  ...
+# Subtest: T-0011 N20: adopt без --human → помилка використання, нічого не записано (ні marker-а, ні запису в журнал)
+ok 152 - T-0011 N20: adopt без --human → помилка використання, нічого не записано (ні marker-а, ні запису в журнал)
+  ---
+  duration_ms: 55.016027
+  type: 'test'
+  ...
+# Subtest: T-0011 N20b: adopt під стоп-краном (J4_HALT=1) → code halted, код 4, нічого не записано
+ok 153 - T-0011 N20b: adopt під стоп-краном (J4_HALT=1) → code halted, код 4, нічого не записано
+  ---
+  duration_ms: 53.955944
+  type: 'test'
+  ...
+# Subtest: T-0011 N22: запис installation_adopted, перенесений в інший журнал (first_hash не збігається) → ledger-not-bound
+ok 154 - T-0011 N22: запис installation_adopted, перенесений в інший журнал (first_hash не збігається) → ledger-not-bound
+  ---
+  duration_ms: 151.226658
+  type: 'test'
+  ...
+# Subtest: T-0011 N29 (G2): після adopt події, чиї записи журналу передують прив'язці, чинні без installation_id; з хибним installation_id — відмова
+ok 155 - T-0011 N29 (G2): після adopt події, чиї записи журналу передують прив'язці, чинні без installation_id; з хибним installation_id — відмова
+  ---
+  duration_ms: 250.66592
+  type: 'test'
+  ...
+# Subtest: T-0011 I17: повтор після done на правильній парі → already, без запису
+ok 156 - T-0011 I17: повтор після done на правильній парі → already, без запису
+  ---
+  duration_ms: 127.324051
+  type: 'test'
+  ...
+# Subtest: T-0011 I16: повтор після done на чужій парі → installation-mismatch, а не already
+ok 157 - T-0011 I16: повтор після done на чужій парі → installation-mismatch, а не already
+  ---
+  duration_ms: 213.28081
+  type: 'test'
+  ...
+# Subtest: T-0011 N23 (M11): done є на subject + застаріла подія ADM з хибним ledger_hash → already, а не ledger-events-mismatch
+ok 158 - T-0011 N23 (M11): done є на subject + застаріла подія ADM з хибним ledger_hash → already, а не ledger-events-mismatch
+  ---
+  duration_ms: 144.125405
+  type: 'test'
+  ...
+# Subtest: T-0011 N31: events.jsonl, що не читається (обірваний рядок), лишається першою причиною відмови (events-corrupt) навіть без закріпленого значення
+ok 159 - T-0011 N31: events.jsonl, що не читається (обірваний рядок), лишається першою причиною відмови (events-corrupt) навіть без закріпленого значення
+  ---
+  duration_ms: 70.728068
+  type: 'test'
+  ...
+# Subtest: T-0011 N18/N19: порожній список журналу в бібліотеці й порожній файл журналу в CLI → installation-mismatch[ledger-not-bound]
+ok 160 - T-0011 N18/N19: порожній список журналу в бібліотеці й порожній файл журналу в CLI → installation-mismatch[ledger-not-bound]
+  ---
+  duration_ms: 55.349955
+  type: 'test'
+  ...
+# Subtest: T-0011 N32: закріплений id, що збігається з marker-ом майже повністю (той самий префікс/кінець) → відмова за обома джерелами
+ok 161 - T-0011 N32: закріплений id, що збігається з marker-ом майже повністю (той самий префікс/кінець) → відмова за обома джерелами
+  ---
+  duration_ms: 233.492591
+  type: 'test'
+  ...
+# Subtest: T-0011 N33: межа ledger_min_seq — рівний довжині журналу проходить, довжина + 1 → ledger-truncated-below-min-seq
+ok 162 - T-0011 N33: межа ledger_min_seq — рівний довжині журналу проходить, довжина + 1 → ledger-truncated-below-min-seq
+  ---
+  duration_ms: 118.401995
+  type: 'test'
+  ...
+# Subtest: T-0011 N16b: adopt на вже прив'язаному журналі з обірваним останнім рядком → відмова, а не already; журнал не змінено
+ok 163 - T-0011 N16b: adopt на вже прив'язаному журналі з обірваним останнім рядком → відмова, а не already; журнал не змінено
+  ---
+  duration_ms: 55.141443
+  type: 'test'
+  ...
+# Subtest: T-0011 N34: закріплене значення — прапорець старший за змінну середовища (в обидва боки)
+ok 164 - T-0011 N34: закріплене значення — прапорець старший за змінну середовища (в обидва боки)
+  ---
+  duration_ms: 122.496404
+  type: 'test'
+  ...
+# Subtest: T-0011 N2c (C3T11-9): marker — симлінк на правильний marker → store-marker-missing (симлінк не marker); цілий файл за тим самим шляхом приймається
+ok 165 - T-0011 N2c (C3T11-9): marker — симлінк на правильний marker → store-marker-missing (симлінк не marker); цілий файл за тим самим шляхом приймається
+  ---
+  duration_ms: 223.221388
+  type: 'test'
+  ...
+# Subtest: T-0011 N13c (C3T11-6в): подія report_filed з msg_id іншого донесення (ref і ledger_hash правильні) → ledger-events-mismatch[kind-mismatch]
+ok 166 - T-0011 N13c (C3T11-6в): подія report_filed з msg_id іншого донесення (ref і ledger_hash правильні) → ledger-events-mismatch[kind-mismatch]
+  ---
+  duration_ms: 73.861734
+  type: 'test'
+  ...
+# Subtest: T-0011 N35 (C3T11-2): adopt непорожнього непривʼязаного журналу з хибним J4_HOME (немає сховища J4) → home-not-j4-store (код 3); marker не створено, журнал не змінено; нова установка створюється
+ok 167 - T-0011 N35 (C3T11-2): adopt непорожнього непривʼязаного журналу з хибним J4_HOME (немає сховища J4) → home-not-j4-store (код 3); marker не створено, журнал не змінено; нова установка створюється
+  ---
+  duration_ms: 234.7573
+  type: 'test'
+  ...
+# Subtest: T-0011 N36 (сканер): newInstallationId відкидає id, який сканер журналу вважає телефоном (хвіст 380+9 цифр), і генерує знову; 64 невдалі спроби → виняток
+ok 168 - T-0011 N36 (сканер): newInstallationId відкидає id, який сканер журналу вважає телефоном (хвіст 380+9 цифр), і генерує знову; 64 невдалі спроби → виняток
+  ---
+  duration_ms: 1.370532
+  type: 'test'
+  ...
+# Subtest: T-0011 N37 (ЗАЛИШОК, характеризація, C3T11-1б): свіжий порожній журнал на новому шляху при тому самому marker-і проходить перевірку ідентичності без --ledger-min-seq; відкриту ескалацію сховища журнал не знає → відмова
+ok 169 - T-0011 N37 (ЗАЛИШОК, характеризація, C3T11-1б): свіжий порожній журнал на новому шляху при тому самому marker-і проходить перевірку ідентичності без --ledger-min-seq; відкриту ескалацію сховища журнал не знає → відмова
+  ---
+  duration_ms: 318.613567
+  type: 'test'
+  ...
+# Subtest: T-0011 N38 (ЗАЛИШОК, характеризація, C3T11-1а): мігрований журнал — перерахований хвіст разом із прив'язкою installation_adopted у голові проходить із правильними ledger_first_hash і ledger_min_seq (хеш seq 1 не змінюється)
+ok 170 - T-0011 N38 (ЗАЛИШОК, характеризація, C3T11-1а): мігрований журнал — перерахований хвіст разом із прив'язкою installation_adopted у голові проходить із правильними ledger_first_hash і ledger_min_seq (хеш seq 1 не змінюється)
+  ---
+  duration_ms: 127.417198
+  type: 'test'
+  ...
+# Subtest: T-0011 N39 (C3T11-6г): замок журналу — adopt і прив'язка порожнього журналу при `run --once` чекають замка живого процесу й відмовляють lock-timeout, нічого не записавши; після звільнення працюють
+ok 171 - T-0011 N39 (C3T11-6г): замок журналу — adopt і прив'язка порожнього журналу при `run --once` чекають замка живого процесу й відмовляють lock-timeout, нічого не записавши; після звільнення працюють
+  ---
+  duration_ms: 5202.968093
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-1: review_finished + passed без review_status → review-C3-incomplete
+ok 172 - T-0012 F16-1: review_finished + passed без review_status → review-C3-incomplete
+  ---
+  duration_ms: 22.223838
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-2: review_status: null явно → incomplete
+ok 173 - T-0012 F16-2: review_status: null явно → incomplete
+  ---
+  duration_ms: 20.790072
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-3: review_status: partial → incomplete (як і раніше не зараховано)
+ok 174 - T-0012 F16-3: review_status: partial → incomplete (як і раніше не зараховано)
+  ---
+  duration_ms: 19.044326
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-4: complete + passed + ref → зараховано (контроль)
+ok 175 - T-0012 F16-4: complete + passed + ref → зараховано (контроль)
+  ---
+  duration_ms: 20.40599
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-5: complete + passed без ref → not-passed
+ok 176 - T-0012 F16-5: complete + passed без ref → not-passed
+  ---
+  duration_ms: 22.41376
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-6: acceptance без result → not-accepted
+ok 177 - T-0012 F16-6: acceptance без result → not-accepted
+  ---
+  duration_ms: 18.276082
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-7: acceptance result: null → not-accepted
+ok 178 - T-0012 F16-7: acceptance result: null → not-accepted
+  ---
+  duration_ms: 12.269763
+  type: 'test'
+  ...
+# Subtest: T-0012 F16-8: accepted_with_restrictions (T-0006 seq 12) → not-accepted (без змін)
+ok 179 - T-0012 F16-8: accepted_with_restrictions (T-0006 seq 12) → not-accepted (без змін)
+  ---
+  duration_ms: 11.381035
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-0: acceptance без scope (форма T-0005…T-0010) → scope-not-full
+ok 180 - T-0012 SC1-0: acceptance без scope (форма T-0005…T-0010) → scope-not-full
+  ---
+  duration_ms: 12.008964
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-1: scope: limited + limits → scope-not-full
+ok 181 - T-0012 SC1-1: scope: limited + limits → scope-not-full
+  ---
+  duration_ms: 12.814738
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-2: scope як масив, число, Full з великої → не full
+ok 182 - T-0012 SC1-2: scope як масив, число, Full з великої → не full
+  ---
+  duration_ms: 51.270565
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-3: scope: full у review_finished не замінює scope у acceptance
+ok 183 - T-0012 SC1-3: scope: full у review_finished не замінює scope у acceptance
+  ---
+  duration_ms: 12.36096
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-4: пізніший повний прийом після обмеженого відкриває бар'єр; зворотний порядок — закриває (F-1)
+ok 184 - T-0012 SC1-4: пізніший повний прийом після обмеженого відкриває бар'єр; зворотний порядок — закриває (F-1)
+  ---
+  duration_ms: 12.877417
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-6: scope: full із непорожнім limits — суперечливий запис → scope-contradictory (C3H-2, рішення G2)
+ok 185 - T-0012 SC1-6: scope: full із непорожнім limits — суперечливий запис → scope-contradictory (C3H-2, рішення G2)
+  ---
+  duration_ms: 12.178521
+  type: 'test'
+  ...
+# Subtest: T-0012 SC1-5: обидві ролі й JE (key_decision) потребують scope: full
+ok 186 - T-0012 SC1-5: обидві ролі й JE (key_decision) потребують scope: full
+  ---
+  duration_ms: 15.926446
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-1: успіх, далі збій варіантною cmd (прапорець) → відмова з причиною
+ok 187 - T-0012 R11-1: успіх, далі збій варіантною cmd (прапорець) → відмова з причиною
+  ---
+  duration_ms: 12.61501
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-2: успіх, далі збій cmd з пробілом наприкінці → відмова
+ok 188 - T-0012 R11-2: успіх, далі збій cmd з пробілом наприкінці → відмова
+  ---
+  duration_ms: 4.206697
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-3: успіх, далі збій без cmd → відмова (запис без cmd стосується всіх вимог)
+ok 189 - T-0012 R11-3: успіх, далі збій без cmd → відмова (запис без cmd стосується всіх вимог)
+  ---
+  duration_ms: 3.897847
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-4: збій, далі успіх тієї ж cmd (повтор) → done (контроль)
+ok 190 - T-0012 R11-4: збій, далі успіх тієї ж cmd (повтор) → done (контроль)
+  ---
+  duration_ms: 5.313948
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-5: збій іншої команди, не з verify → done (контроль)
+ok 191 - T-0012 R11-5: збій іншої команди, не з verify → done (контроль)
+  ---
+  duration_ms: 6.276752
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-6: успіх варіантною, далі збій базовою → відмова
+ok 192 - T-0012 R11-6: успіх варіантною, далі збій базовою → відмова
+  ---
+  duration_ms: 6.899096
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-7: успіх, далі збій із cmd: "" або cmd лише з пробілів → відмова (порожній після trim = відсутній; C3H-1)
+ok 193 - T-0012 R11-7: успіх, далі збій із cmd: "" або cmd лише з пробілів → відмова (порожній після trim = відсутній; C3H-1)
+  ---
+  duration_ms: 14.657872
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-13: без verify єдиний запис без cmd із pass не є доказом (C3H-8)
+ok 194 - T-0012 R11-13: без verify єдиний запис без cmd із pass не є доказом (C3H-8)
+  ---
+  duration_ms: 5.008718
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-14 (залишок, характеризація C3H-1): збій cmd в інших лапках — «інша команда», успіх лишається → done
+ok 195 - T-0012 R11-14 (залишок, характеризація C3H-1): збій cmd в інших лапках — «інша команда», успіх лишається → done
+  ---
+  duration_ms: 8.156391
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-15 (C3H-19): успіх, далі запис із нерозпізнаним result («unknown») → трактується як збій, відмова
+ok 196 - T-0012 R11-15 (C3H-19): успіх, далі запис із нерозпізнаним result («unknown») → трактується як збій, відмова
+  ---
+  duration_ms: 5.197503
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-8: verify порожній — остання запис будь-якої команди провальний → відмова
+ok 197 - T-0012 R11-8: verify порожній — остання запис будь-якої команди провальний → відмова
+  ---
+  duration_ms: 5.286615
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-9: збій базовою, далі успіх варіантною, що містить вимогу → done (контроль)
+ok 198 - T-0012 R11-9: збій базовою, далі успіх варіантною, що містить вимогу → done (контроль)
+  ---
+  duration_ms: 6.921743
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-10: дві вимоги verify — друга провалена варіантною → відмова саме за другою; обидві пройшли → done
+ok 199 - T-0012 R11-10: дві вимоги verify — друга провалена варіантною → відмова саме за другою; обидві пройшли → done
+  ---
+  duration_ms: 10.326431
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-11: вимога без жодного запису → evidence-missing
+ok 200 - T-0012 R11-11: вимога без жодного запису → evidence-missing
+  ---
+  duration_ms: 6.979501
+  type: 'test'
+  ...
+# Subtest: T-0012 R11-12: жодного запису на subject → evidence-no-record-on-subject
+ok 201 - T-0012 R11-12: жодного запису на subject → evidence-no-record-on-subject
+  ---
+  duration_ms: 5.189591
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-1: «запис» усередині блоку «note: !!str |» не є доказом
+ok 202 - T-0012 R10-1: «запис» усередині блоку «note: !!str |» не є доказом
+  ---
+  duration_ms: 3.891423
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-2: «запис» усередині блоку «note: &a |» не є доказом
+ok 203 - T-0012 R10-2: «запис» усередині блоку «note: &a |» не є доказом
+  ---
+  duration_ms: 3.654319
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-3: «запис» усередині блоку «note: !!str >-» не є доказом
+ok 204 - T-0012 R10-3: «запис» усередині блоку «note: !!str >-» не є доказом
+  ---
+  duration_ms: 5.322397
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-4: «запис» усередині блоку «note: |» не є доказом
+ok 205 - T-0012 R10-4: «запис» усередині блоку «note: |» не є доказом
+  ---
+  duration_ms: 4.374479
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-5: «запис» усередині блоку «- !custom |2» не є доказом
+ok 206 - T-0012 R10-5: «запис» усередині блоку «- !custom |2» не є доказом
+  ---
+  duration_ms: 4.94522
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-6: тег без індикатора блоку (note: !!str текст) блок не відкриває — наступний запис діє
+ok 207 - T-0012 R10-6: тег без індикатора блоку (note: !!str текст) блок не відкриває — наступний запис діє
+  ---
+  duration_ms: 5.384017
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-8 (C3H-13, контроль): рядок `note: ->` відкриває «блок», але запис на тому ж відступі після нього діє
+ok 208 - T-0012 R10-8 (C3H-13, контроль): рядок `note: ->` відкриває «блок», але запис на тому ж відступі після нього діє
+  ---
+  duration_ms: 5.775055
+  type: 'test'
+  ...
+# Subtest: T-0012 R10-7: тег у значенні запису ({note: !!str x}) → не доказ (без змін)
+ok 209 - T-0012 R10-7: тег у значенні запису ({note: !!str x}) → не доказ (без змін)
+  ---
+  duration_ms: 4.475039
+  type: 'test'
+  ...
+# Subtest: T-0012 R12-1: порожній рядок усередині блокового скаляра не закриває блок; запис після dedent — діє
+ok 210 - T-0012 R12-1: порожній рядок усередині блокового скаляра не закриває блок; запис після dedent — діє
+  ---
+  duration_ms: 11.077614
+  type: 'test'
+  ...
+# Subtest: T-0012 COMPAT-1: задача з наявним done на subject → already до бар'єра, старі acceptance без scope не заважають
+ok 211 - T-0012 COMPAT-1: задача з наявним done на subject → already до бар'єра, старі acceptance без scope не заважають
+  ---
+  duration_ms: 7.582642
+  type: 'test'
+  ...
+# Subtest: T-0012 COMPAT-2: справжній файл доказів reports/T-0010/003.yaml розбирається як раніше (жодного evidence-* у missing)
+ok 212 - T-0012 COMPAT-2: справжній файл доказів reports/T-0010/003.yaml розбирається як раніше (жодного evidence-* у missing)
+  ---
+  duration_ms: 5.753975
+  type: 'test'
+  ...
+1..212
+# tests 212
+# suites 0
+# pass 210
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 16374.097112
