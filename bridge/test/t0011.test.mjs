@@ -376,6 +376,7 @@ test('T-0011 I15: ескалацію синхронізовано і виріш�
 
 test('T-0011 N12: дві ескалації синхронізовано й вирішено; report_filed і escalation несуть installation_id → done', async () => {
   const s = staff();
+  assert.match(s.id, /^[0-9a-f]{32}$/);
   s.j4.submit(draft(s.root, { kind: 'report', intent: 'status', body: { summary: 'синтетичне донесення' } }), { origin: 'agent_cli' });
   const a = escalate(s, 'перший запит рівня C'); const b = escalate(s, 'другий запит рівня C');
   assert.notEqual(a, b);
@@ -593,4 +594,44 @@ test('T-0011 N18/N19: порожній список журналу в біблі
   assert.ok(r.missing.includes('ledger-not-bound'));
   fs.writeFileSync(s.ledger, '');
   expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id }), 'installation-mismatch', 'ledger-not-bound');
+});
+
+// ---------- Тести, додані за результатами мутаційної перевірки (reports/T-0011/mutants.yaml: M04, M11, M18, M22) ----------
+
+test('T-0011 N32: закріплений id, що збігається з marker-ом майже повністю (той самий префікс/кінець) → відмова за обома джерелами', () => {
+  const s = staff();
+  const flip = (id, i) => `${id.slice(0, i)}${id[i] === '0' ? '1' : '0'}${id.slice(i + 1)}`;
+  for (const i of [31, 16, 8, 0]) {
+    const near = flip(s.id, i);
+    assert.notEqual(near, s.id);
+    expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: near }), 'installation-mismatch', 'store-marker-mismatch', 'ledger-binding-mismatch');
+  }
+  assert.equal(doneCount(s), 0);
+});
+
+test('T-0011 N33: межа ledger_min_seq — рівний довжині журналу проходить, довжина + 1 → ledger-truncated-below-min-seq', () => {
+  const s = staff(); oldLedger(s, 2);
+  const len = entriesOf(s.ledger).length;
+  expectRefusal(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER_MIN_SEQ: String(len + 1) }), 'installation-mismatch', 'ledger-truncated-below-min-seq');
+  assert.equal(doneCount(s), 0);
+  expectDone(cli(s, CLOSE, { J4_INSTALLATION_ID: s.id, J4_LEDGER_MIN_SEQ: String(len) }));
+});
+
+test('T-0011 N16b: adopt на вже прив\'язаному журналі з обірваним останнім рядком → відмова, а не already; журнал не змінено', () => {
+  const s = staff(); fs.appendFileSync(s.ledger, '{"event":"x"');
+  const before = read(s.ledger);
+  const r = cli(s, ['adopt', '--human']);
+  assert.equal(r.status, 1, detail(r));
+  assert.match(r.stderr, /ledger-partial-line/);
+  unchanged(s.ledger, before);
+});
+
+test('T-0011 N34: закріплене значення — прапорець старший за змінну середовища (в обидва боки)', () => {
+  const s = staff();
+  const wrong = s.id.replace(/./, (c) => (c === '0' ? '1' : '0'));
+  expectDone(cli(s, [...CLOSE, '--installation', s.id], { J4_INSTALLATION_ID: wrong }));
+  assert.equal(doneCount(s), 1);
+  const t = staff();
+  expectRefusal(cli(t, [...CLOSE, '--installation', wrong], { J4_INSTALLATION_ID: t.id }), 'installation-mismatch', 'store-marker-mismatch');
+  assert.equal(doneCount(t), 0);
 });
