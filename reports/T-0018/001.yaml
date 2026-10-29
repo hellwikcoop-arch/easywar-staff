@@ -1,0 +1,34 @@
+# Донесення J3 за T-0018 (CSP головного вікна, JE-21 а), CONTRACT_v0_4.md розділ 8. Лише синтетичні дані.
+task_id: T-0018
+task_version: 1
+report_no: 1
+by: J3
+at: 2026-10-29T05:05:00+00:00
+state: review_pending
+milestone: "draft PR відкрито"
+pr: "hellwikcoop-arch/EasyWAR#183 (draft), гілка claude/e8-csp, коміт 6be1e99, база main a176188"
+confirmed:
+  - "src-tauri/tauri.conf.json: csp замість null за ADR §5 (default-src 'self'; img-src лише 4 хости плиток; frame-src 'self' https://dimap.live; connect-src 'self' blob: data: ipc: http://ipc.localhost; object-src 'none'; base-uri/form-action 'self'; 'wasm-unsafe-eval'); devCsp + Vite HMR; dangerousDisableAssetCspModification [style-src]"
+  - "Поза обсягом не змінено: capabilities, build.rs, Cargo.*, src/*.js, legacy HTML; слухача немає"
+  - "tests/network-boundary.test.mjs — контракт по директивах і allowlist хостів; tests/desktop-frontend.test.mjs — текстовий контракт csp; разом з office-isolation 34/34"
+  - "npm run test:unit 1586/1587: збій XLSX-контракту через переповнений диск контейнера; після звільнення місця tests/xlsx-legacy-contract.test.mjs 3/3"
+  - "npm run build — успішно"
+  - "Сценарії в Chromium з емульованим заголовком Tauri (хеші + nonce): лаунчер, ПС (таблиця + 3D), РВ, air/map (worker, .glb), Робоче середовище, EasyGreen/EasyDoc/EasySlide (WASM), 3D-довідники — без порушень; перша версія ламала текстури .glb, виправлено connect-src blob: data:"
+  - "Документи: BACKLOG P2-1 частково закрито, ADR network-and-secret-boundaries §5 статус, docs/evidence/csp/2026-10-29-csp-t0018.md + 3 знімки"
+unverified:
+  - "Справжній webview Tauri Windows/macOS/WebKitGTK — потрібна перевірка JE"
+  - "Live-плитки OSM/ArcGIS/Planet, iframe dimap.live — немає мережі в контейнері"
+  - "Окреме вікно редактора Офісу (workspace_open_editor)"
+  - "CI desktop-build на #183 — очікується"
+residual_risks:
+  - "'unsafe-inline' для стилів; legacy-скрипти без переходу на хеші"
+  - "Ключ Planet у URL плиток (P2-2)"
+  - "Команди Tauri доступні будь-якому скрипту головного вікна (фасад для iframe не зроблено)"
+blockers: []
+decisions_for_je:
+  - "Перевірити збірку #183 на Windows/macOS: «Refused to …» у консолі webview → відкат одним рядком"
+resources_used:
+  calls_estimate: 42
+  max_calls: 80
+  pct: 53
+next: "дочекатися CI на #183; рецензія C3/J5; не зливати без слова JE"
