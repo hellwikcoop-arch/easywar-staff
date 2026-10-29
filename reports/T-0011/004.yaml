@@ -1,0 +1,44 @@
+# Донесення 004 J3 по T-0011: КОРЕКЦІЯ пакета 003.yaml щодо checks[*].subject (аудит ШТАБУ, повідомлення JE 29.10.2026 13:29Z).
+# 003.yaml не переписано (CONTRACT §4, §8: виправлення — новим записом із supersedes і reason). Нових викликів адаптера 0, нового CI 0.
+task: T-0011
+report: 004
+kind: correction
+supersedes: "reports/T-0011/003.yaml#checks, #checks_limits, #barrier_dry_run, #acceptances_on_subject_a9baf25.j3_technical (лише частина про перевірки)"
+reason: "У 003.yaml усім п'яти записам checks[*] поставлено subject a9baf25, хоча жодну перевірку на a9baf25 не виконано (це прямо сказано в checks_limits). Підстава — тотожність дерев — не є виконанням перевірки."
+current_subject: a9baf25893aa8caa2748a99406072281d24f27fb
+
+checks_as_executed:   # фактичний SHA виконання; subject a9baf25 НЕ присвоюється
+  - {id: ci-run-2, executed_on: fa5e06014814e6e800ce3b5ad6f822a41a9284f0, how: "j4-bridge, pull_request (merge-ref PR #15 з main 7f56fcf; SHA merge-ref не зафіксовано)", run_id: 40820727606, result: "212/212, skipped 0", passed: true, evidence_ref: "reports/T-0011/ci.yaml#run_2"}
+  - {id: ci-run-1, executed_on: 8cd510b2f676fabbfa01e84e1f71e28c40117ef0, how: "j4-bridge, pull_request (merge-ref)", run_id: 40820573780, result: "212/212, skipped 0", passed: true, evidence_ref: "reports/T-0011/ci.yaml#run"}
+  - {id: local-full-3, executed_on: ecabb7e, how: "локально J3", result: "212: 210 pass, 0 fail, 2 skipped (A4/A5 під root)", passed: true, evidence_ref: "reports/T-0011/evidence/full-run-3-ecabb7e.txt"}
+  - {id: nobody-78, executed_on: ecabb7e, how: "локально від nobody", result: "78/78", passed: true, evidence_ref: "reports/T-0011/evidence/t0010-t0011-nobody-ecabb7e.txt"}
+  - {id: mutants-37, executed_on: ecabb7e, how: "локально", result: "37/37 вбито", passed: true, evidence_ref: "reports/T-0011/mutants.yaml"}
+  - {id: on-a9baf25, executed_on: null, result: "НЕ ВИКОНУВАЛОСЬ", passed: null, note: "нового CI не було за наказом; локального прогону на a9baf25 теж не було"}
+
+identity_evidence:   # залишається чинним як аргумент, а не як перевірка
+  ref: "reports/T-0011/003.yaml#subject_verification (тотожність дерев bridge/src, bin, test, config, .github, CONTRACT з 3c87dd0/ecabb7e; merge_commit_tree = merge-tree(7f56fcf, fa5e060))"
+  status: "J3 і C3 раунд 4 підтвердили; це доказ тотожності вмісту, НЕ виконання checks.verify на a9baf25"
+
+contract_reading:
+  clause: "CONTRACT v0.4 §6, «Умови переходу в done», п. 1: «Перевірки з checks.verify пройдені на актуальному current_subject»"
+  order_checks_verify: "node --test 'bridge/test/*.test.mjs' (tasks/T-0011/order.yaml)"
+  literal: "п. 1 на a9baf25 НЕ виконано: прогону checks.verify на a9baf25 немає"
+  equivalence_clause_in_contract: "не знайдено: CONTRACT не передбачає зарахування перевірки з іншого SHA за тотожністю дерев"
+  je_t11_02_p8: "просив звірити merge SHA з прийнятими змінами і подати пакет на актуальному subject; вимогу п. 1 явно не скасовує і тотожність як заміну прогону не затверджує"
+  open_question_for_j5: "tasks/T-0011/q-j5-subject-checks.md"
+
+barrier_dry_run_corrected:
+  note: "У 003.yaml acceptanceReady() пройшов умову checks лише тому, що checks[*].subject було проставлено a9baf25. З фактичними executed_on функція дає checks-not-on-subject-or-failed (bridge/src/acceptance.mjs:26). Тому висновок «бракує лише J5 content і JE key_decision» — НЕВІРНИЙ."
+  missing_on_a9baf25: ["checks на a9baf25 (п. 1) — або прогін, або окреме рішення J5/JE про зарахування тотожності", "acceptance J5 (content)", "acceptance JE (key_decision)"]
+
+j3_technical_seq10:
+  status: "запис seq 10 не змінюється; технічне судження J3 про тотожність вмісту лишається, але його посилання на «перевірки на a9baf25» уточнено цим донесенням"
+  if_new_run_required: "після прогону на a9baf25 J3 подає нове приймання technical з посиланням на нього"
+
+ways_to_close_p1:   # лише після рішення; J3 нічого з цього не виконує
+  - {id: a, what: "окреме рішення JE (за тлумаченням J5): зарахувати тотожність дерев як виконання п. 1 для a9baf25, як виняток T-0011", cost: "0 викликів"}
+  - {id: b, what: "локальний прогін node --test 'bridge/test/*.test.mjs' на чистому checkout a9baf25", cost: "≈48 викликів адаптера за методом обліку (calls-ledger.yaml) — більше залишку 1/250; потрібен новий ресурсний дозвіл JE"}
+  - {id: c, what: "новий CI на a9baf25", cost: "заборонено чинним наказом; потрібне окреме рішення JE"}
+
+budget: {used: 249, limit: 250, this_report: {adapter_calls: 0, ci_events: 0}}
+not_done: ["acceptance J5 і JE не створювались", "done не встановлено", "close/adopt не запускались", "нових прогонів і CI не було"]

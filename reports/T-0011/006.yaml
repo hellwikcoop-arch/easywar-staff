@@ -1,0 +1,22 @@
+# Донесення 006 по T-0011: незалежний технічний висновок C5.1 (Codex) на питання tasks/T-0011/q-j5-subject-checks.md.
+# Передано JE з чату «АВТОНОМНІСТЬ» у тред J3 29.10.2026 13:38:45Z; записав J3 без транскрипту.
+# Це НЕ висновок і НЕ acceptance J5: роль J5 не приписується. J5 content і JE key_decision лишаються відкритими.
+task: T-0011
+report: 006
+kind: technical_opinion
+by: C5.1
+recorded_by: J3
+relayed_by: JE
+at: 2026-10-29T13:38:45+00:00
+question: tasks/T-0011/q-j5-subject-checks.md
+current_subject: a9baf25893aa8caa2748a99406072281d24f27fb
+findings:
+  - "тотожність дерев НЕ виконує буквальну вимогу CONTRACT v0.4 §0.8 і §6 п. 1 та acceptanceReady для current_subject a9baf25"
+  - "CI run 40820727606: 212/212 на PR head fa5e060, не на merge-коміті a9baf25"
+  - "корекція reports/T-0011/004.yaml слушна"
+recommendation_for_je:
+  do: "окремо дозволити один локальний синтетичний прогін точно `node --test \"bridge/test/*.test.mjs\"` на чистому checkout a9baf25"
+  budget: "підняти ліміт T-0011 щонайменше до 297 (249 + 48 за чинним обліком calls-ledger.yaml)"
+  record: "SHA, лог прогону, фактичні витрати (з перевіркою dispatch_attempt)"
+  not_recommended: ["новий CI", "виняток за тотожністю дерев"]
+status: "рекомендація; без рішення JE прогін не запускається"

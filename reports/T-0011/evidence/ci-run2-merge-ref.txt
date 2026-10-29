@@ -1,0 +1,19 @@
+# Витяг з журналу CI j4-bridge, run 40820727606, job 123272337552 (PR #15, head fa5e060). Прочитано 2026-10-29T13:3xZ лише на читання (GitHub API + завантаження логу); нового CI і викликів адаптера 0.
+# Номери рядків — у повному журналі job-logs.txt (не зберігається в репозиторії).
+2026-10-29T04:58:52.0764381Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e020802f5daa075cc6de1792f8aca3fdc0abd77f:refs/remotes/pull/15/merge
+2026-10-29T04:58:52.7815607Z  * [new ref]         e020802f5daa075cc6de1792f8aca3fdc0abd77f -> pull/15/merge
+2026-10-29T04:58:52.7923532Z ##[group]Checking out the ref
+2026-10-29T04:58:52.7926738Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/15/merge
+2026-10-29T04:58:52.8112320Z HEAD is now at e020802 Merge fa5e06014814e6e800ce3b5ad6f822a41a9284f0 into 7f56fcf34af290cbb68a20b3d60995b2d990c70d
+2026-10-29T04:59:06.0536920Z # tests 212
+2026-10-29T04:59:06.0537028Z # suites 0
+2026-10-29T04:59:06.0537138Z # pass 212
+2026-10-29T04:59:06.0537244Z # fail 0
+2026-10-29T04:59:06.0537349Z # cancelled 0
+2026-10-29T04:59:06.0537461Z # skipped 0
+#
+# Звірка дерев (git rev-parse <sha>^{tree}; e020802 отримано git fetch origin e020802f5daa075cc6de1792f8aca3fdc0abd77f):
+# e020802f5daa075cc6de1792f8aca3fdc0abd77f^{tree} = 3c63e46d6156a70601553f6771bd77478278d75e
+# a9baf25893aa8caa2748a99406072281d24f27fb^{tree}   = 3c63e46d6156a70601553f6771bd77478278d75e
+# Висновок: протестований CI merge-ref e020802 і subject a9baf25 мають ОДНАКОВЕ дерево, але це РІЗНІ коміти (різні SHA).
+# Буквально «перевірки пройдені на subject a9baf25» це не є; це доказ тотожності вмісту.

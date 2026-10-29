@@ -1,0 +1,57 @@
+# Донесення 002 J3 по T-0011: адміністративна звірка після злиття PR #15 (наказ J5 п. 1, ретранслював JE 2026-10-29T05:06:30Z).
+# Лише факти й облік. Нових викликів адаптера 0, нового CI 0, bridge/ .github/ CONTRACT не змінювались.
+task: T-0011
+report: 002
+kind: administrative_reconciliation
+basis: "reports/T-0011/j5-conclusion-relay.md (J5: CONTENT REVIEWED — CONDITIONAL ACCEPTANCE); Р-Т11-25, Р-Т11-26"
+merge:
+  pr: "https://github.com/hellwikcoop-arch/easywar-staff/pull/15"
+  merged_at: "2026-10-29T05:00:27Z"
+  method: merge
+  merge_commit: a9baf25893aa8caa2748a99406072281d24f27fb
+  base_before: 7f56fcf34af290cbb68a20b3d60995b2d990c70d
+  head: fa5e06014814e6e800ce3b5ad6f822a41a9284f0
+  executed_by: "J3 через GitHub MCP на слово JE «зливай» (2026-10-29T05:00:00Z); обліковий запис GitHub спільний (merged_by: hellwikcoop-arch)"
+  draft_to_ready: "2026-10-29T05:00:21Z (подія ready_for_review; CI не запускала — тригери workflow: opened, synchronize, reopened)"
+  authorization_chain:
+    - "JE, картка «PR + CI, ліміт до 250», 2026-10-29T04:55:36Z (Р-Т11-24)"
+    - "JE, слово «зливай», 2026-10-29T05:00:00Z — після зеленого CI на head fa5e060"
+  not_authorized_by_this: "приймання J5 і остаточне JE не записувались і цим не замінюються"
+  scope_of_change:
+    code_sha: ecabb7e9f04b86229a352df64c3a5e088c3645ea
+    control_sha: 3c87dd07513be097e754ae6175dd82ed227fae6e
+    after_control_sha: "лише tasks/T-0011 і reports/T-0011 (git diff --name-only 3c87dd0 fa5e060)"
+    bridge_github_contract_unchanged_since_control_sha: "git diff 3c87dd0..a9baf25 -- bridge .github CONTRACT_v0_4.md порожній"
+ci:
+  run_1: {run_id: 40820573780, head: 8cd510b2f676fabbfa01e84e1f71e28c40117ef0, test: success, tests: 212, pass: 212, fail: 0, skipped: 0, duration_ms: 15591}
+  run_2: {run_id: 40820727606, head: fa5e06014814e6e800ce3b5ad6f822a41a9284f0, test: success, test_job_id: 123272337552, tests: 212, pass: 212, fail: 0, skipped: 0, duration_ms: 12722, route_stub: skipped, route_live: skipped}
+  note: "обидва запуски — pull_request на PR #15; run_2 викликаний пушем облікових комітів (стоп-хук вимагав пуш); докладніше reports/T-0011/ci.yaml"
+calls:
+  used: 249
+  limit: 250
+  remaining: 1
+  paid_api_calls: 0
+  network_calls: 0
+  this_report: {adapter_calls: 0, ci_events: 0, note: "PR зі змінами лише в tasks/ і reports/ не зачіпає шлях bridge/** фільтра j4-bridge — CI не стартує"}
+acceptance_state:
+  j3_technical: "events.jsonl seq 5 (subject 3c87dd0) — чинне; bridge/.github/CONTRACT на merge-коміті ідентичні control_sha"
+  j5_content: "CONDITIONAL (висновок J5); accepted/full НЕ записано"
+  je_key_decision: "не записано"
+  merge_event: "events.jsonl seq 6 (report_filed J3, subject = merge-коміт a9baf25, ref цей файл)"
+recommended_decisions_for_je:
+  # Рекомендації J3 для затвердження/відхилення JE (п. 2 наказу J5). Рішення приймає JE; J5 після цього формує підсумкове приймання.
+  - {id: Р-Т11-1/19, item: "два наявні тестові файли поза буквальним scope.in (e2e.test.mjs, t0006.test.mjs) + решта наявних тестів лише посилені", j3_recommendation: "затвердити (лише посилення, 0 ослаблених перевірок, обґрунтування в реєстрі)"}
+  - {id: Р-Т11-2, item: "база — вершина T-0012 (49226f9) замість dc78287; різниця лише tasks/reports T-0012", j3_recommendation: "затвердити"}
+  - {id: Р-Т11-3, item: "task_created від імені J5 записав J3 на підставі наказу J5 і рішення JE; явного повторного підтвердження J5 немає", j3_recommendation: "JE/J5 підтвердити або вказати виправлення"}
+  - {id: Р-Т11-12, item: "I10 vs M7.4/N14 — вибрано installation-mismatch[store-ledger-escalation-unknown]", j3_recommendation: "затвердити"}
+  - {id: Р-Т11-22, item: "adopt-repair обірваного хвоста, вимога валідного ref подій ADM, захист adopt від хибного J4_LEDGER/загубленого marker-а, правила сканера для hex-хешів", j3_recommendation: "не в T-0011; окремі наступні задачі; залишкові ризики задокументовані (DESIGN розд. 20)"}
+  - {id: C3-identity, item: "C3 — незалежна read-only сесія-агент, запущена J3; особа не автентифікується (F-9)", j3_recommendation: "JE вирішує: достатньо для цього приймання чи потрібен рецензент поза сесією J3"}
+  - {id: Р-Т11-26, item: "PR, CI і злиття відбулись до записів приймання J5/JE (за карткою JE 04:55:36Z і словом 05:00:00Z)", j3_recommendation: "визнати дозволеним винятком (прецедент D-20, T-0005); приймання заднім числом не створюються"}
+  - {id: subject, item: "технічне приймання J3 (seq 5) на control_sha 3c87dd0, а не на merge-коміті", j3_recommendation: "достатньо: bridge/.github/CONTRACT на a9baf25 ідентичні; інакше JE доручає нове technical-приймання на a9baf25"}
+closed_by_order:
+  - "G6 (реальний adopt, резервна копія, перевірка шляхів, значення installation_id/first_hash/ledger_head_seq) — закрито до окремого рішення JE; на старій установці run/send/submit/resolve відмовляють"
+  - "T-0013 — NO-GO на реалізацію; підготовчі документи дозволені; реалізація потребує закриття приймання T-0011 і окремого дозволу JE"
+  - "до остаточного рішення JE щодо T-0011: не запускати новий CI, не підвищувати ліміти, не виконувати реальні операції J4"
+not_verified:
+  - "реальна установка J4 (старий J4_HOME/ledger) не перевірялась і не змінювалась"
+  - "поведінка після злиття на main у реальному середовищі не перевірялась (CI тестує PR на merge-ref з main 7f56fcf; тестів на самому a9baf25 після злиття не запускали — нового CI немає за наказом)"

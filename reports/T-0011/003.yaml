@@ -1,0 +1,115 @@
+# Донесення 003 J3 по T-0011: формальний пакет приймання на актуальному subject (JE-T11-02 п. 8, CONTRACT v0.4 §9а).
+# Лише факти й облік. Нових викликів адаптера 0, нового CI 0, bridge/ .github/ CONTRACT не змінювались. acceptance J5 і JE тут НЕ створюються.
+task: T-0011
+report: 003
+kind: formal_acceptance_package
+prepared_at: "2026-10-29, після C3 раунду 4 (05:24Z); файл створено в одному коміті з подією seq 10, яка на нього посилається"
+subject: a9baf25893aa8caa2748a99406072281d24f27fb     # merge-коміт PR #15 у main (батьки 7f56fcf, fa5e060)
+basis: "tasks/T-0011/je-decision-T11-02.md (наказ JE 05:16:26Z); reports/T-0011/j5-conclusion-relay.md; reports/T-0011/002.yaml"
+
+subject_verification:
+  method: "git rev-parse <sha>:<шлях> (J3 і незалежна C3-сесія раунду 4, reports/T-0011/c3-review.yaml#seq=6)"
+  trees_equal_to_control_sha_3c87dd0: {bridge: f5b121327f59, bridge/src: 54a44efe25f6, bridge/bin: 02a5e7911e92, bridge/test: fced7d547aee, bridge/config: 4c3b3835f9b1, ".github": 3bb069c15f93, CONTRACT_v0_4.md: 3cc981e73bb3}
+  code_sha_ecabb7e_equal_for: [bridge/src, bridge/bin, bridge/test, bridge/config, .github, CONTRACT_v0_4.md]   # bridge/ загалом відрізняється лише README.md і docs/DESIGN.md
+  merge_commit_tree: 3c63e46d6156a70601553f6771bd77478278d75e   # = git merge-tree --write-tree 7f56fcf fa5e060 (ручних правок у merge-коміті немає)
+  protected_boundaries_unchanged_vs_7f56fcf: ["bridge/src/acceptance.mjs", "bridge/config/**", ".github/**"]
+  files_outside_allowed_dirs: "порожньо (git diff --name-only 7f56fcf a9baf25 поза bridge/, CONTRACT_v0_4.md, tasks/T-0011, reports/T-0011)"
+  contract_changes: "лише §4 (абзац про нові події report_filed/escalation: ledger_hash, installation_id) і §9а.3 (одне речення) — межі G2"
+  conclusion: "a9baf25 за вмістом коду, тестів, CONTRACT і .github тотожний прийнятому (3c87dd0 / ecabb7e); нічого понад злиття не внесено"
+
+checks:   # джерело перевірок для acceptanceReady (контракт не має для них події — §13)
+  - {id: ci-run-2, passed: true, subject: a9baf25893aa8caa2748a99406072281d24f27fb, evidence_ref: "reports/T-0011/ci.yaml#run_2", fact: "run 40820727606, head fa5e060, 212/212, skipped 0", basis: "дерево a9baf25 = merge-tree(7f56fcf, fa5e060), main не пересувався; висновок про тест саме merge-ref умовний (merge-ref GitHub не бачено)"}
+  - {id: ci-run-1, passed: true, subject: a9baf25893aa8caa2748a99406072281d24f27fb, evidence_ref: "reports/T-0011/ci.yaml#run", fact: "run 40820573780, head 8cd510b, 212/212, skipped 0", basis: "код тотожний; тут лише tasks/reports відрізняються"}
+  - {id: local-full-3, passed: true, subject: a9baf25893aa8caa2748a99406072281d24f27fb, evidence_ref: "reports/T-0011/evidence/full-run-3-ecabb7e.txt", fact: "212 тестів: 210 pass, 0 fail, 2 skipped (A4/A5 під root)", basis: "bridge/src, bin, test, config, CONTRACT, .github тотожні ecabb7e"}
+  - {id: nobody-78, passed: true, subject: a9baf25893aa8caa2748a99406072281d24f27fb, evidence_ref: "reports/T-0011/evidence/t0010-t0011-nobody-ecabb7e.txt", fact: "t0010+t0011 від nobody 78/78, skipped 0 (A4/A5 виконані)", basis: "те саме"}
+  - {id: mutants-37, passed: true, subject: a9baf25893aa8caa2748a99406072281d24f27fb, evidence_ref: "reports/T-0011/mutants.yaml", fact: "37/37 вбито, контроль 127 тестів", basis: "те саме"}
+checks_limits:
+    - "на самому a9baf25 після злиття тестів не запускали (нового CI не було за наказом J5/JE); тотожність дерев замінює повторний запуск"
+    - "облік CI — 48 за подію за методом обліку (calls-ledger.yaml counting_method); сканер dispatch_attempt на runner-і недоступний"
+
+review:
+  reviewer: C3
+  events: "events.jsonl seq 9 (review_finished, subject a9baf25, complete, passed, ref reports/T-0011/c3-review.yaml#seq=6)"
+  summary: "раунд 4: mandatory 0, optional 6 (реакція J3 — c3-review.yaml#seq=7): scope.in → A-1; червона лінія merge → Р-Т11-24/26; застарілі знімки → superseded_statements нижче; облік n:23/n:24; однаковий at у seq 4–5 — прийнято; subject — цей пакет"
+  rounds: "1 changes_requested (061063598) → 2 passed (ecabb7e) → 3 passed (3c87dd0) → 4 passed (a9baf25)"
+  c3_identity: "кожен раунд — незалежна read-only сесія-агент, запущена J3; особа C3 засобами J4 не автентифікується; JE-T11-02 п. 6: незалежність зафіксовано за наявними доказами, F-9 НЕ закрито"
+  open_mandatory_findings: 0
+
+acceptances_on_subject_a9baf25:
+  j3_technical: {state: recorded, event: "events.jsonl seq 10", result: accepted, scope: full, limits: []}
+  j5_content: {state: NOT_RECORDED, note: "висновок J5 — CONDITIONAL (j5-conclusion-relay.md); його підстава (відхилення від scope.in) знята JE-T11-02; формальне приймання J5 на a9baf25 створює J5, не J3"}
+  je_key_decision: {state: NOT_RECORDED, note: "остаточне приймання створює JE; цей пакет його не замінює"}
+  earlier_on_other_subject: "seq 4 (C3) і seq 5 (J3) на 3c87dd0 лишаються в журналі чинними на своєму subject; backdated-приймань немає (JE-T11-02 п. 7)"
+
+barrier_dry_run:   # чиста функція acceptanceReady() над events.jsonl і checks вище; жодного j4 close/done, жодних викликів адаптера
+  call: "acceptanceReady({subject: a9baf25…, checks, reviews, acceptances (evidenceFromEvents), openMandatoryFindings: 0, keyDecision: true})"
+  result: {ready: false, missing: [acceptance-J5-content-missing, acceptance-JE-key_decision-missing]}
+  meaning: "усі перевірки, рецензія C3 і технічне J3 на a9baf25 виконані; бракує лише content J5 і key_decision JE (вони мають бути explicit accepted, scope full, limits порожні, evidence_ref)"
+  done: "НЕ встановлено; close/done не запускались і не запускатимуться до ready (JE-T11-02)"
+
+adm_registration:
+  note: "Роль ADM виконана вручну за чек-листом; подій ADM через J4 (router/send/run --once) не створювалось — це була б реальна операція J4, заборонена наказом"
+  source_message: "JE, 2026-10-29T05:16:26Z, id cmsg_012JDmHaeKDsqjDfbG3nLvCA4uy7zoSZTYM98QG58HfMbe"
+  events:
+    - {seq: 6, event: report_filed, by: J3, ref: "reports/T-0011/002.yaml", about: "злиття PR #15, a9baf25, 05:00:27Z; CI №2"}
+    - {seq: 7, event: command, by: JE, recorded_by: J3, ref: "tasks/T-0011/je-decision-T11-02.md"}
+    - {seq: 8, event: amendment_approved, by: JE, recorded_by: J3, amendment_id: A-1, ref: "tasks/T-0011/order.yaml#A-1", task_version: 2}
+    - {seq: 9, event: review_finished, by: C3, subject: a9baf25, verdict: passed, ref: "reports/T-0011/c3-review.yaml#seq=6"}
+    - {seq: 10, event: acceptance, by: J3, role: technical, subject: a9baf25, result: accepted, scope: full, ref: "reports/T-0011/003.yaml"}
+  register: "tasks/T-0011/decisions-register.md: Р-Т11-25 (висновок J5), Р-Т11-26 (порядок PR/merge), Р-Т11-27 (JE-T11-02), Р-Т11-28 (раунд 4 і пакет)"
+  where_merged: "події seq 6–10 і цей файл — у гілці t-0011/admin-reconcile (draft PR #16, лише tasks/ і reports/, CI не стартує); у main вони з'являться після злиття PR #16 за словом JE"
+
+open_risks:   # залишкові ризики лишаються ВІДКРИТИМИ (JE-T11-02 п. 5); докладніше DESIGN розд. 20
+  trust_boundaries:
+    - "F-9: автентифікація by, --human не існує; F-3: особа JE; роль C3 не автентифікується — механізм T-0011 їх не вирішує"
+    - "закріплені значення (installation_id, first_hash, min_seq) публічні: актор із правом запису в J4_HOME і J4_LEDGER може підробити «чисту» пару; ловить лише M7 для синхронізованих подій"
+    - "вікно до синхронізації подій (I11): знімок журналу до несинхронізованої ескалації на чистому сховищі проходить; пом'якшують --ledger-min-seq і регулярний run --once --task-events"
+  detection_gaps:
+    - "N37: без --ledger-first-hash і --ledger-min-seq свіжий порожній журнал, прив'язаний до того самого marker-а, проходить ідентичність"
+    - "N38: ledger_first_hash не виявляє перепис хвоста чи installation_adopted у голові"
+    - "події ADM без валідного ref на журнал J4 не звіряються; task_id запису журналу не порівнюється (Р-Т11-22)"
+  adopt_and_recovery:
+    - "G6 ЗАКРИТО: реальний adopt і реальні значення не виконувались; доти на старій установці run/send/submit/resolve відмовляють (практичний наслідок для реального J4)"
+    - "adopt із хибним J4_LEDGER, загубленим marker-ом чи чужим J4_HOME із marker-ом — захисту немає (захищено лише випадок непорожнього журналу без marker-а у J4_HOME)"
+    - "непривʼязаний журнал з обірваним хвостом — глухий кут, лише ручна процедура; чи дозволити adopt викликати repairUnlocked — окреме рішення (Р-Т11-22)"
+    - "store-ledger-escalation-unknown може бути тимчасовою відмовою або наслідком збою між двома записами escalate(); дія — повторити close/resolve"
+  implementation_notes:
+    - "bindIfEmpty: неатомарне скорочення; старт кожної команди роутера двічі розбирає журнал (ротації немає, вимірювань немає)"
+    - "fsync marker-а і fsync теки після link не покриті тестами/мутантами (поведінка при втраті живлення)"
+    - "правило сканера ops.phone_ua (хвіст 380 + 9 цифр, ≈3,6·10⁻⁶ на значення) діє й на 64-hex поля first_hash, ledger_hash, dropped_sha256 — поза T-0011, окрема задача"
+    - "нотатки C3 без правок: R3-1…3 (формулювання README/сканера/коду adopt), R2-6б/в (косметика коментарів), R2-7 (timeout у spawnCli, мутант ensureMarker), R2-8 (F-4 у RUNS, redact(e.message))"
+  process:
+    - "runbook-close.md і reconcile-close.mjs (тимчасовий контроль F-T9-18) не вилучено — поза scope.in (Р-Т11-16); очищення — окремим завданням після приймання"
+    - "PR, CI і злиття відбулись до записів приймання J5/JE — дозволений виняток (Р-Т11-26, JE-T11-02 п. 7), приймань заднім числом немає"
+    - "тести A4/A5 локально під root пропущені (2 skipped); виконані в CI та від nobody"
+  out_of_t0011: ["F-9", "F-3", "F-T9-15 (бар'єр поза замком)", "G6", "CSP/capabilities"]
+  follow_up_tasks_proposed: "Р-Т11-22 (adopt-repair, ref/task_id подій ADM, захист adopt, сканер vs hex-хеші), очищення runbook-close/reconcile-close, ротація журналу — окремі завдання; створює J5/JE"
+
+superseded_statements:   # знімки на момент написання лишаються (лише додавання); чинні значення — тут
+  - {where: "reports/T-0011/checkpoint.md на a9baf25", said: "відправлена на origin, без PR і без CI", now: "PR #15 злито, CI 2 події (212/212); checkpoint в гілці адмінзвірки виправлено"}
+  - {where: "reports/T-0011/001.yaml (ci_runs: 0; «CI не запускався»; облік 153/180)", now: "CI 2 події, облік 249/250, ліміт 250 (Р-Т11-24); див. ci.yaml, calls-ledger.yaml, 002.yaml"}
+  - {where: "tasks/T-0011/je-decision-T11-01.md (рядок «без PR і без CI»)", now: "PR/CI/merge дозволені JE 04:55:36Z і 05:00:00Z (Р-Т11-24), виняток визнано JE-T11-02 п. 7"}
+  - {where: "tasks/T-0011/order.yaml red_lines «не зливати PR; PR із кодом і CI — лише за окремим дозволом JE»", now: "виконано за окремим дозволом JE; текст не змінено"}
+  - {where: "tasks/T-0011/order.yaml version 1, amendments []", now: "version 2, A-1 (scope.in + e2e.test.mjs, t0006.test.mjs), JE-T11-02 п. 1"}
+  - {where: "reports/T-0011/001.yaml open_for_je", now: "вирішено JE-T11-02 (п. 1–8), крім G6 (закрито) і Р-Т11-22 (відкладено)"}
+
+budget:
+  used: 249
+  limit: 250
+  paid_api_calls: 0
+  network_calls: 0
+  ci_events: 2
+  this_package: {adapter_calls: 0, ci_events: 0, c3_session: "1 нова read-only сесія-агент (без викликів адаптера J4), 24 звернення до інструментів читання"}
+  note: "ліміт не перевищено; без нового ресурсного дозволу JE не перевищувати (JE-T11-02)"
+
+for_j5: "сформувати підсумкове змістове приймання на subject a9baf25 (acceptance, role content, result accepted, scope full, limits [], evidence_ref), якщо відкриті ризики вище вважаються прийнятними; J3 цього не робить"
+for_je:
+  - "остаточне приймання T-0011 (key_decision) на subject a9baf25 після acceptance J5"
+  - "злиття draft PR #16 (журнал звірки, tasks/ і reports/) — лише за словом JE"
+  - "окремі рішення: G6 (реальний adopt і значення), наступні завдання за Р-Т11-22, дозвіл на T-0013 (зараз NO-GO)"
+not_done:
+  - "acceptance J5 і JE не створювались; done не встановлено; close/done/adopt не запускались"
+  - "T-0013 не починався"
+not_verified:
+  - "реальна установка J4 не перевірялась і не змінювалась"
+  - "CI-запуски перевірено лише через GitHub API з J3 (run id, висновок, 212/212 із логів job); C3 їх не бачив (немає мережі)"

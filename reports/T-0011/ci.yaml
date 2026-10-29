@@ -1,4 +1,4 @@
-# CI j4-bridge на draft PR #15 (T-0011). Записано J3; факти з GitHub Actions, без інтерпретацій.
+# CI j4-bridge на PR #15 (T-0011): запуски 1 і 2. Записано J3; факти з GitHub Actions, без інтерпретацій. Доповнено 2026-10-29 (адмін-звірка, 002.yaml): другий запуск і злиття.
 task: T-0011
 pr: "https://github.com/hellwikcoop-arch/easywar-staff/pull/15"
 authorized_by: "JE, картка «PR + CI, ліміт до 250», 2026-10-29T04:55:36Z (Р-Т11-24)"
@@ -21,4 +21,24 @@ calls:
   limit: 250
 not_verified:
   - "CI запускається на merge-ref PR з main 7f56fcf; на самій гілці без PR окремо не запускався"
+  - "УТОЧНЕННЯ 2026-10-29 (аудит ШТАБу): run 2 тестував merge-ref e020802 («Merge fa5e060 into 7f56fcf»), 212/212; його дерево 3c63e46… = дерево merge-коміту a9baf25, але SHA різні; на a9baf25 тест не запускався (evidence/ci-run2-merge-ref.txt)"
   - "змістове приймання J5 і остаточне JE цим результатом не замінюються"
+run_2:
+  workflow: j4-bridge (подія pull_request, synchronize)
+  run_id: 40820727606
+  trigger: "пуш облікових комітів 64d156e + fa5e060 (стоп-хук власника вимагав пуш); bridge/ не змінювався"
+  head_sha: fa5e06014814e6e800ce3b5ad6f822a41a9284f0
+  jobs:
+    test: {job_id: 123272337552, conclusion: success, started: "2026-10-29T04:58:50Z", completed: "2026-10-29T04:59:08Z"}
+    route-stub: {conclusion: skipped}
+    route-live: {conclusion: skipped}
+  test_summary: {tests: 212, pass: 212, fail: 0, cancelled: 0, skipped: 0, duration_ms: 12722}
+merged:
+  pr_merged_at: "2026-10-29T05:00:27Z"
+  merge_commit: a9baf25893aa8caa2748a99406072281d24f27fb
+  note: "злито на слово JE після зеленого run_2; перед злиттям draft → ready (CI не запускала)"
+calls_total:
+  ci_events: 2
+  counted: 96     # 2 × 48 за методом обліку (фактичний сканер на runner-і недоступний)
+  used_after: 249
+  limit: 250
