@@ -48,4 +48,13 @@ resources: {max_calls: 150, max_attempts: 2, max_delegation_depth: 1, reviewer: 
 reporting:
   milestones: ["залежності + вектори + codec (PR чернетка)", "identity/epoch/envelope/replay зелені", "secret_store з 5 перевірками JE-18", "G12 звіт", "C3 passed; J3; J5"]
   thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
-amendments: []
+amendments:
+  - id: A-1
+    proposed_by: J3
+    base_version: 1
+    change: {field: resources.reviewer.max_read_files, from: 15, to: 25}
+    reason: "спроба C3 №1 (29.10, session_01UgydCJmxbR3d4boBPP3aL7) прочитала 17 файлів (19 з AGENTS/CLAUDE) і зупинилась на ліміті 15 із CONTRACT_v0_4.md; обов'язковий перелік брифу G12 = 12 файлів + бриф + AGENTS/CLAUDE ≈ 15, для перевірки контексту (lib.rs, Cargo.toml, office_library.rs::KdfParams) потрібно більше. У цьому наказі з оформлення вже стоїть 25, але наказу ще немає в main; поправка фіксує 25 як рішення JE, щоб значення не залежало від гілки"
+    status: proposed
+    decided_by: null
+    decided_at: null
+    note: "очікує рішення JE (повідомлення JE 04:45Z); C2 не змінюється, PR #180 не зливається"
