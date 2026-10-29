@@ -1,7 +1,7 @@
 # Облік викликів адаптера J4 для T-0011 (одиниця — як у T-0009/T-0010/T-0012: dispatch_attempt у журналі J4 + прямий adapter.call()). Лише додавання рядків.
 # Ліміт: 180 (JE-T12-01 п. 4), з 2026-10-29T04:55:36Z — 250 за рішенням JE (Р-Т11-24). Перевірка перед кожним прогоном з диспетчеризацією: used + next ≤ ліміт. Не обнуляти.
 task: T-0011
-limits: {effective: 250, halt_rule: "used + next > 250", paid_usd: 0, previous: 180, raised_by: "JE, 2026-10-29T04:55:36Z, картка «PR + CI, ліміт до 250» (Р-Т11-24)"}
+limits: {effective: 297, halt_rule: "used + next > 297", paid_usd: 0, previous: [180, 250], raised_by: "JE, 2026-10-29T13:47:35Z, картка «Прогін на a9baf25, до 297» (Р-Т11-30); до того 250 — JE 2026-10-29T04:55:36Z, картка «PR + CI, ліміт до 250» (Р-Т11-24)", scope_of_permission: "ОДИН локальний синтетичний прогін точно node --test 'bridge/test/*.test.mjs' на чистому checkout a9baf25; новий CI не дозволено; більше нічого ліміт 297 не покриває"}
 counting_method:
   - "повний прогін node --test 'bridge/test/*.test.mjs' = 48 (44 dispatch_attempt + 4 прямих у gate.test.mjs); базове значення T-0009/T-0010/T-0012"
   - "фільтровані прогони запускаються через tasks/T-0011/tools/run-counted.sh (ізольований TMPDIR + сканер dispatch_attempt); результат сканера записується в entries"
@@ -12,6 +12,7 @@ plan:
   - "повний прогін J3 №1 на контрольному SHA: 48 → 48 ≤ 180"
   - "резерв CI ×1: 48 (лише за окремим дозволом JE) → 96"
   - "повний прогін J3 №2 (лише після changes_requested): 48 → 144; третій (192 > 180) — HALT"
+  - "ПЛАН 2026-10-29 після картки JE 13:47:35Z: повний прогін J3 №4 на чистому a9baf25 (checks.verify, CONTRACT §6 п.1): 48 → 249 + 48 = 297 ≤ 297; будь-який наступний виклик — HALT без нового рішення JE"
 entries:
   - {n: 1, label: t0009-a, cmd: "node --test bridge/test/t0009.test.mjs --test-name-pattern 'T-0009 C'", dispatch_attempt: 2, direct: 0, used_after: 2, note: "ПОМИЛКА ЗАПУСКУ: опція після імені файла потрапила в аргументи файла, фільтра не було; відпрацював Q1 (2 stub-виклики). Р-Т11-17"}
   - {n: 2, label: t0009-b, cmd: "node --test --test-name-pattern 'T-0009 C' bridge/test/t0009.test.mjs", dispatch_attempt: 0, direct: 0, used_after: 2, note: "8 тестів, 1 pass / 7 fail — очікувано до оновлення фікстур"}
