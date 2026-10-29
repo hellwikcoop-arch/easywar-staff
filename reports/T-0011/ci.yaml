@@ -1,0 +1,24 @@
+# CI j4-bridge на draft PR #15 (T-0011). Записано J3; факти з GitHub Actions, без інтерпретацій.
+task: T-0011
+pr: "https://github.com/hellwikcoop-arch/easywar-staff/pull/15"
+authorized_by: "JE, картка «PR + CI, ліміт до 250», 2026-10-29T04:55:36Z (Р-Т11-24)"
+run:
+  workflow: j4-bridge (подія pull_request)
+  run_id: 40820573780
+  head_sha: 8cd510b2f676fabbfa01e84e1f71e28c40117ef0   # code_sha ecabb7e, control_sha 3c87dd0; далі лише tasks/ і reports/
+  base_sha: 7f56fcf34af290cbb68a20b3d60995b2d990c70d    # main на момент відкриття PR
+  mergeable_state: clean
+  jobs:
+    test: {job_id: 123271836266, conclusion: success, started: "2026-10-29T04:57:03Z", completed: "2026-10-29T04:57:24Z"}
+    route-stub: {conclusion: skipped, note: "лише workflow_dispatch"}
+    route-live: {conclusion: skipped, note: "лише workflow_dispatch, environment j4-live"}
+  test_summary: {tests: 212, pass: 212, fail: 0, cancelled: 0, skipped: 0, duration_ms: 15591}
+  note: "skipped 0 (локально 2 під root: A4/A5): на runner-і тест виконується не від root, A4/A5 пройшли"
+calls:
+  ci_events: 1
+  counted: 48    # метод обліку: CI — 48 за подію (calls-ledger.yaml counting_method); фактичний сканер на runner-і недоступний
+  used_after: 201
+  limit: 250
+not_verified:
+  - "CI запускається на merge-ref PR з main 7f56fcf; на самій гілці без PR окремо не запускався"
+  - "змістове приймання J5 і остаточне JE цим результатом не замінюються"
