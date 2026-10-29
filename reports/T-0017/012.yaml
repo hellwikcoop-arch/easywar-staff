@@ -1,0 +1,29 @@
+task_id: T-0017
+report_no: 12
+kind: review
+pr: https://github.com/hellwikcoop-arch/easywar-staff/pull/19
+brief_sha256: "0f1901835a90aa246f2862c6d40b7adcaf4767692754c5bf433a42b368602abe"
+reviewer: C3
+route: "окремий агент, напряму за брифом c3-pr19-brief.md; J4 не використано; платних API 0"
+review_status: complete
+verdict: PASS
+subject: 1bf4d69379d33702f18c85790d5240224f7fb76e
+items:
+  - {id: 1, result: confirmed, evidence: "diff 4c5ca72..1bf4d69: 22 A, лише tasks/T-0017 і reports/T-0017; один коміт, батько 4c5ca72"}
+  - {id: 2, result: confirmed, evidence: "ls-tree: 22 у head, 22 в 11dc1fc, mismatch [] , missing []"}
+  - {id: 3, result: confirmed, evidence: "42 події, seq 1..42, дублікатів 0; видалених рядків в історії файлу 0"}
+  - {id: 4, result: confirmed, evidence: "done лише seq 42 (state_changed, ADM); seq 34 — waiting"}
+  - {id: 5, result: confirmed, evidence: "наказ дослівно (як Markdown-цитата, 20 рядків = еталон)"}
+  - {id: 6, result: confirmed, evidence: "#180 70bade5→ed5819c, #192 b971778→cb78c88; 009–011 існують"}
+  - {id: 7, result: confirmed, evidence: "open_conditions U1,U2,U3,A3,A6,N1,п.15"}
+findings:
+  - {id: F1, severity: nit, description: "наказ збережено як Markdown-цитату з заголовком і датою; зміст дослівний"}
+  - {id: F2, severity: nit, description: "4c5ca72 не предок 11dc1fc; діапазон фільтровано за шляхом, повна історія без видалень — висновок не змінює"}
+files_read: [c3-pr19-brief.md, "1bf4d69:tasks/T-0017/events.jsonl", "1bf4d69:tasks/T-0017/je-order-done.md", "git log -p … events.jsonl"]
+tool_calls_used: 5
+limits: {max_calls: 15, max_files: 10}
+residual_risks:
+  - "вміст звітів 009–011 не читав (лише наявність і blob)"
+  - "ed5819c/cb78c88 у EasyWAR не перевіряв (поза брифом; J3 звірив батьків окремо)"
+  - "еталон наказу звірено з брифом, не з тредом"
+  - "CI і метадані PR #19 не перевіряв"
