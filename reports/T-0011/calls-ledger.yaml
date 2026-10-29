@@ -12,5 +12,15 @@ plan:
   - "повний прогін J3 №1 на контрольному SHA: 48 → 48 ≤ 180"
   - "резерв CI ×1: 48 (лише за окремим дозволом JE) → 96"
   - "повний прогін J3 №2 (лише після changes_requested): 48 → 144; третій (192 > 180) — HALT"
-entries: []
-state: {used: 0, forecast_next_full_run: 48, projected_after_full_run: 48, remaining_to_180: 180, paid_api_calls: 0, network_calls: 0, ci_runs: 0}
+entries:
+  - {n: 1, label: t0009-a, cmd: "node --test bridge/test/t0009.test.mjs --test-name-pattern 'T-0009 C'", dispatch_attempt: 2, direct: 0, used_after: 2, note: "ПОМИЛКА ЗАПУСКУ: опція після імені файла потрапила в аргументи файла, фільтра не було; відпрацював Q1 (2 stub-виклики). Р-Т11-17"}
+  - {n: 2, label: t0009-b, cmd: "node --test --test-name-pattern 'T-0009 C' bridge/test/t0009.test.mjs", dispatch_attempt: 0, direct: 0, used_after: 2, note: "8 тестів, 1 pass / 7 fail — очікувано до оновлення фікстур"}
+  - {n: 3, label: t0009-c, cmd: "те саме, після оновлення фікстур", dispatch_attempt: 0, direct: 0, used_after: 2, note: "8/8 pass"}
+  - {n: 4, label: t0009-d, cmd: "--test-name-pattern 'T-0009 (E|Q2|Q3|H)' bridge/test/t0009.test.mjs", dispatch_attempt: 0, direct: 0, used_after: 2, note: "8/8 pass"}
+  - {n: 5, label: t0009-e, cmd: "--test-name-pattern 'T-0009 Q1' bridge/test/t0009.test.mjs", dispatch_attempt: 2, direct: 0, used_after: 4, note: "1/1 pass (Q1: 2 stub-виклики за задумом)"}
+  - {n: 6, label: e2e-a, cmd: "--test-name-pattern 'J3 → J5 через J4|підробка запису' e2e.test.mjs recovery.test.mjs", dispatch_attempt: 2, direct: 0, used_after: 6, note: "2/2 pass"}
+  - {n: 7, label: t0007-a, cmd: "--test-name-pattern 'T-0007 S1' bridge/test/t0007.test.mjs", dispatch_attempt: 2, direct: 0, used_after: 8, note: "1/1 pass"}
+  - {n: 8, label: t0007-b, cmd: "--test-name-pattern 'T-0007 S7|T-0007 S2|T-0007 S6' bridge/test/t0007.test.mjs", dispatch_attempt: 1, direct: 0, used_after: 9, note: "3/3 pass; S7 після цього посилено (підміна запису повідомлення, а не прив'язки)"}
+  - {n: 9, label: t0007-c, cmd: "--test-name-pattern 'T-0007 S7' bridge/test/t0007.test.mjs", dispatch_attempt: 0, direct: 0, used_after: 9, note: "pass"}
+  - {n: 10, label: t0010-d / t0012-a / docs-check, cmd: "bridge/test/t0010.test.mjs, t0012.test.mjs (+ t0011)", dispatch_attempt: 0, direct: 0, used_after: 9, note: "t0010 10 pass + 2 skipped, t0012 41/41, t0011 55/55; 0 dispatch"}
+state: {used: 9, forecast_next_full_run: 48, projected_after_full_run: 57, remaining_to_180: 171, paid_api_calls: 0, network_calls: 0, ci_runs: 0}
