@@ -787,3 +787,111 @@
     C3T11-R3-1_2_3: "прийнято як нотатки без нового коміту в bridge/ (кожна зміна bridge/ зсуває контрольний SHA і потребує нового кола C3); перелічено в 001.yaml (not_verified/open_for_je)"
     C3T11-R3-4: "виправлено цим записом (seq 2–5 дописано дослівно, ручна ланка M-2)"
   limits_for_accountability: "C3 у цій задачі — незалежна read-only сесія-агент, яку запускав J3; особа C3 засобами J4 не автентифікується (F-9). Запис review_finished у tasks/T-0011/events.jsonl робить J3 (ручна ланка M-2), як у T-0010/T-0012."
+
+- seq: 6
+  round: 4
+  subject: a9baf25893aa8caa2748a99406072281d24f27fb
+  scope_of_review: "тотожність кінцевого merge-коміту PR #15 прийнятому коду (дерева bridge/, .github, CONTRACT_v0_4.md проти 3c87dd0 і ecabb7e); merge-tree; межі наказу; узгодженість журналу й звітів з git. Поведінку коду, тести і CI не перевіряв (мережі й запусків немає за умовою)"
+  requested_at: "2026-10-29T05:19:54Z"
+  received_at: "2026-10-29T05:24:04Z"
+  mandatory: 0
+  optional: 6
+  verdict: passed
+  review_status: complete
+  note_j3: "Раунд 4 — НОВА незалежна read-only сесія-агент (контексту раундів 1–3 не мала), запущена J3 за JE-T11-02 п. 8; завдання — п. 1–6 (тотожність, merge-tree, межі, файли поза scope, журнал, узгодженість ci.yaml). Особа C3 засобами J4 не автентифікується (F-9, JE-T11-02 п. 6). Адреса: тека /tmp/…/scratchpad/c3-a9baf25 (detached checkout a9baf25). Реакція J3 — seq 7."
+  c3_report_verbatim: |
+    C3 (лише читання). Репозиторій: /tmp/claude-0/-home-user/0c488177-7a0b-5854-9250-dc5836d9653f/scratchpad/c3-a9baf25 (HEAD = a9baf25893aa8caa2748a99406072281d24f27fb). Файли не змінював, node --test і код bridge/ не запускав, мережі не використовував. Використані лише git (rev-parse, cat-file, diff, log, merge-base, merge-tree, ls-tree, show, grep), sed, grep, python3 -I для розбору JSON.
+
+    - status: complete
+    - verdict: passed (a9baf25 за вмістом тотожний переглянутому 3c87dd0 у bridge/, .github, CONTRACT; нічого понад злиття не внесено)
+    - mandatory_findings: []
+
+    ## optional_findings
+    1. Розбіжність зі scope.in. bridge/test/e2e.test.mjs і bridge/test/t0006.test.mjs змінені в PR, але не входили до scope.in наказу v1 (amendments: [] на a9baf25). Я бачу такі записи в репозиторії:
+       - на a9baf25: це розкрито в Р-Т11-1/13/19, зміни лише додають перевірки (запис `installation` seq 1 і 13 записів замість 12; diff переглянув, ослаблень не бачу);
+       - на refs/remotes/origin/t-0011/admin-reconcile: поправка A-1 до order.yaml і events seq 7–8, схвалено JE post factum.
+       Саму відповідь JE я перевірити не можу, бо це чат.
+    2. Червона лінія «не зливати PR». На a9baf25 слід слова JE про злиття є тільки в тексті merge-коміту («за словом JE 2026-10-29 05:00Z») і в Р-Т11-24 («злиття — окремо, після зеленого CI і слова JE»). Червоні лінії order.yaml не поправлені. JE-T11-02 п. 7 (є лише в гілці admin-reconcile) називає це «окремо дозволеним винятком». Слово JE 05:00:00Z я не перевіряв.
+    3. Застарілі твердження у файлах на самому a9baf25 (знімки на момент написання):
+       - checkpoint.md:7 «відправлена на origin, без PR і без CI» суперечить рядку «Витрати» того ж файла та ci.yaml. У admin-reconcile це виправлено.
+       - 001.yaml:54,59 (`ci_runs: 0`, «CI … не запускався») і je-decision-T11-01.md:48 («без PR і без CI»). У admin-reconcile 001.yaml не змінювався; різниця a9baf25..admin-reconcile не містить 001.yaml.
+    4. Облік на a9baf25. У calls-ledger.yaml запис n:23 позначений «ПЛАН (запис зроблено до пушу)», проте `state` вже має used 249, ci_runs 2. ci.yaml на a9baf25 містить лише run 40820573780 (used_after 201). Run 40820727606 на a9baf25 є тільки в тексті merge-коміту, а у файлі ci.yaml з'являється лише в admin-reconcile.
+    5. events.jsonl: seq 4 і 5 мають однаковий `at` (2026-10-29T02:02:30Z), тобто час нестрого зростає. bridge/src/acceptance.mjs:32,43 бере `.at(-1)` за порядком у масиві, час не порівнює, тому на поведінку це не впливає.
+    6. Subject приймань. review_finished (seq 4) і acceptance J3 (seq 5) мають subject 3c87dd0, а не a9baf25. acceptance.mjs фільтрує за `subject === subject`, тому `close` із subject a9baf25 цих записів не знайде. Формального приймання на a9baf25 у цьому коміті немає. JE-T11-02 п. 8 це передбачає (пакет «на a9baf25», `003.yaml`, якого в репозиторії я не бачив).
+
+    ## По пунктах
+
+    **1. Ідентичність bridge/src, bin, test, config, .github, CONTRACT, README, docs на a9baf25 і 3c87dd0**
+    Команда: `git rev-parse <sha>:<path>` для кожного шляху, потім `git diff --quiet 3c87dd0 a9baf25 -- bridge .github CONTRACT_v0_4.md`, потім sha256 від `git ls-tree -r <sha> -- bridge .github CONTRACT_v0_4.md`.
+    Результат (усе збігається):
+    - bridge/src 54a44efe…; bridge/bin 02a5e791…; bridge/test fced7d54…; bridge/config 4c3b3835…; .github 3bb069c1…
+    - CONTRACT_v0_4.md 3cc981e7…; bridge/README.md 63faac8f…; bridge/docs 573d8e94…
+    - уся тека bridge/ f5b12132… в обох; `git diff --quiet` дає rc=0.
+    - Список blob-ів (43 файли) дає однаковий хеш d652a4ba5a94c270, тож режими теж однакові.
+    - Окремо: `git diff --stat ecabb7e a9baf25 -- bridge/src bridge/bin bridge/test bridge/config CONTRACT_v0_4.md .github` порожній, тобто code_sha ecabb7e теж збігається.
+    - Різниця 3c87dd0..a9baf25 за повним деревом складається лише з reports/ і tasks/ і здебільшого приходить з main (J4-HARDENING, E8, T-0002, T-0016). Це не зміни PR, а наслідок того, що 3c87dd0 не є предком 7f56fcf (`merge-base --is-ancestor` → ні).
+    - `git diff --name-only 49226f9 7f56fcf | grep -E '^(bridge/|CONTRACT_v0_4\.md|\.github/)'` порожній: main з часу відгалуження гілки bridge/, CONTRACT і .github не чіпав. Тому тотожність bridge/ повна.
+    Не перевіряв: поведінку коду (тести не запускав), оскільки хеші дерев збігаються.
+
+    **2. Чи a9baf25 нічого не вніс понад злиття**
+    Команди: `git cat-file -p a9baf25`, `git merge-tree --write-tree 7f56fcf fa5e060`, `git rev-parse a9baf25^{tree}`.
+    Результат:
+    - батьки a9baf25: 7f56fcf34af2… (1-й) і fa5e06014814… (2-й);
+    - merge-tree дав rc=0 і один рядок з OID, без повідомлень про конфлікти: 3c63e46d6156a70601553f6771bd77478278d75e;
+    - дерево a9baf25: 3c63e46d6156a70601553f6771bd77478278d75e.
+    Хеші збігаються, ручних правок у merge-коміті немає. Не перевіряв: PGP-підпис (gpgsig є, committer GitHub, ключа немає).
+
+    **3. acceptance.mjs, bridge/config/**, .github/** проти 7f56fcf**
+    Команди: `git diff --quiet 7f56fcf a9baf25 -- bridge/src/acceptance.mjs bridge/config .github` і `git rev-parse` обох.
+    Результат: rc=0. acceptance.mjs 4eaf3000… в обох, bridge/config 4c3b3835… в обох, .github 3bb069c1… в обох. Відмінностей немає.
+
+    **4. Файли поза bridge/, CONTRACT_v0_4.md, tasks/T-0011, reports/T-0011 між 7f56fcf і a9baf25**
+    Команди: `git diff --name-only 7f56fcf a9baf25 | grep -v -E '^(bridge/|CONTRACT_v0_4\.md$|tasks/T-0011/|reports/T-0011/)'` та `git diff --name-status`.
+    Результат: порожньо. Інших файлів немає, `.github` не зачеплено.
+    У bridge/ змінено 16 файлів: README.md, bin/j4.mjs, docs/DESIGN.md, src/{close,ledger,router,store}.mjs та тести e2e, helpers, recovery, t0006, t0007, t0009, t0010, t0012 і новий t0011. Серед них acceptance.mjs і config відсутні. Єдиний файл із режимом 100755 — tasks/T-0011/tools/run-counted.sh (в дозволеній теці).
+    CONTRACT (`git diff -U0 7f56fcf a9baf25 -- CONTRACT_v0_4.md`) має два ханки:
+    - `@@ -205,0 +206,2 @@`: додано абзац «Нові події report_filed і escalation … ledger_hash … installation_id …» і порожній рядок. Це розділ «### 4.» (рядки 184–228, наступний «### 5.» на 229).
+    - `@@ -374 +376 @@`: один рядок п. 3 розділу «### 9а» (372–385) доповнено реченням про `ledger_hash`, `installation_id` і визначення «нової» події.
+    Змінено лише §4 і §9а.3, інших розділів немає.
+
+    **5. tasks/T-0011/events.jsonl на a9baf25**
+    Команда: `python3 -I` (json.loads по рядках) і `git show a9baf25:tasks/T-0011/events.jsonl`.
+    Результат:
+    - 5 рядків, файл закінчується `\n`, CR немає, порожніх рядків немає;
+    - кожен рядок — JSON-об'єкт, seq 1…5 без пропусків;
+    - `at`: 00:42:08Z, 00:50:00Z, 00:50:30Z, 02:02:30Z, 02:02:30Z (не спадає, останні два однакові — див. optional 5).
+    Останній запис — seq 5 `acceptance`: by J3, role technical, result accepted, scope full, subject 3c87dd07…, ref reports/T-0011/001.yaml. Попередній — seq 4 `review_finished` by C3, verdict passed, subject 3c87dd07…, ref c3-review.yaml#seq=4. У c3-review.yaml seq 4 справді раунд 3, subject 3c87dd0, verdict passed.
+    Подій про PR, CI чи злиття на a9baf25 немає (з'являються як seq 6–8 лише в admin-reconcile).
+
+    **6. ci.yaml на a9baf25 і admin-reconcile проти git**
+    Команди: `git show <ref>:reports/T-0011/ci.yaml`, `git cat-file -p a9baf25`, `git merge-base --is-ancestor`, `git diff --name-only 3c87dd0 fa5e060 | grep -v -E '^(tasks|reports)/'`.
+    Результат:
+    - fa5e060 — другий батько a9baf25 (`git rev-parse a9baf25^2`).
+    - 8cd510b2f676… — предок fa5e060 (`--is-ancestor` так). 3c87dd0 є предком 8cd510b і fa5e060, ecabb7e — предком 3c87dd0.
+    - Між 3c87dd0 і fa5e060 `grep -v -E '^(tasks|reports)/'` порожній. Змінено лише reports/T-0011/{001,c3-review,calls-ledger,checkpoint,ci}.yaml/.md, tasks/T-0011/decisions-register.md і events.jsonl. До 8cd510b — ті самі файли без ci.yaml. Твердження «далі лише tasks/ і reports/» підтверджується.
+    - ecabb7e..3c87dd0 змінює лише bridge/README.md, bridge/docs/DESIGN.md і reports/T-0011/*. Код, тести і CONTRACT там не змінені.
+    - ci.yaml на a9baf25: run 40820573780, head 8cd510b, base 7f56fcf (= перший батько a9baf25), 212/212, used_after 201.
+    - ci.yaml в admin-reconcile містить те саме і додає run_2: run 40820727606, head fa5e060, 212/212, `merged.merge_commit` a9baf25893aa…, `calls_total` 249/250.
+    - Значення узгоджені між ci.yaml, calls-ledger.yaml, checkpoint.md і 002.yaml. Run id 40820727606 збігається з текстом merge-коміту. Лічильник 212 збігається з evidence/full-run-3-ecabb7e.txt (`# tests 212`, pass 210, skipped 2 під root; у CI skipped 0 — пояснено в ci.yaml нотаткою про A4/A5 не від root).
+    - Хронологія за git-датами: 8cd510b 04:56:43Z, run 1 04:57:03–04:57:24Z, 64d156e 04:57:58Z, fa5e060 04:58:41Z, run 2 04:58:50–04:59:08Z, merge 05:00:26Z (в ci.yaml 05:00:27Z). Суперечностей немає.
+    - refs/remotes/origin/main = a9baf25 у цьому знімку (як востаннє отримано; актуальність відносно GitHub не перевіряв).
+    - Висновок із дерев: оскільки дерево a9baf25 дорівнює merge-tree(7f56fcf, fa5e060), а main не пересувався (7f56fcf = перший батько), тест run 2 на merge-ref мав би тестувати ті самі файли. Це умовний висновок. Merge-ref GitHub я не бачив.
+
+    ## Що НЕ перевіряв
+    - Самі запуски CI (run id, job id, 212/212, тривалість): мережі немає, перевірено лише узгодженість записів у репозиторії та з git.
+    - Сліва JE (картка 04:55:36Z, «зливай» 05:00:00Z, JE-T11-02): це чат, а не git.
+    - Логіку коду bridge/ по суті (лише тотожність за хешами) і тести (не запускав).
+    - Збіг c3-review.yaml із оригінальними звітами C3 дослівно. PGP-підпис merge-коміту.
+
+- seq: 7
+  by: J3
+  responds_to: seq 6 (раунд 4, subject a9baf25893aa8caa2748a99406072281d24f27fb)
+  note: "Реакція J3 (не рецензія). Мандаторних зауважень немає; 6 необов'язкових — нижче. Нового коміту в bridge/ немає (дерева незмінні)."
+  dispositions:
+    optional_1_scope_in: "закрито: JE-T11-02 п. 1 → поправка A-1 (order.yaml version 2, events seq 8)"
+    optional_2_red_line_merge: "закрито: Р-Т11-24 (картка JE 04:55:36Z, слово 05:00:00Z) + JE-T11-02 п. 7 / Р-Т11-26 (дозволений виняток); текст red_lines в order.yaml не міняю — рядок про PR/CI виконано за окремим дозволом JE"
+    optional_3_stale_snapshots: "не переписую (донесення 001.yaml, je-decision-T11-01.md, checkpoint на a9baf25 — знімки на момент написання, лише додавання); перелік застарілого й чинних значень — reports/T-0011/003.yaml, розділ superseded_statements; checkpoint уже виправлено в гілці адмінзвірки"
+    optional_4_ledger: "закрито: рядки n:23 (план до пушу) і n:24 (факт) у calls-ledger.yaml; ci.yaml доповнено run_2; зведення — 003.yaml"
+    optional_5_equal_at: "прийнято: seq 4 і 5 мають однаковий at; acceptance.mjs порядок бере з масиву, час не порівнює; не змінюю (журнал лише додається)"
+    optional_6_subject: "закрито цим пакетом: events seq 9 (review_finished C3 на a9baf25) і seq 10 (acceptance J3 technical на a9baf25), пакет 003.yaml; acceptance J5 (content) і JE (key_decision) на a9baf25 — за J5/JE"
+  limits_for_accountability: "C3 раунду 4 — НОВА незалежна read-only сесія-агент, запущена J3; особа C3 засобами J4 не автентифікується (F-9 лишається відкритим, JE-T11-02 п. 6). Сліди слова JE (чат) агент перевірити не міг — вони засвідчені записами JE-T11-02 і подіями seq 7–8."
