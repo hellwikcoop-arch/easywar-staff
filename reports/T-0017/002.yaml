@@ -1,0 +1,52 @@
+# Висновок C3 (спроба №2) за T-0017 / gate G12, CONTRACT_v0_4.md розділ 18. Read-only. Лише синтетичні дані.
+# Записав J3 дослівно за змістом підсумку рецензента (без транскрипту і проміжних виводів).
+task_id: T-0017
+task_version: 2
+report_no: 2
+by: C3
+recorded_by: J3
+at: 2026-10-29T05:02:00+00:00
+route: "J4 M-T-0017-0001 (TH-T-0017-001), inbox C3; рецензент — окрема незалежна сесія Claude, запущена J3 без його контексту (не fork); автентифікації ролі C3 немає (як у T-0011, F-9)"
+review_status: complete
+verdict: passed
+subject: c2d8d4fc199ea520c57c0ebe78094757c24a6cbb
+precheck: "HEAD = c2d8d4f…; git status без змін відстежуваних файлів; код не змінювався, нічого не комітилось і не публікувалось"
+resources: {files_read_count: 17, max_read_files: 25, tool_calls: 24, max_calls: 40, attempts: 1}
+files_read: [tasks/T-0017/c3-g12-brief.md (першим), tasks/T-0017/c3-review-attempt-1.md, docs/evidence/collectives/2026-10-29-c2-g12-checklist.md, collective/epoch.rs, collective/replay.rs, collective/envelope.rs, collective/identity.rs, collective/mod.rs, collective/codec.rs, collective/secret_store.rs (частково), office_library.rs (фрагменти KdfParams і мітки), profile_schema.rs (збіг grep), office_sources.rs (збіг grep), docs/adr/collective-crypto.md, collective/vectors.rs, tests/collective-crypto-vectors.test.mjs, tests/fixtures/collective-crypto-vectors.json]
+checks:
+  - {cmd: "cargo test --locked --manifest-path src-tauri/Cargo.toml collective::", subject: c2d8d4fc199ea520c57c0ebe78094757c24a6cbb, result: "37 passed, 0 failed, 1 ignored (vectors::print_synthetic), exit 0"}
+  - {cmd: "node --test tests/collective-crypto-vectors.test.mjs tests/network-boundary.test.mjs", subject: c2d8d4fc199ea520c57c0ebe78094757c24a6cbb, result: "17 passed, 0 failed"}
+items:
+  - {id: 1, status: confirmed, conclusion: "contributory() fail-closed на всіх трьох шляхах до KEK (wrap_epoch_key, wrap_deterministic, unwrap_with); wrap_with приватна; негативний тест (нуль, точка порядку 8, підроблений eph_pub). Від підміни ключа обміну дійсним ключем нападника не захищає (п. 15/U1)"}
+  - {id: 7, status: confirmed, conclusion: "Deferred до запису envelope_id; тести: повтор до надолуження — знову Deferred; після надолуження — Apply рівно раз, далі SkipDuplicateEnvelope"}
+  - {id: 15, status: confirmed, deferral_acceptable: true, conclusion: "member_id лише з Ed25519; exchange не підписаний; InMemoryMembership::join мовчки замінює exchange наявного учасника. Відкладення прийнятне лише тому, що в C2 немає шляху надходження MemberPublic від іншого вузла", conditions: ["U1 до C2p: підписане Ed25519 зв'язування з новою міткою над member_id ‖ exchange_pub ‖ collective_id ‖ issued_at/лічильник ротації", "U2 до C2p/C3b: перевірка на кожному вузлі до join і до wrap_epoch_key; тип VerifiedMember замість сирих member_id + exchange; join не перезаписує exchange без підписаного запису ротації", "U3: A1 і A2 — до першого збереженого або переданого EpochWrap, з перегенерацією фікстури і node-перевіркою", "негативні тести: підмінений exchange, непідписане/чужопідписане зв'язування, повторний join з іншим exchange; крос-реалізаційний вектор", "до виконання умов — без команд Tauri, мережі, production-шляху; при закритті G12 п. 15 = «відкрито для C2p/C3b»"]}
+  - {id: 2, status: confirmed, conclusion: "nonce 24 байти з OsRng; revoke ротує епоху; застереження A4"}
+  - {id: 3, status: confirmed, conclusion: "мітки easywar/collective/v1/* окремо від easywar/library/v1/*; префіксних колізій немає"}
+  - {id: 4, status: confirmed, conclusion: "AAD — усі 80 байтів відкритих полів; перевірено в Rust і node"}
+  - {id: 5, status: confirmed, conclusion: "expiry лише в payload; op_digest без підпису/nonce/епохи; reencrypt-вектор у Rust і node"}
+  - {id: 6, status: confirmed, conclusion: "два рівні anti-replay; підпис до порівняння digest; застереження A6"}
+  - {id: 8, status: confirmed, conclusion: "правила відкликання за векторами; вибір (а)/(б) — за JE"}
+  - {id: 9, status: confirmed, conclusion: "verify_strict; запис пристрою з фіксованими полями; не прив'язаний до collective_id — прийнятно"}
+  - {id: 10, status: not_confirmed, conclusion: "secret_store оглянуто частково (розбір, Argon2-KEK, AAD); сім тестів, атомарний запис, zeroize при знищенні, зміна пароля — не прочитано (економія ліміту файлів)"}
+  - {id: 11, status: confirmed, conclusion: "Zeroizing для ключів; дрібниця hardening: Key::from(*kek) лишає незатерту копію на стеку"}
+  - {id: 12, status: confirmed, conclusion: "codec: big-endian, checked_add, Malformed на обрізаному; без CBOR/JSON у підписаних байтах; для C3b — немає верхньої межі розміру op/ciphertext"}
+  - {id: 13, status: not_confirmed, conclusion: "G06 Windows/macOS — не перевірити на Linux"}
+  - {id: 14, status: confirmed, conclusion: "RFC 9180 A.2 побайтово не застосовні; достатньо еталонів примітивів + незалежної node-реалізації обгортки"}
+findings:
+  - {id: U1, confirmed: true, class: condition_c2p_c3b, evidence: "identity.rs:17-26"}
+  - {id: U2, confirmed: true, class: condition_c2p_c3b, evidence: "replay.rs:181-187 (join перезаписує exchange); epoch.rs:103-109"}
+  - {id: U3, confirmed: true, class: condition_c2p_c3b, evidence: "epoch.rs:45-85 — EpochWrap лише в пам'яті"}
+  - {id: A1, confirmed: true, class: condition_c2p_c3b, evidence: "epoch.rs:55-63 — без v/suite; додати до першого збереженого EpochWrap"}
+  - {id: A2, confirmed: true, class: hardening, evidence: "epoch.rs:88-97 — eph_pub/pk одержувача не в KDF; разом з U3/A1"}
+  - {id: A3, confirmed: true, class: condition_c2p_c3b, evidence: "replay.rs:59-61, 108 — latest_seq має бути суцільним застосованим префіксом (контракт C1c/C3b)"}
+  - {id: A4, confirmed: true, class: hardening, evidence: "envelope.rs:23-33, 210-221 — генерувати nonce/envelope_id усередині seal до відкриття seal іншим викликачам"}
+  - {id: A5, confirmed: true, class: hardening, evidence: "secret_store.rs:163-165, 388-397; office_library.rs:209-212 — обмежений локальний DoS"}
+  - {id: A6, confirmed: true, class: condition_c2p_c3b, evidence: "replay.rs:40, 137-141 — ключ (collective, author_member_id, op_id) до мультивузлової доставки"}
+  - {id: A7, confirmed: true, class: documentation, evidence: "(а) checklist:13 «35» vs 37+1 (і опис PR #180 — за J3); (б) envelope.rs:174 replay::authorize → receive; (в) checklist:37-38 п. 15 перед п. 14; (г) ADR collective-crypto.md:174 — неіснуючий src/collective-envelope-core.js; (ґ) checklist:37 відсилає до ADR 2.2, де цього немає; (д) ADR:120 device_id vs device_pub у коді"}
+  - {id: N1, confirmed: true, class: condition_c2p_c3b, evidence: "replay.rs:108-110 — Deferred до перевірок складу; відкликаний автор і membership_seq=u64::MAX → вічне очікування; C3b: обмежити чергу (горизонт, розмір, TTL) і відхиляти revoked_at ≤ latest_seq до відкладення"}
+  - {id: N2, confirmed: true, class: hardening, evidence: "replay.rs:113, 129-134 — Quarantine не пише op_id; C1d має проводити схвалення через op-журнал"}
+  - {id: N3, confirmed: true, class: hardening, evidence: "node-тест/фікстура без негативного вектора WeakExchangeKey"}
+g12_recommendation: "Блокерів для C2 як бібліотеки без мережі й команд немає; G12 можна закрити після приймання J5 і підпису JE, якщо: виправлено A7 (а–д); п. 15 = відкрито для C2p/C3b з умовами U1–U3; A3, A6, N1 — обов'язкові вхідні умови C3b; п. 13 (G06) не перевірено; п. 10 оглянуто частково."
+open_for_je_j5:
+  - "Приймання J5 (змістове) — не виконано"
+  - "Рішення JE: закриття G12 і чи виправляти A7 (документація) на #180 до закриття"

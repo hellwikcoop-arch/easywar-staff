@@ -1,0 +1,31 @@
+# Висновок C3 (рецензія №3: лише зміни A7) за T-0017, CONTRACT_v0_4.md розділ 18. Read-only. Лише синтетичні дані.
+# Записав J3 за змістом підсумку рецензента (без транскрипту і проміжних виводів).
+task_id: T-0017
+task_version: 2
+report_no: 4
+by: C3
+recorded_by: J3
+at: 2026-10-29T05:30:00+00:00
+route: "J4 M-T-0017-0002 (TH-T-0017-002), inbox C3, dispatch_attempt 0; рецензент — окрема незалежна сесія Claude без контексту J3; автентифікації ролі C3 немає (F-9)"
+review_status: complete
+verdict: passed
+subject: 9ea099433f83088fb97d04c6a0521e3379446fa0
+base: c2d8d4fc199ea520c57c0ebe78094757c24a6cbb
+resources: {files_read_count: 6, max_read_files: 10, tool_calls: 7, max_calls: 20, attempts: 1}
+files_read: [reports/T-0017/003.yaml, docs/adr/collective-crypto.md (85–179), docs/evidence/collectives/2026-10-29-c2-g12-checklist.md, collective/replay.rs (grep), collective/envelope.rs (grep), tests/collective-crypto-vectors.test.mjs (grep)]
+checks:
+  - {cmd: "git rev-parse HEAD", result: "9ea0994… — збігається"}
+  - {cmd: "git status --porcelain --untracked-files=no", result: "порожньо до і після тестів"}
+  - {cmd: "git diff --numstat c2d8d4f 9ea0994", result: "3 файли: ADR +4/-3, чекліст +27/-2, envelope.rs +1/-1"}
+  - {cmd: "cargo test --locked --manifest-path src-tauri/Cargo.toml collective::", subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, result: "37 passed, 0 failed, 1 ignored"}
+  - {cmd: "cargo fmt --manifest-path src-tauri/Cargo.toml --check", result: "чисто"}
+  - {cmd: "grep replay::authorize | collective-envelope-core; grep device_id в ADR", result: "збігів немає"}
+a7: {1: ok, 2: ok, 3: ok, 4: ok, 5: ok, 6: ok}
+code_unchanged: true
+conditions_preserved: true
+findings:
+  - {id: R1, severity: nit, evidence: "чекліст:53 — «Код, залежності й тести не змінювались», хоча змінено один doc-коментар envelope.rs:174"}
+  - {id: R2, severity: nit, evidence: "ADR:176 — новий текст склеєно з реченням про CBOR в один довгий рядок"}
+  - {id: R3, severity: nit, evidence: "чекліст:13 — кількість позначено «на c2d8d4f»; на 9ea0994 те саме"}
+j3_on_nits: "R1–R3 косметичні; не виправляються, щоб не міняти SHA 9ea0994, на якому вже є CI і C3. Пропоную внести їх разом з наступною змістовною зміною (C2p) або за окремим словом JE/J5."
+summary: "Усі шість виправлень A7 правильні; змінено лише документацію і один doc-коментар; умови J5 збережено (п. 15 відкрито з U1–U3; A3/A6/N1 — передумови C3b; пп. 10, 13 відкриті; G12 відкрито)."

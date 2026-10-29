@@ -1,0 +1,36 @@
+# Технічне приймання J3 за T-0017 на актуальному subject (CONTRACT v0.4 §6 «Умови переходу в done», п. 1 і п. 4). Лише синтетичні дані.
+# Усі перевірки checks.verify виконано на САМОМУ subject (чистий checkout 70bade5 або CI з checkout точного SHA), без зарахування за тотожністю дерев.
+task_id: T-0017
+task_version: 3
+report_no: 9
+by: J3
+at: 2026-10-29T14:35:00+00:00
+kind: technical_acceptance
+subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4   # head PR EasyWAR #180, коміт злиття (батьки 9ea0994, main 649b6e2)
+checks:   # executed_on = SHA, на якому перевірку реально виконано
+  - {verify: "cargo test --locked --manifest-path src-tauri/Cargo.toml collective", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "J3, Linux, чистий checkout (git status порожній до і після)", result: "38 passed, 0 failed, 1 ignored, 493 filtered; exit 0", note: "фільтр без «::» ловить ще 1 тест поза модулем collective; з «collective::» — 37 + 1 ignored", passed: true}
+  - {verify: "cargo clippy --locked … --all-targets --all-features -- -D warnings", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "J3, Linux", result: "exit 0", passed: true}
+  - {verify: "cargo fmt --check", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "J3, Linux", result: "exit 0", passed: true}
+  - {verify: "cargo audit --file src-tauri/Cargo.lock", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "J3, Linux, --no-fetch, локальна advisory-db 40f5be6 (2026-10-28)", result: "exit 0, вразливостей 0, 3 дозволені попередження (allowed warnings, як і до PR)", passed: true}
+  - {verify: "node --test tests/collective-crypto-vectors.test.mjs tests/network-boundary.test.mjs", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "J3, Linux", result: "17/17", passed: true}
+  - {verify: "npm run test:unit", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "J3, Linux (node_modules — тимчасове посилання на основну копію, package-файли не змінено)", result: "1647/1647, fail 0, exit 0 (разом з XLSX-контрактом)", passed: true}
+  - {verify: "CI desktop-build checks + audit", executed_on: "merge-ref PR #180 (GitHub, дерево = 70bade5, оскільки main 649b6e2 не рухався); head_sha 70bade5", where: "run 40880492187", result: "audit success; checks success після одного перезапуску тесту таймінгу local_model (поза PR)", passed: true, note: "як і в T-0011, CI на PR тестує merge-ref, а не сам SHA; на самому 70bade5 ті самі перевірки виконав J3 вище"}
+  - {verify: "G06 macOS: cargo test --locked collective::", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "C5.1, Darwin arm64, rustc 1.98.1", result: "37 passed, 1 ignored", passed: true, evidence_ref: reports/T-0017/007.yaml}
+  - {verify: "G06 Windows: cargo test --locked collective::", executed_on: 70bade5e06ab781fc2906529ce415b92d2fd28b4, where: "GitHub Actions windows-2025, rustc 1.99.1, run 40885518249 (checkout і перевірка точного SHA)", result: "37 passed, 1 ignored", passed: true, evidence_ref: reports/T-0017/008.yaml}
+review:
+  - {reviewer: C3, subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4, verdict: passed, scope: "лише коміт злиття", ref: reports/T-0017/006.yaml}
+  - {reviewer: C3, subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, verdict: passed, scope: "зміни A7", ref: reports/T-0017/004.yaml}
+  - {reviewer: C3, subject: c2d8d4fc199ea520c57c0ebe78094757c24a6cbb, verdict: "passed з умовами", scope: "повний G12-огляд", ref: reports/T-0017/002.yaml}
+identity_chain: "дерево collective/, ADR, вектори й чекліст на 70bade5 = 9ea0994 (006 п. 2); 9ea0994 − c2d8d4f = лише docs і 1 коментар (004)"
+acceptance:
+  role: technical
+  result: accepted
+  scope: full
+  limits: []
+  covers: "реалізація C2 за end_state наказу (крім пункту G12, який закривають J5 і JE) і всі checks.verify на 70bade5"
+not_covered_by_j3:
+  - "G12 (незалежна перевірка дизайну протоколу) — відкрито до J5 content і рішення JE"
+  - "п. 15 (зв'язування sign↔exchange) — відкрито для C2p/C3b з U1–U3; A3, A6, N1 — передумови C3b; п. 10 оглянуто C3 частково (рішення J5 05:08Z)"
+  - "production-підключення C2, команди Tauri, мережа — поза наказом"
+budget: {max_calls: 190, used_estimate: "≈183", accuracy: estimate}
+next: "J5 content на 70bade5; потім JE (key_decision). #180 не зливати до JE-T5 і окремого рішення JE"

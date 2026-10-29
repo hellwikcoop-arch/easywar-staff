@@ -1,0 +1,28 @@
+# Доказ G06 (macOS, повтор) за T-0017 / п. 13 чекліста G12 на новому head PR #180. Лише синтетичні дані.
+# Донесення Codex, передане JE у тред J3 29.10.2026 13:21Z; записав J3 без транскрипту.
+# 005.yaml (9ea0994) лишається історичним доказом для попереднього head і не змінюється.
+task_id: T-0017
+task_version: 3
+report_no: 7
+by: C5.1
+recorded_by: J3
+at: 2026-10-29T13:21:54+00:00
+gate: G06
+platform: macOS
+subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4
+supersedes_for_head: reports/T-0017/005.yaml
+environment:
+  checkout: "окремий чистий checkout /private/tmp/easywar-g06-9ea0994 (назва каталогу лишилась від першого прогону)"
+  head: "git rev-parse HEAD = 70bade5e06ab781fc2906529ce415b92d2fd28b4"
+  worktree: "git status --short порожній"
+  uname: "Darwin arm64"
+  toolchain: "rustc 1.98.1"
+checks:
+  - {cmd: "cargo test --locked --offline --manifest-path src-tauri/Cargo.toml collective::", subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4, result: "exit 0; lib: 37 passed, 0 failed, 1 ignored, 494 filtered out; main: 0 tests; збірка test-профілю 2m44s"}
+notes:
+  - "Крейти вже були в локальному кеші; мережевого доступу в цьому запуску не було (--offline, --locked)"
+  - "Звірка J3: 37 + 1 + 494 = 532 = 530 passed + 2 ignored у повному cargo test J3 на тотожному дереві 33f71fc; на 9ea0994 було 481 filtered — різниця 13 = тести, що прийшли з main (E4)"
+unverified:
+  - "Windows (друга половина G06) — не підтверджено"
+  - "Незалежного повтору прогону J3 немає (у J3 немає macOS); доказ — донесення C5.1 з точним SHA і підсумком"
+next: "Windows G06, зелений CI, J3 technical і J5 content на 70bade5; G12 і merge #180 відкриті"

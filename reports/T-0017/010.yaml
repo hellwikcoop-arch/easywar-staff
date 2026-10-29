@@ -1,0 +1,29 @@
+task_id: T-0017
+task_version: 3
+report_no: 10
+by: J5
+recorded_at: "2026-10-29"
+kind: content_acceptance_and_je_decision
+subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4
+evidence:
+  - reports/T-0017/002.yaml
+  - reports/T-0017/006.yaml
+  - reports/T-0017/007.yaml
+  - reports/T-0017/008.yaml
+  - reports/T-0017/009.yaml
+acceptance:
+  role: content
+  result: accepted_with_conditions
+  scope: "C2 isolated library only, no network, no production, no Tauri commands"
+  basis: "J5 content review of J3/C3/G06 reports; not a fresh independent source-code audit"
+conditions:
+  - "U1-U3 mandatory before C2p/C3b"
+  - "A3, A6, N1 block C3b until resolved"
+  - "G12 item 15 remains open for C2p/C3b"
+  - "G12 item 10 only partially independently reviewed by C3"
+  - "No production, network delivery or Tauri exposure without separate acceptance"
+je_decision:
+  id: JE-T5
+  result: "G12 closure approved with J5 conditions"
+  merge_pr_180: forbidden_until_separate_je_order
+  note: "JE explicitly instructed not to merge PR #180 without a separate order"
