@@ -16,7 +16,7 @@ import * as closeMod from '../src/close.mjs';
 import { Store } from '../src/store.mjs';
 import { Ledger } from '../src/ledger.mjs';
 import { canonical, sha256 } from '../src/protocol.mjs';
-import { tmpStaff, SHA_A, SHA_B } from './helpers.mjs';
+import { tmpStaff, pinnedId, installJ4, SHA_A, SHA_B } from './helpers.mjs';
 
 const { closeTask, readLedgerStrict } = closeMod;
 const CLI = path.join(BRIDGE_DIR, 'bin', 'j4.mjs');
@@ -48,9 +48,10 @@ function writeEvidence(root, text = `- {cmd: "${CMD}", subject: ${SHA_A}, result
   return 'reports/checks.yaml';
 }
 
+// T-0011: закріплене значення установки береться з marker-а тестового сховища; хост-змінні закріплення не просочуються в тест
 function cliEnv(root, extra = {}) {
-  const env = { ...process.env, J4_STAFF_ROOT: root, J4_HOME: path.join(root, '.j4'), J4_LEDGER: path.join(root, 'ledger.jsonl'), J4_MONTHLY_BUDGET: path.join(root, 'monthly.json'), ...extra };
-  for (const k of ['J4_HALT', 'J4_ALLOW_LIVE', 'J4_APPROVAL', 'J4_TASK_EVENTS']) if (!(k in extra)) delete env[k];
+  const env = { ...process.env, J4_STAFF_ROOT: root, J4_HOME: path.join(root, '.j4'), J4_LEDGER: path.join(root, 'ledger.jsonl'), J4_MONTHLY_BUDGET: path.join(root, 'monthly.json'), ...(pinnedId(root) ? { J4_INSTALLATION_ID: pinnedId(root) } : {}), ...extra };
+  for (const k of ['J4_HALT', 'J4_ALLOW_LIVE', 'J4_APPROVAL', 'J4_TASK_EVENTS', 'J4_LEDGER_FIRST_HASH', 'J4_LEDGER_MIN_SEQ']) if (!(k in extra)) delete env[k];
   return env;
 }
 
@@ -71,13 +72,12 @@ function base({ entries = 3 } = {}) {
   writeOrder(root);
   const ref = writeEvidence(root);
   fullAcceptance(root);
-  new Store(path.join(root, '.j4'));
-  const led = new Ledger(path.join(root, 'ledger.jsonl'));
+  const led = new Ledger(path.join(root, 'ledger.jsonl'), { installationId: new Store(path.join(root, '.j4')).installation().installation_id }); // T-0011: журнал прив'язаний до установки
   for (let n = 1; n <= entries; n += 1) led.append({ event: 'test_entry', at: '2026-10-27T00:00:00.000Z', detail: { n } });
   return { root, ref, args: ['close', '--task', T, '--subject', SHA_A, '--checks-ref', ref], ledger: path.join(root, 'ledger.jsonl'), home: path.join(root, '.j4'), led };
 }
 
-const src = (root) => ({ store: new Store(path.join(root, '.j4')), ledgerEntries: new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries });
+const src = (root) => ({ store: new Store(path.join(root, '.j4')), ledgerEntries: new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries, installationId: pinnedId(root) });
 
 // Знімок дерева: шлях, тип і sha256 вмісту. Порівняння до/після показує, що нічого не створено й не змінено.
 function tree(dir) {
@@ -150,8 +150,9 @@ test('T-0010 A2: inspectJ4Home розрізняє «не сховище» і «�
 test('T-0010 A3: closeTask не падає винятком, коли сховище J4 нечитне, а відмовляє (escalation-source-unreadable)', () => {
   const t = base();
   const ledgerEntries = new Ledger(t.ledger).readAll().entries;
-  const throwing = { list: () => { throw Object.assign(new Error('EIO'), { code: 'EIO' }); }, readJson: () => null };
-  const r = closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, store: throwing, ledgerEntries });
+  const marker = new Store(t.home).installation(); // T-0011: підставне сховище має віддавати marker, інакше відмова буде за ідентичністю, а не за читанням
+  const throwing = { installation: () => marker, list: () => { throw Object.assign(new Error('EIO'), { code: 'EIO' }); }, readJson: () => null };
+  const r = closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, store: throwing, ledgerEntries, installationId: pinnedId(t.root) });
   assert.equal(r.ok, false);
   assert.equal(r.code, 'escalation-source-unreadable');
   assert.deepEqual(r.missing, ['store-unreadable']);
@@ -170,8 +171,8 @@ test('T-0010 A3: closeTask не падає винятком, коли схови
   }
   fs.writeFileSync(path.join(t.home, 'escalations', 'E-X.json'), '{не json');
   // помилка програми (не fs і не JSON) не маскується під «нечитне сховище»
-  const buggy = { list: () => { throw new TypeError('помилка програми'); }, readJson: () => null };
-  assert.throws(() => closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, store: buggy, ledgerEntries }), TypeError);
+  const buggy = { installation: () => marker, list: () => { throw new TypeError('помилка програми'); }, readJson: () => null };
+  assert.throws(() => closeTask({ staffRoot: t.root, taskId: T, subject: SHA_A, checksRef: t.ref, store: buggy, ledgerEntries, installationId: pinnedId(t.root) }), TypeError);
   // CLI: те саме — код 3 і ні done, ні виклику адаптера
   const c = cli(t.root, t.args);
   assert.equal(c.code, 3, c.stderr);
@@ -251,6 +252,7 @@ test('T-0010 B2: j4 close не створює і не змінює жодног�
   const t = base();
   const alien = path.join(t.root, 'alien-home');
   fs.mkdirSync(path.join(alien, 'escalations'), { recursive: true });
+  fs.copyFileSync(path.join(t.home, 'installation.json'), path.join(alien, 'installation.json')); // T-0011: чужа тека без marker-а тепер відмова (t0011 I6); тут — тека з marker-ом тієї ж установки
   const beforeAlien = tree(alien);
   const r = cli(t.root, t.args, { J4_HOME: alien });
   assert.equal(r.code, 0, r.stderr);
@@ -283,6 +285,7 @@ function evidenceResult(text, { verify = [CMD], subject = SHA_A } = {}) {
   fullAcceptance(root);
   writeOrder(root, { verify });
   const ref = writeEvidence(root, text);
+  installJ4(root);
   return closeTask({ staffRoot: root, taskId: T, subject, checksRef: ref, ...src(root) });
 }
 
@@ -388,6 +391,7 @@ test('T-0010 C2: F-T9-22 — справжні форми запису (reports/T
   writeOrder(root, { verify: [CMD] });
   const text = rec('76/76 pass, fail 0', ', by: J3');
   const ref = writeEvidence(root, text);
+  installJ4(root);
   const r = closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref, ...src(root) });
   assert.equal(r.ok, true);
   assert.equal(r.entry.evidence_sha256, createHash('sha256').update(text).digest('hex'));

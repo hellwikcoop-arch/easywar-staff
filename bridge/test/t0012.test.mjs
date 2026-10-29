@@ -12,6 +12,7 @@ import { closeTask } from '../src/close.mjs';
 import { acceptanceReady, evidenceFromEvents } from '../src/acceptance.mjs';
 import { Store } from '../src/store.mjs';
 import { Ledger } from '../src/ledger.mjs';
+import { installJ4, pinnedId } from './helpers.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..', '..');
@@ -29,7 +30,7 @@ function staff(verify = [CMD]) {
   fs.writeFileSync(path.join(root, 'tasks', T, 'events.jsonl'), `${JSON.stringify({ seq: 1, event: 'task_accepted', task_id: T, by: 'J3' })}\n`);
   fs.writeFileSync(path.join(root, 'tasks', T, 'order.yaml'), ['id: T-0900', 'data_class: synthetic', 'acceptance: {technical: J3, content: J5, key_decision: false}', 'checks:', '  subject_kind: commit', `  verify: ${JSON.stringify(verify)}`, '  review_kind: code', ''].join('\n'));
   fs.mkdirSync(path.join(root, 'reports'), { recursive: true });
-  new Store(path.join(root, '.j4'));
+  installJ4(root); // T-0011: сховище з marker-ом і журнал, прив'язаний до цієї установки
   new Ledger(path.join(root, 'ledger.jsonl')).append({ event: 'test_entry', at: '2026-10-27T00:00:00.000Z', detail: { n: 1 } });
   return root;
 }
@@ -39,7 +40,7 @@ const evidence = (root, text) => { fs.writeFileSync(path.join(root, 'reports', '
 const review = (root, extra = {}) => add(root, { event: 'review_finished', by: 'C3', subject: SHA_A, review_status: 'complete', verdict: 'passed', ref: 'r', ...extra });
 const accept = (root, by, role, extra = {}) => add(root, { event: 'acceptance', by, role, subject: SHA_A, result: 'accepted', scope: 'full', ref: `a-${by}`, ...extra });
 const full = (root) => { review(root); accept(root, 'J3', 'technical'); accept(root, 'J5', 'content'); };
-const src = (root) => ({ store: Store.open(path.join(root, '.j4')), ledgerEntries: new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries });
+const src = (root) => ({ store: Store.open(path.join(root, '.j4')), ledgerEntries: new Ledger(path.join(root, 'ledger.jsonl')).readAll().entries, installationId: pinnedId(root) });
 const close = (root, ref) => closeTask({ staffRoot: root, taskId: T, subject: SHA_A, checksRef: ref, ...src(root) });
 const barrier = (root) => { const ev = evidenceFromEvents(root, T); return acceptanceReady({ subject: SHA_A, checks: [{ subject: SHA_A, passed: true, evidence_ref: 'x' }], reviews: ev.reviews, acceptances: ev.acceptances }); };
 const events = (root) => fs.readFileSync(path.join(root, 'tasks', T, 'events.jsonl'), 'utf8');

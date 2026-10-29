@@ -89,9 +89,10 @@ test('підробка запису журналу виявляється', asyn
   await j4.process();
   const f = path.join(root, 'ledger.jsonl');
   const lines = fs.readFileSync(f, 'utf8').split('\n');
-  lines[2] = lines[2].replace('"verdict":"answer"', '"verdict":"accepted"');
+  assert.ok(lines[3].includes('"verdict":"answer"'), 'T-0011: запис із вердиктом — четвертий (перед ним прив\'язка seq 1)');
+  lines[3] = lines[3].replace('"verdict":"answer"', '"verdict":"accepted"');
   fs.writeFileSync(f, lines.join('\n'));
   const v = verifyLedger(f);
   assert.equal(v.ok, false);
-  assert.ok(v.problems.some((p) => p.code === 'hash' && p.line === 3));
+  assert.ok(v.problems.some((p) => p.code === 'hash' && p.line === 4));
 });
