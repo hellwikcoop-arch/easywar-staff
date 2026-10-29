@@ -1,0 +1,43 @@
+task_id: T-0017
+task_version: 3
+report_no: 11
+by: J3
+to: J5
+recorded_at: "2026-10-29T15:02:00+00:00"
+kind: docs_pr_package
+basis: "розпорядження J5 щодо T-0017, передане JE у треді 29.10.2026 14:59:04Z"
+merge_pr_180:
+  pr: https://github.com/hellwikcoop-arch/EasyWAR/pull/180
+  accepted_head: 70bade5e06ab781fc2906529ce415b92d2fd28b4
+  merge_commit: ed5819c8dc75d0826266e3c314bf2fbe0aa12449
+  method: merge
+  guard: "expectedHeadSha = 70bade5 (злиття відхилилось би, якби head змінився)"
+  decided_by: "JE, картка 14:53:38Z, після рекомендації J5 (seq 35)"
+  event: "tasks/T-0017/events.jsonl seq 36"
+docs_pr:
+  pr: https://github.com/hellwikcoop-arch/EasyWAR/pull/192
+  state: "open, draft, не злитий"
+  branch: claude/project-thread-0u03av
+  head: b97177850239061ea407388d291357ad17283cba
+  base_at_pr_open: ed5819c8dc75d0826266e3c314bf2fbe0aa12449
+  main_now: "4916cf19e5271d4dc776107eafa3244ca2535486 (+#187 E3в, не з цього завдання)"
+  conflicts_with_main_now: "немає (git merge-tree origin/main origin/claude/project-thread-0u03av)"
+  docs_only: true
+  files:
+    - {path: docs/adr/collective-crypto.md, blob: c6855c58d77ed8fa8f6e14ad309303d2f8fffbe4, change: "статус: у main з 29.10 (PR #180), G12 закрито з умовами; межа ізольованої бібліотеки; рецензента G12 призначено (C3)"}
+    - {path: docs/COLLECTIVES_PLAN.md, blob: becda16618bb4f733275f5b4eed1e80157112b5c, change: "рядок C2 §8: G06 для C2 на Linux/Windows/macOS (70bade5), G12 закрито з умовами, G11 відкрито; рядок G12 §9: стан 29.10"}
+    - {path: docs/evidence/collectives/2026-10-29-c2-g12-checklist.md, blob: 1e67d6f3f52d82236d1ab9fd9b4b974219c8adb9, change: "статус «закрито з умовами»; розділ «Закриття» заповнено; первісний текст збережено"}
+  diffstat: "3 файли, +27 −7"
+  g12_wording: "закрито з умовами"
+  still_open: ["U1–U3 (до C2p/C3b)", "A3, A6, N1 (блокують C3b)", "п. 15 (C2p/C3b)", "п. 10 — частково"]
+checks:
+  - {name: "CI desktop-build audit", executed_on: b971778, result: success, ref: "https://github.com/hellwikcoop-arch/EasyWAR/actions/runs/40896427004/job/123526663509"}
+  - {name: "CI desktop-build checks (fmt, clippy, cargo test, test:unit, build)", executed_on: "refs/pull/192/merge (merge-ref з ed5819c)", result: success, ref: "https://github.com/hellwikcoop-arch/EasyWAR/actions/runs/40896427004/job/123526664292"}
+  - {name: "macos, windows, release", result: skipped, note: "на PR не запускаються; для зміни лише документації не потрібні"}
+  - {name: "node script/assistant_index.mjs", executed_on: b971778, result: "індекс не змінився"}
+  - {name: "текстові контракти в tests/ і src-tauri/src на ці документи", result: "немає (grep)"}
+limits:
+  - "CI тестує merge-ref, не сам b971778; дерево документів однакове, код не змінено"
+  - "код, тести, залежності, CSP, capabilities не змінено"
+task_state: "T-0017 відкрито (waiting); done — лише після рішення щодо #192 і окремого наказу JE"
+budget: {calls_used: 189, max_calls: 190, accuracy: estimate}
