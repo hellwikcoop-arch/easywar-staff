@@ -20,6 +20,7 @@ intent:
     - "тільки синтетичні дані; жодних реальних ключів у репозиторії"
     - "без мережі, listener, команд Tauri, CSP/capabilities, міграцій (міграції — C3)"
     - "Cargo.lock змінюється лише цим наказом; Dependabot #169/#165 закрити/злити ДО старту"
+    - "ОНОВЛЕНО 29.10 01:20Z: власник уже злив Dependabot #169 (chacha20poly1305 0.10 → 0.11), #166 (zip 4.6.1), #167 (rfd 0.17.2) і #175 (rfd gtk3, нові ключ/nonce у шифруванні Офісу). Перед стартом: перечитати таблицю крейтів ADR collective-crypto §1 — варіант Б розраховано на покоління 0.10 для AEAD/HKDF; якщо chacha20poly1305 0.11 у main лишається, узгодити покоління (hkdf/hmac/sha2 0.13/0.11) або зафіксувати окрему копію; #168 (calamine) відкритий"
     - "ADR лишаються з умовою JE-15 «умовно» до G12"
 scope:
   in: [src-tauri/Cargo.toml, src-tauri/Cargo.lock, src-tauri/src/lib.rs (лише pub mod), src-tauri/src/collective/**, tests/fixtures/collective-crypto-vectors.json, tests/collective-crypto-vectors.test.mjs, docs/adr/collective-crypto.md, docs/COLLECTIVES_PLAN.md, docs/evidence/collectives/]
