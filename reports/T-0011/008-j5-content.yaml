@@ -1,0 +1,15 @@
+task: T-0011
+kind: acceptance
+by: J5
+role: content
+subject: a9baf25893aa8caa2748a99406072281d24f27fb
+result: accepted
+scope: full
+limits: []
+evidence_ref: reports/T-0011/007.yaml
+additional_evidence:
+  - reports/T-0011/003.yaml
+  - tasks/T-0011/order.yaml
+  - tasks/T-0011/je-decision-T11-02.md
+basis: "J5 review of documented evidence and exact-SHA test report; no new test calls"
+note: "Residual risks remain open outside accepted T-0011 scope; no live adopt, close or done authorized"
