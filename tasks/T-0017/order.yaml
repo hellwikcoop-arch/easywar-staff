@@ -1,6 +1,9 @@
-# ЧЕРНЕТКА (J3, 29.10.2026, за п. 7 рішення JE за R3). НЕ НАКАЗ. Номер T-XXXX, max_calls і task_created — за J5/JE.
-# Не запускати автоматично. Передумови: злиття PR #172 за JE-T5; рішення JE-15 (Б, умовно), JE-16 (а), JE-18 (Ф) — є (29.10.2026).
-id: T-XXXX
+# Наказ T-0017 (R4 = C2 Rust Crypto Engine) за п. 7 рішення JE за R3 (tasks/T-0016/je-decision-R3.md) і словом JE 29.10.2026 01:24Z
+# («наступний наказ (R4 C2 / CSP»). Оформлено з чернетки tasks/E8-C2/order.draft.yaml (історія в git). Ресурсний дозвіл JE на max_calls —
+# очікується (пропозиція J3: 150); task_accepted J3 — лише після дозволу. Виконання НЕ почато.
+# Передумови: PR #172 злито (0fa5c32); JE-15 Б умовно, JE-16 а, JE-18 Ф — є; підпитання JE-16 (офлайн-операції відкликаного: а/б) — відкрите,
+# робоче припущення (б) відхиляти, доки JE не скаже інакше. Cargo.lock у main уже змінено (#166/#167/#169/#175) — звірити таблицю крейтів ADR §1 на старті.
+id: T-0017
 version: 1
 parent_task_id: null
 title: "R4 / E8 C2 — Rust Crypto Engine: ключі, епохи, конверт EnvelopeV1, сховище секретів (варіант Б, без мережі)"
@@ -41,7 +44,7 @@ checks:
     - "npm run test:unit; CI desktop-build checks + audit success"
     - "G06: ті самі вектори на Windows і macOS (поза хмарною сесією — окремий доказ власника або CI на тегах)"
   review_kind: code
-resources: {max_calls: NOT_AUTHORIZED, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
+resources: {max_calls: PENDING_JE, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
 reporting:
   milestones: ["залежності + вектори + codec (PR чернетка)", "identity/epoch/envelope/replay зелені", "secret_store з 5 перевірками JE-18", "G12 звіт", "C3 passed; J3; J5"]
   thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
