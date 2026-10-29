@@ -271,9 +271,14 @@ test('F-4: паралельні процеси send не рвуть ланцюг
   for (const p of procs) assert.equal(p.status, 0, p.stderr);
   const v = verifyLedger(path.join(root, 'ledger.jsonl'));
   assert.equal(v.ok, true, JSON.stringify(v.problems));
-  assert.equal(v.entries, 12);
+  assert.equal(v.entries, 13); // T-0011: 12 повідомлень + запис прив'язки журналу до установки (seq 1)
   const ids = events(root, 'message_accepted').map((e) => e.msg_id);
   assert.equal(new Set(ids).size, 12);
+  // T-0011: чотири процеси стартують разом на порожньому сховищі — один marker і рівно один запис прив'язки, що збігається з ним
+  const bind = events(root, 'installation');
+  assert.equal(bind.length, 1);
+  assert.equal(bind[0].seq, 1);
+  assert.equal(bind[0].detail.installation_id, JSON.parse(fs.readFileSync(path.join(root, '.j4', 'installation.json'), 'utf8')).installation_id);
 });
 
 test('F-6: замок загиблого процесу не блокує облік назавжди', () => {
