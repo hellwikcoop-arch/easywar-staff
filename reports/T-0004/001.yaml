@@ -1,0 +1,28 @@
+# Донесення J3 за T-0004 (C1c, виконавець C5.1): технічне приймання J3. Лише синтетичні дані.
+task_id: T-0004
+task_version: 2
+report_no: 1
+by: J3
+at: 2026-10-29T04:05:00+00:00
+state: review_pending
+milestone: "handoff J3 → J3 technical"
+pr: "hellwikcoop-arch/EasyWAR#182 (draft, base main a1761880, head b29f5d7846203323f5e7a783f71dbb6e6b89e94f, гілка codex/t-0004-c1c-membership)"
+handoff_ref: "повідомлення JE 29.10 03:59Z (handoff_format_for_C5.1_code) + уточнення 04:03Z (task_version 2)"
+confirmed_by_j3:
+  - "git diff --name-only origin/main...HEAD = рівно 4 файли scope.in: src/collective-core.js, src/collective-pair-core.js, tests/collective.test.mjs, tests/collective-pair.test.mjs; merge-base = a1761880"
+  - "node --check обох ядер — ок; node --test tests/collective.test.mjs tests/collective-pair.test.mjs tests/collective-core-boundaries.test.mjs — 28/28"
+  - "npm run test:unit на head у чистому worktree хмарної сесії — 1609/1609 (12 падінь у середовищі Codex — лише sandbox: loopback EPERM, DNS crates.io)"
+  - "ядра без fetch/require/tauri/crypto/Math.random/Date.now (текстовий grep); час і ліміти задає викликач"
+  - "CI PR #182 на b29f5d7: checks success, audit success (за повідомленням JE; підписка J3 на події PR активна)"
+unverified:
+  - "C3 (незалежна рецензія коду) і J5 (приймання змісту за AC01–AC20, JE-T6/T7) — не виконані"
+  - "3 mutation probes — лише за донесенням C5.1, J3 не відтворював"
+  - "macOS/Windows — skipped у CI (тільки теги)"
+blockers: []
+decisions_for_je:
+  - "Призначити C3 на рецензію #182 (≈10 викликів з T-0002) і J5 на приймання змісту; злиття — лише після обох"
+resources_used:
+  t0004_codex_estimate: "25 (виконання) + публікація в межах A-2 (35); точний залишок C5.1 не звітований"
+  t0002_j3_this_handoff_estimate: 8
+  t0002_remaining_estimate: "≈46 з 235 (було ≈54 після A-3; після C3 ≈10 і J3 technical ≈6 лишиться ≈30)"
+next: "чекати C3/J5; за командою JE J3 готує злиття #182 після приймання"
