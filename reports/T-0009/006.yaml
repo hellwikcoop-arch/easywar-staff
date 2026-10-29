@@ -1,0 +1,61 @@
+task_id: T-0009
+task_version: 2
+seq: 6
+author: J3
+to: JE
+cc: J5
+kind: status_report   # прийом JE-T9-04 (проєкт), підготовчі матеріали, запит підтвердження
+at: 2026-10-27T07:32:00+00:00
+subject: {kind: commit, ref: 67eb3310db5f69f2451ce748d72722c614409425}   # bridge/ без змін
+result: JE_T9_04_recorded_as_draft_awaiting_confirmation   # done не встановлено; acceptance J5 не записано; PR не відкрито; CI не запускався
+
+received:
+  text: "tasks/T-0009/je-decision-T9-04.md (дослівно)"
+  status: "ПРОЄКТ: у тексті стоїть «проєкт на затвердження JE»; J3 не знімає позначку сам (заборона автоматичного погодження рішень JE)"
+  not_done_because_draft: ["подія command від JE у events.jsonl", "повідомлення J5 про дозвіл на повторне приймання як чинне", "підстановка значень у runbook"]
+
+prepared:   # усе поза bridge/; контрольний SHA T-0009 не змінено
+  runbook: "tasks/T-0009/runbook-close.md — чернетка; канонічні J4_HOME, J4_LEDGER, ledger_first_hash, ledger_head НЕ заповнено (не вигадувалось)"
+  tool: "tasks/T-0009/tools/reconcile-close.mjs — лише читання: звірка пари з очікуваними first/head, ескалацій за сховищем, журналом J4 і events.jsonl; без очікувань відмовляє; 12 синтетичних тестів, 7 мутантів знайдено"
+  follow_up_orders: "reports/T-0009/follow-up-orders.md — чернетки: 1) B2 (ідентичність сховища; зміни моделі довіри винесено на окреме затвердження JE), 2) F-T9-16 (f-t9-16-proposal.md), 3) стабілізація F-T9-19…23 і DESIGN §17"
+  risk_register: "reports/T-0009/risk-register.yaml оновлено: F-T9-18 → процедурний контроль C у чернетці, B2 — окремий наказ"
+
+actual_config_finding:   # D-8 «отримати з фактичної конфігурації»
+  found_in_repo: "типові значення J4_HOME=<корінь штабу>/.j4, журнал=<корінь штабу>/bridge/ledger/ledger.jsonl; приклад розкладу DESIGN §17: $HOME/.j4, $HOME/.j4/ledger.jsonl; j4 close вимагає явні змінні"
+  not_found: "справжнього сховища/журналу в хмарній копії немає; ідентифікатора установки в коді J4 немає (лише пара J4_HOME + ledger_first_hash як тимчасовий відбиток); до комп'ютера JE теки не підключено"
+  need_from_JE: "знімок значень командами з таблиці runbook на машині, де працює J4, або підключення теки J4 (лише читання) — тоді заповню таблицю"
+
+scope_for_J5_if_JE_confirms:   # JE-T9-04, абзац про T-0009
+  re_review: "змістове приймання лише обмеженої реалізації A (j4 run --once, скрипт запуску, замок, відновлення, зупинка, stub) і B (автоматичні події ADM) на 67eb3310db5f69f2451ce748d72722c614409425"
+  not_accepted: "C (автоматичне закриття j4 close): реалізовано, перевірено C3 passed, але не приймається до усунення F-T9-18; j4 close для встановлення done не виконується"
+  j3_position: "технічне приймання J3 (подія 17) читати як таке, що охоплює A/B; для C J3 свого твердження не поширює до рішення щодо F-T9-18 (звуження, не зміна журналу)"
+  evidence: ["reports/T-0009/001.yaml", "reports/T-0009/003.yaml", "reports/T-0009/004.yaml", "reports/T-0009/c3-reviews.yaml#seq=3"]
+  after_J5_acceptance: "PR до setup/staff-bootstrap через REST без злиття; один CI-прогін (резерв P-006, 48); результат — у коментар PR і звіт J5; done не встановлюється; злиття — окреме рішення JE"
+
+accounting:   # calls-ledger.yaml, A-008
+  limit: 250
+  used: {local_J3: 146, C3: 48, CI: 0, total: 194, remaining: 56}
+  this_step_calls: 0   # тести helper не імпортують Router/адаптери (exact за конструкцією)
+  ci_reserve_P006: 48
+  total_estimate_with_reserve: 242
+  paid_api_calls: 0
+  network_calls: 0
+
+verified:
+  - "reconcile-close: node --test tasks/T-0009/tools/reconcile-close.test.mjs → 12/12; мутанти m1…m5 і два на поля очікувань — усі знайдено (m2 спершу вижив — тест R2 посилено)"
+  - "bridge/, .github/, CONTRACT_v0_4.md (sha256 2fdc2f9d…a855de) без змін відносно HEAD"
+not_verified:
+  - "runbook на справжній установці J4: значень немає, процедуру не виконувано"
+  - "reconcile-close не рецензувався C3; перевірений лише синтетичними даними"
+  - "повні прогони не запускались (заборонено); CI не запускався"
+
+questions_for_JE:
+  - {id: Q-1, question: "Чи затверджує JE текст JE-T9-04 як чинне рішення (знімає позначку «проєкт»)? До відповіді матеріали вважаю чернетками, повідомлення J5 не надсилаю як чинне"}
+  - {id: Q-2, question: "Звідки взяти канонічні значення: JE знімає їх командами з runbook чи підключає теку J4 для читання?"}
+  - {id: Q-3, question: "Чи достатньо процедурного блокування j4 close (runbook) на час PR до setup/staff-bootstrap, чи потрібна кодова заборона done (зміна bridge/, новий SHA, окремий наказ)?"}
+  - {id: Q-4, question: "Чернетки наказів 1–3 передати J5 для нумерації й лімітів?"}
+
+residual_blocks:
+  - "F-T9-18 не усунено; процедурний контроль C ще не чинний (чернетка, значення не заповнено)"
+  - "змістове приймання J5 не записано; PR і CI не виконувались; done неможливий до приймання і окремого рішення JE"
+  - "M-1, M-2, M-5, M-7 ручні; M-4 планувальник не активовано; F-9, F-3 — межа рівня C"

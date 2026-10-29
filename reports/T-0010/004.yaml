@@ -1,0 +1,56 @@
+# T-0010: технічне приймання J3 на контрольному SHA і пакет для змістового приймання J5.
+task_id: T-0010
+from: J3
+to: J5
+cc: [JE]
+control_sha: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3      # коміт, що останнім змінює bridge/; усі наступні коміти гілки — лише tasks/T-0010/** і reports/T-0010/**
+base_sha: efe03c959107856f2536771ae5c023f1e007e7be      # t-0009/j4-automation (PR №6, чернетка; не змінювався)
+branch: t-0010/stabilization      # запушено, PR немає, CI-запусків немає (workflow лише pull_request і workflow_dispatch)
+authorization: "JE-T10-01, JE-T10-02, режим JE-T10-03"
+
+technical_acceptance:
+  by: J3
+  subject: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3
+  result: accepted
+  basis:
+    - "C3 раунд 2 на цьому SHA: review_status complete, verdict passed, обов'язкових 0 (reports/T-0010/c3-reviews.yaml seq 2; подія 12)"
+    - "докази перевірок на цьому SHA: reports/T-0010/003.yaml (повний набір 103/103 pass, 2 skipped A4/A5 під root, 0 fail; 12/12 під nobody; мутанти 42/42 + контроль)"
+    - "межі наказу: acceptance.mjs, bridge/config, CONTRACT_v0_4.md, .github, CSP, Tauri, міграції, секрети — без змін; у bridge/ змінено 6 файлів; F-T9-15 не включено; F-T9-21 — лише документація"
+    - "облік: 96 з 150 (J3 96, C3 0, CI 0); платних і мережевих викликів 0"
+  not_claimed: "це приймання J3 за роллю technical; воно не замінює змістове приймання J5, рецензію C3 чи рішення JE"
+
+implemented:
+  F-T9-19: "Store.list не ковтає EACCES/EIO/ELOOP (лише ENOENT); Store.open — режим лише для читання (assertWritable); inspectJ4Home розрізняє home-not-j4-store і home-unreadable; j4 close не створює теку J4_HOME"
+  F-T9-20: "openEscalations: не-об'єктні файли ескалацій → escalation-source-unreadable; звужений catch; readLedgerStrict із тест-швом afterVerify (ledger-changed-during-read)"
+  F-T9-21: "лише опис у DESIGN §17 (повторний j4 close після done — як було)"
+  F-T9-22: "сувора граматика записів перевірок: однорядковий flow-mapping із префіксом - або checks: , білий список ключів, subject = повний SHA, граматика result, блокові скаляри пропускаються, для кожної cmd діє останній запис"
+  F-T9-23: "зміна поведінки run --once на нечитній черзі: код 1 (було ok:true, код 0) — описано в DESIGN §18"
+  DOC-1: "виправлення DESIGN §17 (граматика доказів, read-only сховище, review_status null)"
+
+for_j5_content_decision:
+  - "Fail-closed граматика (F-T10-4): `tests 93 pass 93 fail 0`, JSON-ключі в лапках, слова not/never/false у хвості result — відхиляються мовчки. Підтвердити як свідомий вибір чи вимагати послаблення/діагностики причини відмови (потребує нового наказу)."
+  - "run --once: тепер код 1 і j4: EACCES на нечитній теці черги (було ok:true, код 0) — підтвердити як бажаний наслідок F-T9-19."
+  - "Відкладені необов'язкові R-10…R-12 (нижче) — підтвердити відкладення."
+  - "A4 і A5 пропускаються під root; виконуються під не-root і на CI; J3 перевірив 12/12 під nobody."
+
+deferred_non_mandatory:
+  R-10: "F-T10-10 — заголовок блокового скаляра з тегом/якорем (note: !!str |) не розпізнається; потрібен нетиповий YAML"
+  R-11: "F-T10-11 — пізніший збій варіантною командою (cmd з додатковим прапорцем/пробілом, запис без cmd) не скасовує раніший успіх"
+  R-12: "F-T10-12 — немає тесту порожнього рядка в блоковому скалярі; README не згадує код 1; A5 не перевіряє зняття замка"
+  reason: "виправлення змінює bridge/ → новий контрольний SHA → повний прогін J3 (48) і CI (48): 96+48+48 = 192 > 150; плюс раунд C3-3"
+  options_for_JE:
+    - "A (рекомендовано): відкласти R-10…R-12 у T-0012 (разом із F-T9-16) або окремий малий наказ; T-0010 іде до PR як є"
+    - "B: підняти ліміт T-0010 щонайменше до 192 (краще 200) і виправити R-10…R-12 у цьому ж завданні (+ раунд C3-3)"
+
+next_after_j5_content_acceptance:
+  - "записати подію acceptance J5/content у tasks/T-0010/events.jsonl і закомітити журнал ДО відкриття PR"
+  - "запушити гілку; відкрити чернетку PR без злиття; база — t-0009/j4-automation (стекова гілка від efe03c9, за JE-T10-02); після відкриття PR — жодних push"
+  - "очікуваний CI: одна подія PR ≈ 48 викликів → 144 з 150 (оцінка; accuracy estimate до підтвердження журналом прогону); результат CI — коментарем у PR"
+
+not_done: ["змістове приймання J5", "PR не створено", "CI не запускався", "done не встановлювався; j4 close реально не запускався", "T-0011 і T-0012 не реалізовувались (чернетки-ворота лишаються в гілці orders/T-0010-12)"]
+open_risks_unchanged: "F-T9-15, F-T9-16, F-T9-18, SCOPE-1, F-9, F-3; runbook T-0009 — чернетка; подія 25 T-0009 відкладена"
+gate_dry_run:
+  what: "суха перевірка closeTask на копії tasks/T-0010 і reports/T-0010/003.yaml у тимчасовій теці (поза репозиторієм), реальний J4_HOME не використовувався"
+  result_real_events: "ok false, barrier-not-passed, missing: [acceptance-J5-content-missing] — інших нестач немає"
+  caveat: "другий прогін із синтетичною подією J5 лише в тимчасовій теці перевіряв, що решта умов виконується; це не приймання J5 і в журнал T-0010 не потрапило"
+  calls: {adapter_calls: 0, counter_total: 0}

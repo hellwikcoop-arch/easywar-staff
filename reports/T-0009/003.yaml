@@ -1,0 +1,79 @@
+task_id: T-0009
+task_version: 2
+seq: 3
+author: J3
+to: JE
+cc: J5
+kind: milestone
+at: 2026-10-27T07:04:01+00:00
+subject: {kind: commit, ref: 67eb3310db5f69f2451ce748d72722c614409425}   # КОНТРОЛЬНИЙ SHA-КАНДИДАТ №3; bridge/ у наступних журнальних комітах не змінюється
+previous_control: d05dc5aaf449fc9c5be03a0869035e2871d6b57a   # C3 раунд 2: changes_requested
+base: {branch: setup/staff-bootstrap, sha: 7313085f44ae5c8dcbc37235bc43207bfaf94c19}
+branch: t-0009/j4-automation
+result: fixes_done_regression_green_awaiting_C3_round3   # не done; PR не відкрито; приймання J3/J5 не записано
+
+# Звіт за JE-T9-03 (tasks/T-0009/je-decision-T9-03.md): D-3 виправлення, D-4 третій раунд C3, D-5 бюджет V1, D-6 F-T9-16 окремо.
+
+changed_since_previous_control:   # git diff --stat d05dc5a..67eb3310db5f69f2451ce748d72722c614409425
+  code: ["bridge/src/close.mjs", "bridge/bin/j4.mjs (лише case close, імпорт)", "bridge/test/t0009.test.mjs (+3 тести C6, C7, C8; наявні тести під обов'язкові джерела)"]
+  docs: ["bridge/docs/DESIGN.md (§17)", "bridge/README.md"]
+  records: ["reports/T-0009/f-t9-16-proposal.md"]
+unchanged_verified: "CONTRACT_v0_4.md (sha256 2fdc2f9d…55de), bridge/config/**, bridge/src/acceptance.mjs, .github/** відносно бази 7313085 — git diff порожній; CSP, Tauri, міграції, секрети не торкнуті"
+
+checks:
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 67eb3310db5f69f2451ce748d72722c614409425, result: "93/93 pass, fail 0 (68 базових + 8 T-0007 + 17 T-0009)", by: J3, calls: "44 dispatch + 4 прямих (derived)"}
+  - {cmd: "node --test --test-name-pattern 'T-0009 (E|C|H|Q2|Q3)' bridge/test/t0009.test.mjs", subject: 67eb3310db5f69f2451ce748d72722c614409425, result: "16/16 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+
+fixes:   # відповідність зауваженням C3 раунду 2 (reports/T-0009/c3-reviews.yaml#seq=2)
+  F-T9-12: "j4 close: J4_HOME має бути сховищем J4 (існує підтека escalations; теку не створює), журнал — наявним цілим файлом; інакше escalation-source-unreadable, код 3, з причиною: home-not-j4-store, ledger-missing, ledger-partial, ledger-corrupt, ledger-unreadable, ledger-changed-during-read. Читає readLedgerStrict (verifyLedger + друге читання зі звіркою кількості й голови ланцюга). closeTask без store і ledgerEntries — escalation-source-unknown (store додано за тим самим класом дефекту; ledgerEntries — за рішенням JE)"
+  F-T9-11: "тест C6 (CLI передає журнал J4: ескалація лише в журналі, J4_HOME — порожнє сховище → open-escalation; після resolve → done), тест C7 (відсутній, обірваний, пошкоджений значенням, видалений запис, не-JSON, каталог замість файла, J4_HOME відсутній / не сховище J4; контроль: цілий і порожній журнал приймаються), доповнено C5 (виклик без журналу чи сховища відхиляється)"
+  F-T9-13: "SHA має стояти поза значенням cmd; 'not passed', '0 passed', '0 pass', '0/76 pass', 'pass: 0' не є доказом (C8)"
+  F-T9-14: "кілька ключів verify: у наказі — order-verify-unreadable (C8)"
+  F-T9-17: "ескалація без escalation_id і seq має мітку 'entry N' (C8)"
+  not_fixed_documented: ["F-T9-15 бар'єр поза замком — DESIGN §17 (обмеження етапу 1)", "F-T9-16 acceptance.mjs — відкритий ризик у DESIGN §17 і reports/T-0009/f-t9-16-proposal.md; окремий наказ (JE-T9-03 D-6)"]
+  trust_model: "модель довіри не розширено: лише суворіші відмови; CONTRACT, acceptance.mjs, config, .github не змінено; автоматичних приймань і рішень JE немає"
+
+mutations:   # тимчасові копії дерева, відфільтровані тести T-0009 (E|C|H), лічильник dispatch 0 у кожній
+  m1a: {file: "bridge/bin/j4.mjs", change: "CLI не передає ledgerEntries у closeTask", failing: [C3, C5, C6, C7]}
+  m1b: {file: "bridge/bin/j4.mjs", change: "CLI передає ledgerEntries: [] замість журналу", failing: [C6]}
+  m2:  {file: "bridge/bin/j4.mjs", change: "CLI не читає журнал (entries = [])", failing: [C6, C7]}
+  m3:  {file: "bridge/bin/j4.mjs", change: "прибрано перевірку J4_HOME", failing: [C7]}
+  m4:  {file: "bridge/src/close.mjs", change: "обірваний журнал приймається", failing: [C7]}
+  m5:  {file: "bridge/src/close.mjs", change: "відсутній журнал = порожній список", failing: [C7]}
+  m6:  {file: "bridge/src/close.mjs", change: "ledgerEntries необов'язковий", failing: [C5]}
+  m7:  {file: "bridge/src/close.mjs", change: "пошкоджений журнал приймається", failing: [C7]}
+  m8:  {file: "bridge/src/close.mjs", change: "'not passed' зараховується як pass", failing: [C8]}
+  m9:  {file: "bridge/src/close.mjs", change: "кілька verify: дозволено", failing: [C8]}
+
+review_status:
+  C3_round_1: {verdict: changes_requested, subject: 9a3048cd65e07dd45be74048b9d437b831d83351, events_seq: 7}
+  C3_round_2: {verdict: changes_requested, subject: d05dc5aaf449fc9c5be03a0869035e2871d6b57a, events_seq: 11}
+  C3_round_3: "запит надсилається після запису цієї віхи (JE-T9-03 D-4): лише git diff d05dc5a..67eb3310db5f69f2451ce748d72722c614409425, без повного набору"
+  J3_technical: not_recorded   # лише після C3 passed на тому ж SHA; висновок C3 не підміняється
+  J5_content: not_recorded
+
+accounting:   # reports/T-0009/calls-ledger.yaml: K-001, A-005, P-006, P-007
+  limit: 250
+  used: {local_J3: 146, C3: 48, CI: 0, total: 194, remaining: 56}
+  breakdown: "L-001 2 + A-001 48 + A-003 48 + A-005 48 = 146 локально (у кожному повному прогоні 44 dispatch + 4 прямих); C3-1 48; C3-2 0; CI ще не запускався"
+  accuracy: {local: "dispatch exact, прямі derived", C3: exact, CI: "estimate"}
+  full_runs_J3: {used: 3, limit: 3}   # J3-1, J3-2, J3-3; повторні повні прогони заборонені
+  paid_api_calls: 0
+  network_calls: 0
+  cost_usd: 0
+  forecast_V1:
+    C3_round_3: {calls: 0}
+    CI_1_after_PR: {estimate: 48, cumulative_estimate: 242, remaining_estimate: 8}
+    rules: "після відкриття PR жодних push; повторні повні прогони та CI без рішення JE заборонені; зміна прогнозу в бік перевищення — зупинка"
+
+residual_manual_operations:   # M-1…M-7 — reports/T-0007/001.yaml; без змін відносно reports/T-0009/001.yaml
+  open: ["M-1 (справжній J5 — лише stub)", "M-2 (C3 запускає J3, review_* вручну)", "M-5 (--human не автентифікований, F-3)", "M-7 (маршрути C5.1)"]
+  closed_with_limits: ["M-3 (report_filed/escalation пише J4; події комітити)", "M-6 (j4 close; докази — рядок у reports/** із SHA і result: pass)"]
+  script_ready_not_enabled: ["M-4 (j4-tick.sh є; планувальник НЕ активовано)"]
+
+residual_risks:
+  - "C3 раунд 3 ще не проведено: виправлення F-T9-11/12 мають лише власні тести J3 (мутації) і не мають незалежного підтвердження"
+  - "F-T9-16 (acceptance.mjs: review_finished без review_status зараховується) — відкритий, окремий наказ"
+  - "F-T9-15 (бар'єр поза замком, вікно від мілісекунд) — задокументований"
+  - "CI-облік — estimate; запас бюджету 8 викликів: будь-який повторний прогін чи CI перевищить 250"
+  - "поле by не автентифіковано (F-9), --human не доказ особи JE (F-3)"

@@ -1,0 +1,22 @@
+task_id: T-0007
+task_version: 1
+seq: 5
+author: J3
+to: [J5, JE]
+kind: correction
+at: 2026-10-26T17:19:37+00:00
+supersedes: "reports/T-0007/004.yaml#corrected (X, total, over_limit)"
+reason: "004.yaml обіцяв точне X після першого погодженого повного прогону T-0009. Прогін виміряно лічильником: набір із 86 тестів = 44 виклики адаптера (reports/T-0009/calls-ledger.yaml, A-001; повтор A-003 і прогін C3 A-002 — теж 44)."
+original_value: {value: "≈218–268 (estimate)", status: replaced}   # 001.yaml, 002.yaml, 004.yaml лишаються як є
+corrected:
+  unit: "виклик адаптера J4 (stub або fake без мережі); подія dispatch_attempt у журналі J4"
+  measured: {full_run_T0009_suite_calls: 44, accuracy: exact, runs_measured: 3, note: "J3-1, J3-2 і прогін C3 — однаково 44; 86 тестів = 68 базових + 8 T-0007 + 10 T-0009 (у прогоні J3-1)"}
+  X: {meaning: "виклики адаптерів у 68 базових тестах за один повний прогін", value: 35, accuracy: derived, derivation: "44 − 7 (набір T-0007) − 2 (T-0009 Q1); 7 і 2 — з аналізу коду, окремо лічильником не виміряні"}
+  formula: "8 + 5 × (X + 7) = 8 + 5 × 42"
+  total: {value: 218, accuracy: derived, basis: "X виведено з точно виміряного N; кількість прогонів (2 J3, 1 C3, 2 CI, 1 прогін лише t0007, 1 пробний CLI) — із запису 004.yaml"}
+  limit: 20
+  over_limit: {value: 198, accuracy: derived}
+  paid_api_calls: 0
+  cost_usd: {value: 0, accuracy: exact}
+  not_counted: "прямі виклики adapter.call() із fake fetch/spawn у gate.test.mjs (4 за прогін) — не dispatch через router (calls-ledger.yaml, N-001)"
+lesson: "Лічильник (tasks/T-0009/tools/call-counter.mjs) дає точний облік локальних прогонів; для CI точного лічильника немає, CI — estimate = N × кількість прогонів."

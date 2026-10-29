@@ -1,0 +1,67 @@
+task_id: T-0010
+task_version: 1
+seq: 1
+author: J3
+to: J5
+cc: JE
+kind: registration_package   # JE-T10-02: «надати J5 фінальний наказ, контрольну базу, перевірені тригери CI й початковий облік»
+at: 2026-10-27T12:50:20+00:00
+subject: {kind: commit, ref: efe03c959107856f2536771ae5c023f1e007e7be}   # контрольна база; bridge/ == 67eb3310db5f69f2451ce748d72722c614409425
+result: registered   # реалізація T-0010 на момент цього звіту не почата
+
+final_order:
+  order: tasks/T-0010/order-j5.md
+  card: tasks/T-0010/order.yaml
+  decisions: [tasks/T-0010/je-decision-T10-01.md, tasks/T-0010/je-decision-T10-02.md]
+  journal: tasks/T-0010/events.jsonl   # seq 1–2 command (JE), 3 task_created, 4 task_accepted
+  JE_decisions_applied: ["T-0010 стеком від efe03c9", "F-T9-15 не входить", "F-T9-21 лише опис у DESIGN/README, поведінка j4 close без змін", "ліміт 150"]
+  registration_note: >-
+    task_created записано від J3 за дорученням JE (JE-T10-02 п. 5), а не від J5: за CONTRACT §4 цю подію пише requester,
+    але підтвердження J5 у журналі немає, і приписувати його J5 J3 не стане. J5 може підтвердити наказ окремою подією
+    або вимагати поправки (amendments.md). Текст наказу підготовлено J3 за дозволом JE (JE-T10-01 п. 2).
+
+control_base:
+  sha: efe03c959107856f2536771ae5c023f1e007e7be
+  branch: t-0009/j4-automation   # PR №6, чернетка, без злиття; гілка PR №6 не змінюється
+  bridge_identical_to: 67eb3310db5f69f2451ce748d72722c614409425   # git diff --stat 67eb331 efe03c9 -- bridge порожній
+  ci_on_base: "j4-bridge, прогін 40502892802, success, спроба 1 (pull_request, SHA efe03c9)"
+  execution_branch: "t-0010/stabilization: створюється від efe03c9; до неї переносяться (cherry-pick) лише коміти реєстрації з orders/T-0010-12, що містять тільки tasks/ і reports/ (bridge/ лишається ідентичним efe03c9)"
+  orders_branch: "orders/T-0010-12 від efe03c9: накази T-0010 (зареєстровано), T-0011 і T-0012 (проєкти-ворота, не зареєстровано)"
+
+file_conflicts:
+  checked: "git diff --name-only efe03c9...<гілка> по файлах T-0010 (store.mjs, close.mjs, j4.mjs, DESIGN.md, README.md, bridge/test) для всіх віддалених гілок"
+  result: "конфліктів немає: codex/j4-bridge-stage1, t-0007/draft (розбіжні) — 0 файлів; t-0005, t-0006, t-0007/autonomy-check, setup/staff-bootstrap, main — предки efe03c9"
+  open_prs: "№6 (база стеку, чернетка), №1 (setup/staff-bootstrap → main, чернетка) — файлів T-0010 не змінюють"
+  planned_files: ["bridge/src/store.mjs", "bridge/src/close.mjs", "bridge/bin/j4.mjs", "bridge/test/t0010.test.mjs (новий)", "bridge/docs/DESIGN.md", "bridge/README.md", "tasks/T-0010/**", "reports/T-0010/**"]
+
+ci_triggers:
+  workflows: ".github/workflows/j4-bridge.yml — єдиний"
+  on:
+    - "pull_request з paths: ['bridge/**', '.github/workflows/j4-bridge.yml'] (типи за замовчуванням: opened, synchronize, reopened)"
+    - "workflow_dispatch (лише вручну; джоби route-stub і route-live за умовою workflow_dispatch)"
+  no_push_trigger: true   # події push і schedule відсутні
+  static_conclusions:
+    - "push гілки orders/T-0010-12 і t-0010/stabilization без відкритого PR прогонів не запускає"
+    - "PR з гілки без змін у bridge/** і workflow-файлі не запускає прогону (фільтр paths за diff PR відносно бази)"
+    - "кожна подія PR T-0010 з diff у bridge/** = один прогін test (≈48); push у відкритий PR = ще один; ready_for_review прогону не дає (немає в типах)"
+    - "гілка PR №6 не змінюється push-ем іншої гілки"
+  dynamic_check: "перевірено 2026-10-27 після пушу orders/T-0010-12 (коміти 37f3936, ac2e8c8): прогонів workflow для гілки 0 (gh api actions/runs?branch=orders/T-0010-12); для гілки t-0009/j4-automation лишається 1 прогін (success, run 40502892802); PR №6: open, draft, не злитий, head efe03c959107856f2536771ae5c023f1e007e7be, 1 коментар"
+
+initial_accounting:   # reports/T-0010/calls-ledger.yaml
+  limit: 150
+  used: {local_J3: 0, C3: 0, CI: 0, total: 0, remaining: 150}
+  per_full_run_estimate: 48
+  plan: {filtered_tests: 0, J3_full_run_1: 48, C3_diff_only: 0, CI_1: 48, subtotal: 96, reserve_one_repeat: 48, total_with_reserve: 144, spare: 6}
+  rule: "ризик перевищити 150 — HALT і доповідь JE; другий повтор повного прогону не вміщується"
+  paid_api_calls: 0
+  network_calls: 0
+
+gated_orders:   # у гілці orders/T-0010-12, НЕ зареєстровані (немає task_created)
+  T-0011: "B2/F-T9-18, ліміт 180: проєкт-ворота; реалізація лише після окремого рішення JE (модель довіри, можливо контракт); після T-0010"
+  T-0012: "F-T9-16 і SCOPE-1, ліміт 150: проєкт-ворота; реалізація лише після окремого рішення JE (acceptance.mjs, CONTRACT розд. 6)"
+
+not_done_and_deferred:
+  - "реалізація T-0010: не почата на момент звіту; перший крок — тести, що падають на старому коді"
+  - "подія 25 у журналі T-0009 відкладена (JE-T10-01 п. 4); докази CI №40502892802 і коментар PR №6 збережено за посиланнями"
+  - "runbook T-0009 — чернетка до фактичних J4_HOME, J4_LEDGER і fingerprint (потрібні від власника установки)"
+  - "PR №6 — чернетка; push, CI, merge, done, планувальник, live, реальний j4 close, платні API — заборонені"

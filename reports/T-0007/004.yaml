@@ -1,0 +1,22 @@
+task_id: T-0007
+task_version: 1
+seq: 4
+author: J3
+to: [J5, JE]
+kind: correction
+at: 2026-10-26T13:17:00+00:00
+supersedes: "reports/T-0007/002.yaml#accounting_deviation (і 001.yaml#resources.stub_adapter_calls.cumulative_all_runs)"
+reason: "Неповний підрахунок: 29 охоплювало лише сценарії t0007 (7 на прогін) і пробний CLI-запуск; виклики адаптерів (stub і fake) решти тестів bridge/test у тих самих повних прогонах і в CI не враховано. Виявлено під час T-0009."
+authorized_by: "J5, рішення 26.10.2026 15:15 (Київ), п. 4"
+original_value: {value: 29, status: incomplete}   # історія не переписується: 001.yaml і 002.yaml лишаються як є
+corrected:
+  unit: "виклик адаптера J4 (stub або fake без мережі)"
+  formula: "1 (CLI) + 7 (прогін лише t0007) + 2 повні прогони J3 + 1 повний прогін C3 + 2 прогони CI на PR #5 (817df4c, bb176d5) = 8 + 5 × (X + 7)"
+  X: {meaning: "виклики адаптерів у 68 базових тестах за один повний прогін", value: null, accuracy: unknown, estimate: "≈35–45 за аналізом коду"}
+  total: {value: null, accuracy: estimate, range: "≈218–268"}
+  limit: 20
+  over_limit: "≈198–248 (estimate)"
+  paid_api_calls: 0
+  cost_usd: {value: 0, accuracy: exact}
+  note: "Точне X буде виміряно першим погодженим повним прогоном T-0009 (базові тести T-0009 не змінює) — тоді J3 додасть наступний запис із supersedes цього."
+lesson: "Ліміт викликів у наказі має явно охоплювати регресійний набір і CI; облік — до прогону, а не після."
