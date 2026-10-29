@@ -1,6 +1,9 @@
-# ЧЕРНЕТКА (J3, 29.10.2026, за п. 7 рішення JE за R3). НЕ НАКАЗ. Номер T-XXXX, max_calls і task_created — за J5/JE.
-# Не запускати автоматично. Передумови: злиття PR #172 за JE-T5; рішення JE-15 (Б, умовно), JE-16 (а), JE-18 (Ф) — є (29.10.2026).
-id: T-XXXX
+# Наказ T-0017 (R4 = C2 Rust Crypto Engine) за п. 7 рішення JE за R3 (tasks/T-0016/je-decision-R3.md) і словом JE 29.10.2026 01:24Z
+# («наступний наказ (R4 C2 / CSP»). Оформлено з чернетки tasks/E8-C2/order.draft.yaml (історія в git). Ресурсний дозвіл JE на max_calls 150 —
+# 29.10.2026 01:30Z (картка рішення в треді); task_accepted J3 — events.jsonl seq 3. Виконання почато 29.10.
+# Передумови: PR #172 злито (0fa5c32); JE-15 Б умовно, JE-16 а, JE-18 Ф — є; підпитання JE-16 (офлайн-операції відкликаного: а/б) — відкрите,
+# робоче припущення (б) відхиляти, доки JE не скаже інакше. Cargo.lock у main уже змінено (#166/#167/#169/#175) — звірити таблицю крейтів ADR §1 на старті.
+id: T-0017
 version: 1
 parent_task_id: null
 title: "R4 / E8 C2 — Rust Crypto Engine: ключі, епохи, конверт EnvelopeV1, сховище секретів (варіант Б, без мережі)"
@@ -20,6 +23,7 @@ intent:
     - "тільки синтетичні дані; жодних реальних ключів у репозиторії"
     - "без мережі, listener, команд Tauri, CSP/capabilities, міграцій (міграції — C3)"
     - "Cargo.lock змінюється лише цим наказом; Dependabot #169/#165 закрити/злити ДО старту"
+    - "ОНОВЛЕНО 29.10 01:20Z: власник уже злив Dependabot #169 (chacha20poly1305 0.10 → 0.11), #166 (zip 4.6.1), #167 (rfd 0.17.2) і #175 (rfd gtk3, нові ключ/nonce у шифруванні Офісу). Перед стартом: перечитати таблицю крейтів ADR collective-crypto §1 — варіант Б розраховано на покоління 0.10 для AEAD/HKDF; якщо chacha20poly1305 0.11 у main лишається, узгодити покоління (hkdf/hmac/sha2 0.13/0.11) або зафіксувати окрему копію; #168 (calamine) відкритий"
     - "ADR лишаються з умовою JE-15 «умовно» до G12"
 scope:
   in: [src-tauri/Cargo.toml, src-tauri/Cargo.lock, src-tauri/src/lib.rs (лише pub mod), src-tauri/src/collective/**, tests/fixtures/collective-crypto-vectors.json, tests/collective-crypto-vectors.test.mjs, docs/adr/collective-crypto.md, docs/COLLECTIVES_PLAN.md, docs/evidence/collectives/]
@@ -40,7 +44,7 @@ checks:
     - "npm run test:unit; CI desktop-build checks + audit success"
     - "G06: ті самі вектори на Windows і macOS (поза хмарною сесією — окремий доказ власника або CI на тегах)"
   review_kind: code
-resources: {max_calls: NOT_AUTHORIZED, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
+resources: {max_calls: 150, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
 reporting:
   milestones: ["залежності + вектори + codec (PR чернетка)", "identity/epoch/envelope/replay зелені", "secret_store з 5 перевірками JE-18", "G12 звіт", "C3 passed; J3; J5"]
   thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
