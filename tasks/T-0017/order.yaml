@@ -1,0 +1,82 @@
+# Наказ T-0017 (R4 = C2 Rust Crypto Engine) за п. 7 рішення JE за R3 (tasks/T-0016/je-decision-R3.md) і словом JE 29.10.2026 01:24Z
+# («наступний наказ (R4 C2 / CSP»). Оформлено з чернетки tasks/E8-C2/order.draft.yaml (історія в git). Ресурсний дозвіл JE на max_calls 150 —
+# 29.10.2026 01:30Z (картка рішення в треді); task_accepted J3 — events.jsonl seq 3. Виконання почато 29.10.
+# Передумови: PR #172 злито (0fa5c32); JE-15 Б умовно, JE-16 а, JE-18 Ф — є; підпитання JE-16 (офлайн-операції відкликаного: а/б) — відкрите,
+# робоче припущення (б) відхиляти, доки JE не скаже інакше. Cargo.lock у main уже змінено (#166/#167/#169/#175) — звірити таблицю крейтів ADR §1 на старті.
+id: T-0017
+version: 4
+parent_task_id: null
+title: "R4 / E8 C2 — Rust Crypto Engine: ключі, епохи, конверт EnvelopeV1, сховище секретів (варіант Б, без мережі)"
+intent:
+  purpose: >-
+    Реалізувати криптопрофіль ADR collective-crypto.md (suite 1, варіант Б) у Rust без мережі й без UI:
+    ідентичність (Ed25519 + X25519 учасника, пристрій), ключ епохи й обгортки, EnvelopeV1 з AAD = усі відкриті
+    поля, two-level anti-replay, авторизація за журналом складу (membership_seq), сховище секретів за JE-18 (Ф).
+  end_state:
+    - "Cargo.toml: + ed25519-dalek 2.2 (rand_core, zeroize), x25519-dalek 2.0 (static_secrets, zeroize); spake2 — лише якщо C2p у цьому ж наказі (інакше C2p окремо); без ciborium (власний codec); Cargo.lock оновлено одним комітом; cargo audit зелений"
+    - "src-tauri/src/collective/{mod,identity,epoch,envelope,codec,replay,secret_store}.rs — pub mod collective у lib.rs; БЕЗ #[tauri::command], БЕЗ reqwest; підключення команд — C3b"
+    - "tests/fixtures/collective-crypto-vectors.json (розділ 4 ADR): RFC 8032/7748/5869/XChaCha вектори + синтетичні конверти + reencrypt + негативні (flipped byte, same op_id different payload, backdated signed operation, old envelope after revocation, membership_seq from the future); читають cargo test і node --test"
+    - "secret_store: файл + Argon2id за зразком office_library.rs, мітки easywar/collective/v1/*; тести: зміна пароля (rewrap), відновлення, ізоляція профілів, знищення ключів (zeroize + видалення файла), аварійне завершення (атомарний запис, журнал)"
+    - "docs/adr/collective-crypto.md: статус «Реалізовано в C2 (варіант Б), gate G12 — відкрито»; docs/COLLECTIVES_PLAN.md §8 рядок C2, §9 G12"
+    - "gate G12: незалежна перевірка дизайну протоколу (не автором коду) — окремий звіт у docs/evidence/collectives/ ДО злиття в main або явне рішення JE про злиття з відкритим G12 як feature behind nothing (модуль не викликається до C3b)"
+  red_lines:
+    - "тільки синтетичні дані; жодних реальних ключів у репозиторії"
+    - "без мережі, listener, команд Tauri, CSP/capabilities, міграцій (міграції — C3)"
+    - "Cargo.lock змінюється лише цим наказом; Dependabot #169/#165 закрити/злити ДО старту"
+    - "ОНОВЛЕНО 29.10 01:20Z: власник уже злив Dependabot #169 (chacha20poly1305 0.10 → 0.11), #166 (zip 4.6.1), #167 (rfd 0.17.2) і #175 (rfd gtk3, нові ключ/nonce у шифруванні Офісу). Перед стартом: перечитати таблицю крейтів ADR collective-crypto §1 — варіант Б розраховано на покоління 0.10 для AEAD/HKDF; якщо chacha20poly1305 0.11 у main лишається, узгодити покоління (hkdf/hmac/sha2 0.13/0.11) або зафіксувати окрему копію; #168 (calamine) відкритий"
+    - "ADR лишаються з умовою JE-15 «умовно» до G12"
+scope:
+  in: [src-tauri/Cargo.toml, src-tauri/Cargo.lock, src-tauri/src/lib.rs (лише pub mod), src-tauri/src/collective/**, tests/fixtures/collective-crypto-vectors.json, tests/collective-crypto-vectors.test.mjs, docs/adr/collective-crypto.md, docs/COLLECTIVES_PLAN.md, docs/evidence/collectives/]
+  out: ["tauri.conf.json, capabilities/*, build.rs, generate_handler!, міграції, src/*.js, legacy HTML, AGENTS.md, office_library.rs"]
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: true
+acceptance: {technical: J3, content: J5, key_decision: true}
+checks:
+  subject_kind: commit
+  verify:
+    - "cargo test --locked --manifest-path src-tauri/Cargo.toml collective"
+    - "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings; cargo fmt --check"
+    - "cargo audit --file src-tauri/Cargo.lock (0 вразливостей; нові крейти лише з allowlist ADR §5)"
+    - "node --test tests/collective-crypto-vectors.test.mjs tests/network-boundary.test.mjs"
+    - "npm run test:unit; CI desktop-build checks + audit success"
+    - "G06: ті самі вектори на Windows і macOS (поза хмарною сесією — окремий доказ власника або CI на тегах)"
+  review_kind: code
+resources: {max_calls: 195, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
+reporting:
+  milestones: ["залежності + вектори + codec (PR чернетка)", "identity/epoch/envelope/replay зелені", "secret_store з 5 перевірками JE-18", "G12 звіт", "C3 passed; J3; J5"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+amendments:
+  - id: A-1
+    proposed_by: J3
+    base_version: 1
+    kind: clarification   # ратифікація чинного значення, не зміна поля (корекція 29.10, seq 19)
+    change: {field: resources.reviewer.max_read_files, from: 25, to: 25, ratifies: 25}
+    correction: "Первісний запис A-1 мав change {from: 15, to: 25}; це помилка J3: у наказі version 1 (6d685d1) поле вже дорівнювало 25, а 15 — лише значення за замовчуванням CONTRACT_v0_4.md, яке сприйняв рецензент спроби №1. Рішення JE «Так, 25 файлів» ратифікує чинні 25 для нового огляду на c2d8d4f і поля з 15 не змінює. Вміст наказу у version 1 і 2 однаковий; номер version 2 залишено, бо на нього посилаються події seq 10–18 і повідомлення J4 M-T-0017-0001/0002 — минулі події не переписуються (CONTRACT розділ 4)."
+    reason: "спроба C3 №1 (29.10, session_01UgydCJmxbR3d4boBPP3aL7) прочитала 17 файлів (19 з AGENTS/CLAUDE) і зупинилась на ліміті 15 із CONTRACT_v0_4.md; обов'язковий перелік брифу G12 = 12 файлів + бриф + AGENTS/CLAUDE ≈ 15, для перевірки контексту (lib.rs, Cargo.toml, office_library.rs::KdfParams) потрібно більше. У цьому наказі з оформлення вже стоїть 25, але наказу ще немає в main; поправка фіксує 25 як рішення JE, щоб значення не залежало від гілки"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-29
+    note: "JE 04:51Z: «Так, 25 файлів (рекомендовано)» — для НОВОГО формального огляду G12 на c2d8d4f; ратифікує 25, що вже стояли в штабній гілці; спроба №1 лишається incomplete/null. Платний виклик J4, модель, токени й вартість цим НЕ дозволені — окремий ресурсний дозвіл"
+  - id: A-2
+    proposed_by: J3
+    base_version: 2
+    kind: change
+    change: {field: resources.max_calls, from: 150, to: 190}
+    reason: "конфлікт PR #180 з main 649b6e2 (lib.rs, Codex 13:05Z); план tasks/T-0017/merge-main-plan.md (seq 21): коміт злиття (не rebase), CI, вузька C3 лише коміту злиття (≤5 файлів, ≤10 викликів, J4 inbox, 0 USD), G06 macOS/Windows і J3/J5 на новому SHA; залишок ≈10 із 150 (оцінка) не покриває ≈35–40"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-29
+    note: "JE 13:15Z, картка рішення: «Злиття, C3, +40 викликів». Дозволяє коміт злиття main у claude/e8-c2-crypto-engine і вузьку C3 через J4 inbox; НЕ дозволяє merge #180 у main, закриття G12, платні виклики чи production-підключення C2"
+  - id: A-3
+    proposed_by: J3
+    base_version: 3
+    kind: change
+    change: {field: resources.max_calls, from: 190, to: 195}
+    reason: "бюджет ≈190/190 (estimate) вичерпано; потрібно ~3 виклики на злиття документаційного PR #192 і запис merge SHA"
+    scope: "лише злиття #192 і запис SHA; нових завдань і змін коду не дозволяє; done T-0017 — окремим наказом JE"
+    status: approved
+    decided_by: JE
+    decided_at: "2026-10-29T15:53:59Z (картка «Так: злити, бюджет +5»)"

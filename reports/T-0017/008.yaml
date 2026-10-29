@@ -1,0 +1,33 @@
+# Доказ G06 (Windows) за T-0017 / п. 13 чекліста G12 на head PR #180. Лише синтетичні дані.
+# Записав J3 з журналу job GitHub Actions (прочитано через GitHub API), без сирого логу.
+task_id: T-0017
+task_version: 3
+report_no: 8
+by: J3
+at: 2026-10-29T14:16:00+00:00
+gate: G06
+platform: Windows
+subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4
+basis: "рішення JE 29.10.2026 13:48:30Z (картка): варіант В1 tasks/T-0017/g06-ci-proposal.md (ред. 3)"
+mechanism:
+  repo: hellwikcoop-arch/EasyWAR
+  branch: claude/g06-windows      # бічна гілка, у main не зливається, PR не відкривався
+  workflow_commit: 6f120493e29aa99465cf677ea8cde98ba23c2ea3   # лише .github/workflows/collective-vectors.yml
+  event: push
+  run: {id: 40885518249, job: 123488049082, url: "https://github.com/hellwikcoop-arch/EasyWAR/actions/runs/40885518249", attempt: 1, conclusion: success}
+  other_workflows_triggered: none   # desktop-build і runner.yml на гілку не спрацювали (у списку runs гілки лише цей)
+environment:
+  runner_image: "windows-2025-vs2026 (20261021.278.1)"
+  checkout: "actions/checkout fetch --depth=1 origin 70bade5…; «HEAD is now at 70bade5 Колектив C2: злиття main (E4) у гілку крипторушія»"
+  exact_sha_step: "git rev-parse HEAD = 70bade5e06ab781fc2906529ce415b92d2fd28b4; test == SUBJECT_SHA — success"
+  toolchain: "rustc 1.99.1 (58cf8f9c3 2026-10-13), cargo 1.99.1, stable-x86_64-pc-windows-msvc"
+  shell: "MINGW64_NT-10.0-26100 x86_64 (Git Bash)"
+checks:
+  - {cmd: "cargo test --locked --manifest-path src-tauri/Cargo.toml collective::", subject: 70bade5e06ab781fc2906529ce415b92d2fd28b4, result: "exit 0; lib: 37 passed, 0 failed, 1 ignored (collective::vectors::print_synthetic), 475 filtered out; main: 0 tests; збірка test-профілю 4m32s"}
+notes:
+  - "475 filtered (а не 494, як на macOS/Linux) — на Windows у крейті менше тестів поза collective:: (платформні cfg); набір collective:: той самий: 37 + 1 ignored"
+  - "tauri-build скомпілював крейт на Windows без sidecar-бінарника runner — ризик із розділу «Не перевірено» пропозиції не справдився"
+  - "витрати: один job windows-latest ≈5 хв (множник 2 для приватного репозиторію); платних викликів моделей немає"
+unverified:
+  - "збірка інсталятора й запуск застосунку на Windows не перевірялись (поза G06)"
+next: "G06 macOS (007) + Windows (008) на 70bade5 є; далі J3 technical і J5 content на 70bade5; G12 і merge #180 — після JE-T5 і окремого рішення JE"

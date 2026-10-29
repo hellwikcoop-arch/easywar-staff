@@ -1,0 +1,30 @@
+# Донесення J3 за T-0017 (R4 / C2 Rust Crypto Engine), CONTRACT_v0_4.md розділ 8. Лише синтетичні дані.
+task_id: T-0017
+task_version: 1
+report_no: 1
+by: J3
+at: 2026-10-29T02:20:00+00:00
+state: review_pending
+milestone: "draft PR відкрито"
+pr: "hellwikcoop-arch/EasyWAR#180 (draft), гілка claude/e8-c2-crypto-engine, коміт 63d93cb, база main a176188"
+confirmed:
+  - "src-tauri/src/collective/{mod,identity,epoch,envelope,codec,replay,secret_store,vectors}.rs; pub mod collective у lib.rs; без #[tauri::command], без reqwest/std::net, без міграцій"
+  - "Cargo.toml: ed25519-dalek 2.2 (rand_core, zeroize), x25519-dalek 2.0 (static_secrets, zeroize); Cargo.lock +7 крейтів (curve25519-dalek, curve25519-dalek-derive, ed25519, ed25519-dalek, fiat-crypto, x25519-dalek, zeroize_derive), версії наявних не змінено; spake2/ciborium не введено"
+  - "cargo test --locked: 515 passed (collective 35 + 1 ignored генератор); clippy -D warnings і fmt --check чисто; cargo audit з кореня (.cargo/audit.toml): 0 вразливостей, 3 дозволені попередження"
+  - "tests/fixtures/collective-crypto-vectors.json: RFC 8032/7748/5869, XChaCha A.3.1, синтетичні конверти/reencrypt/7 негативних; node --test collective-crypto-vectors + network-boundary 17/17; npm run test:unit 1596/1596"
+  - "secret_store: тести зміни пароля (rewrap + новий ключ відновлення), відновлення, ізоляції профілів, знищення (zeroize + видалення), аварії при записі, невалідних KDF-параметрів"
+  - "Документи: ADR collective-crypto статус «Реалізовано в C2 (варіант Б), gate G12 — відкрито»; COLLECTIVES_PLAN §7/§8/§9 (G12); docs/evidence/collectives/2026-10-29-c2-g12-checklist.md (14 пунктів, відкрито)"
+unverified:
+  - "Windows/macOS (G06) — у хмарній сесії недоступно"
+  - "CI на PR #180 — очікується (checks + audit)"
+  - "G12 незалежна рецензія — не виконана; рецензента призначає JE"
+  - "npm run build не запускався (фронтенд не змінено)"
+blockers: []
+decisions_for_je:
+  - "Призначити рецензента G12 (C3 за чеклістом чи зовнішній)"
+  - "JE-16 підпитання: у коді робоче припущення (б) RevokedPolicy::Reject; (а) Quarantine — перемикач; обрати до C3b"
+resources_used:
+  calls_estimate: 62
+  max_calls: 150
+  pct: 41
+next: "дочекатися CI на #180; C3/J5 рецензія; T-0018 (CSP) окремою гілкою claude/e8-csp"
