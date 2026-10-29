@@ -1,0 +1,47 @@
+# Донесення 007 J3 по T-0011: ЛІТЕРАЛЬНЕ виконання checks.verify на current_subject a9baf25 (CONTRACT v0.4 §6 п.1) за дозволом JE 2026-10-29T13:47:35Z (Р-Т11-30).
+# Закриває варіант (б) з 004.yaml ways_to_close_p1. 003/004/005/006 не змінюються. Нового CI 0. acceptance J5 і JE тут НЕ створюються; done не встановлено.
+task: T-0011
+report: 007
+kind: check_on_current_subject
+current_subject: a9baf25893aa8caa2748a99406072281d24f27fb
+permission: {by: JE, at: "2026-10-29T13:47:35Z", via: "картка cmsg_012JDmHaeKDsqjDfbG3nLvCA9ZTDjUd2gUxuTaFfeXVFqL, відповідь «Прогін на a9baf25, до 297»", scope: "один локальний синтетичний прогін точно node --test 'bridge/test/*.test.mjs' на чистому checkout a9baf25; ліміт 250 → 297; без CI", register: "Р-Т11-30"}
+supersedes: "reports/T-0011/005.yaml#what_does_not_change[0] (перша умова: «жодна перевірка не виконана на самому a9baf25») — тепер checks.verify виконано на a9baf25; решта 005 лишається чинною"
+reason: "дозвіл JE на буквальний прогін (варіант B/б з 004, рекомендація C5.1 у 006.yaml); тлумачення тотожності дерев (варіант A) і виняток (C) більше не потрібні для п.1"
+
+check_executed:
+  id: full-run-4-a9baf25
+  command: "node --test 'bridge/test/*.test.mjs'   # checks.verify наказу T-0011; запуск через tasks/T-0011/tools/run-counted.sh (власний порожній TMPDIR + сканер dispatch_attempt)"
+  subject: a9baf25893aa8caa2748a99406072281d24f27fb
+  checkout: "git worktree --detach на a9baf25: HEAD = a9baf25893aa8caa2748a99406072281d24f27fb, дерево 3c63e46d6156a70601553f6771bd77478278d75e, git status --porcelain до і після = 0 змін; після прогону worktree видалено"
+  environment: {os: linux, node: v22.22.0, user: root, window: "2026-10-29T13:48:27Z–13:48:47Z", tmpdir: isolated}
+  result: {tests: 212, pass: 210, fail: 0, cancelled: 0, skipped: 2, duration_ms: 18160, exit: 0, passed: true}
+  skipped_detail: "T-0010 A4 (J4_HOME без читного вмісту) і A5 (нечитна тека черги) — SKIP під root (за дизайном тестів); виконувались у CI (0 skipped, run 40820727606) і від nobody на ecabb7e (78/78, evidence/t0010-t0011-nobody-ecabb7e.txt); від nobody на a9baf25 НЕ запускалось (дозвіл JE покриває рівно один прогін)"
+  evidence_ref: "reports/T-0011/evidence/full-run-4-a9baf25.txt"
+  data: "синтетичні; жодних реальних даних, платних викликів, мережевих викликів J4"
+
+cost:
+  dispatch_attempt_scanner: 44   # файлів журналів 27
+  direct_adapter_calls_gate_test: 4   # сканер їх не бачить; за методом обліку calls-ledger.yaml
+  total: 48
+  used_before: 249
+  used_after: 297
+  limit: 297
+  remaining: 0
+  paid_usd: 0
+  ci_events: 0
+  halt: "будь-який наступний виклик адаптера J4, повний прогін чи CI — HALT без нового рішення JE (used + next > 297)"
+
+barrier_dry_run:   # чиста функція acceptanceReady() над events.jsonl (seq 1–14) — 0 викликів адаптера
+  checks_passed_to_function: "лише перевірка, що вимагається наказом (checks.verify), з subject = SHA, на якому виконана (a9baf25)"
+  result: {ready: false, missing: [acceptance-J5-content-missing, acceptance-JE-key_decision-missing]}
+  note_on_function: "acceptanceReady вимагає, щоб УСІ елементи checks мали subject == subject; допоміжні докази з інших SHA (CI на fa5e060/8cd510b/e020802, локальні на ecabb7e, мутанти, nobody) у checks НЕ передаються — вони лишаються окремими аргументами тотожності (003–005). Якщо передати їх разом, функція повертає checks-not-on-subject-or-failed (перевірено)"
+  meaning: "умова CONTRACT v0.4 §6 п.1 для a9baf25 виконана буквально; п.2 (C3 раунд 4 passed, seq 9) і п.4 (J3 technical, seq 10) на a9baf25 є; бракує acceptance J5 (content) і JE (key_decision) — їх створюють J5 і JE, не J3"
+  done: "НЕ встановлено; close/done/adopt не запускались"
+
+what_changes_and_what_not:
+  - "seq 10 (J3 technical на a9baf25) лишається без змін; тепер його підтримує буквальний прогін (раніше — лише тотожність вмісту)"
+  - "питання до J5 tasks/T-0011/q-j5-subject-checks.md щодо тлумачення §6 п.1 для a9baf25 втратило практичну потребу; J5 може закрити його одним рядком; рішення про зарахування за тотожністю як практику для майбутніх завдань (CONTRACT v0.5) — окреме"
+  - "запуск виконано лише на Linux у контейнері; macOS/Windows і реальна установка J4 не перевірялись"
+  - "відкриті ризики T-0011 (003.yaml open_risks) без змін; G6 закрито; T-0013 NO-GO"
+
+not_done: ["acceptance J5 і JE не створювались", "done не встановлено", "close/adopt не запускались", "нового CI не було", "прогін від nobody на a9baf25 не запускався", "PR #16 не злито"]
