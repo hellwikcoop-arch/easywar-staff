@@ -1,0 +1,26 @@
+# Доказ G06 (macOS) за T-0017 / п. 13 чекліста G12. Лише синтетичні дані.
+# Донесення Codex, передане JE у тред J3 29.10.2026 13:02Z; записав J3 без транскрипту.
+task_id: T-0017
+task_version: 2
+report_no: 5
+by: C5.1
+recorded_by: J3
+at: 2026-10-29T13:02:00+00:00
+gate: G06
+platform: macOS
+subject: 9ea099433f83088fb97d04c6a0521e3379446fa0
+environment:
+  checkout: "тимчасовий окремий checkout /private/tmp/easywar-g06-9ea0994 з GitHub-гілки claude/e8-c2-crypto-engine"
+  head: "git rev-parse HEAD = 9ea099433f83088fb97d04c6a0521e3379446fa0"
+  worktree: "git status --short порожній"
+  uname: "Darwin arm64"
+  toolchain: "rustc/cargo 1.98.1"
+checks:
+  - {cmd: "cargo test --locked --manifest-path src-tauri/Cargo.toml collective::", subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, result: "exit 0; lib: 37 passed, 0 failed, 1 ignored, 481 filtered out; main: 0 tests; збірка test-профілю 2m28s"}
+notes:
+  - "Перший запуск з --offline не знайшов ed25519-dalek у локальному кеші; успішний запуск завантажив крейти з crates.io (з --locked, тобто версії з Cargo.lock)"
+  - "Код і PR #180 не змінювались"
+unverified:
+  - "Windows (друга половина G06) — не підтверджено"
+  - "Незалежного повтору прогону J3 немає (у J3 немає macOS); доказ — донесення C5.1 з точним SHA і виводом підсумку"
+next: "Windows G06 → J3 technical і J5 content на 9ea0994; G12 і merge #180 відкриті"
