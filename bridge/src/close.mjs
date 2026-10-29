@@ -19,11 +19,16 @@
 //   - ідемпотентність: повторний close на тому ж subject нічого не пише (`already: true`), але лише коли джерела ескалацій
 //     читні — CLI перевіряє їх ДО розбору done; done на іншому subject — відмова (T-0010, F-T9-21: опис, не поведінка).
 // Відкриті обов'язкові зауваження окремим джерелом не рахуються: вимога «C3 passed» на тому ж SHA (наказ T-0009).
+// T-0011 (ідентичність установки, F-T9-18): перед усім іншим, окрім читання events.jsonl, пара «сховище—журнал» мусить належати закріпленій
+// установці (checkInstallation: закріплене значення JE, marker сховища, прив'язка журналу, ledger_first_hash, ledger_min_seq); після
+// ідемпотентності й наказу події ADM у events.jsonl звіряються із записами журналу, а ескалації сховища — з журналом (reconcileSources).
+// Єдиний нормативний порядок (03-spec-T-0011.md, M11) — у closeTask. Механізм не автентифікує `by` і особу JE (F-9, F-3).
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { requestDone, evidenceFromEvents } from './acceptance.mjs';
-import { verifyLedger } from './ledger.mjs';
+import { verifyLedger, ledgerBinding } from './ledger.mjs';
+import { INSTALLATION_ID } from './store.mjs';
 import { appendAdmEvent, readTaskEvents, TaskEventsError } from './events.mjs';
 
 const SHA40 = /^[0-9a-f]{40}$/;
@@ -98,8 +103,12 @@ export function inspectJ4Home(home, fsImpl = fs) {
 }
 
 // Відкриті ескалації за задачею з трьох джерел: сховище J4, журнал J4 (ledgerEntries), журнал задачі (entries).
+// storeOnly (T-0011, M7 п. 4) — ескалації, відкриті у сховищі, яких журнал J4 не знає (немає escalation_raised за задачею): сховище і журнал
+// однієї установки не розходяться в наборі ескалацій, бо escalate() пише обидва; розбіжність — чуже сховище, обрізаний журнал або збій
+// між двома записами.
 function openEscalations({ store, ledgerEntries, taskId, entries }) {
   const open = new Set();
+  const storeOnly = new Set();
   const status = new Map();
   if (store) {
     for (const f of store.list('escalations')) {
@@ -119,6 +128,7 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
     if (x.event === 'escalation_resolved') resolved.add(x.detail.escalation_id);
   }
   for (const id of raised) if (!resolved.has(id) && status.get(id) !== 'resolved') open.add(id);
+  for (const [id, st] of status) if (st === 'open' && !raised.has(id)) storeOnly.add(id);
   // ескалація, записана в журнал задачі, але невідома жодному джерелу J4 (інший J4_HOME) — консервативно відкрита
   entries.forEach((e, i) => {
     if (e.event !== 'escalation') return;
@@ -126,7 +136,7 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
     if (!id) open.add(e.seq === undefined ? `entry ${i + 1}` : `seq ${e.seq}`);
     else if (!status.has(id) && !raised.has(id)) open.add(id);
   });
-  return [...open];
+  return { open: [...open], storeOnly: [...storeOnly] };
 }
 
 // Доказ перевірок (T-0010, F-T9-22) — запис на ОДНОМУ рядку у вигляді плоского YAML-відображення, як у reports/T-0007/001.yaml:
@@ -339,7 +349,70 @@ export function readLedgerStrict(file, hooks = {}) {
   return { ok: true, entries };
 }
 
-export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledgerEntries, now = Date.now() }) {
+// T-0011 (M4): закріплені значення JE, які CLI отримує явно (рішення JE, не `bridge/config/**`). Значення за замовчуванням немає.
+//   installationId — 32 hex (обов'язкове); ledgerFirstHash — sha256 запису seq 1 (необов'язкове); ledgerMinSeq — додатне ціле, мінімальна
+//   довжина журналу (необов'язкове). Хибний формат або порожній рядок — installation-unknown, а не тихе ігнорування; регістр не нормалізується.
+const SHA256 = /^[0-9a-f]{64}$/;
+function pinnedProblems({ installationId, ledgerFirstHash, ledgerMinSeq }) {
+  const missing = [];
+  if (typeof installationId !== 'string' || !INSTALLATION_ID.test(installationId)) missing.push('pinned');
+  if (ledgerFirstHash !== undefined && ledgerFirstHash !== null && !(typeof ledgerFirstHash === 'string' && SHA256.test(ledgerFirstHash))) missing.push('ledger-first-hash');
+  const seq = ledgerMinSeq;
+  if (seq !== undefined && seq !== null && !((typeof seq === 'number' && Number.isInteger(seq) && seq >= 1) || (typeof seq === 'string' && /^[1-9][0-9]*$/.test(seq)))) missing.push('ledger-min-seq');
+  return missing;
+}
+
+// T-0011 (M6, M3): пара «сховище—журнал» належить закріпленій установці. Збираються всі розбіжності, а не перша:
+//   store-marker-missing | store-marker-mismatch, ledger-not-bound | ledger-binding-mismatch, ledger-first-hash-mismatch,
+//   ledger-truncated-below-min-seq. Читання: store.installation() нічого не створює (Store.open).
+export function checkInstallation({ store, ledgerEntries, installationId, ledgerFirstHash, ledgerMinSeq }) {
+  const missing = [];
+  const marker = typeof store.installation === 'function' ? store.installation() : null;
+  if (!marker) missing.push('store-marker-missing');
+  else if (marker.installation_id !== installationId) missing.push('store-marker-mismatch');
+  const binding = ledgerBinding(ledgerEntries);
+  if (!binding) missing.push('ledger-not-bound');
+  else if (binding.installation_id !== installationId) missing.push('ledger-binding-mismatch');
+  if (ledgerFirstHash && ledgerEntries.length && ledgerEntries[0].hash !== ledgerFirstHash) missing.push('ledger-first-hash-mismatch');
+  if (ledgerMinSeq !== undefined && ledgerMinSeq !== null && ledgerEntries.length < Number(ledgerMinSeq)) missing.push('ledger-truncated-below-min-seq');
+  return missing.length ? { ok: false, missing } : { ok: true, binding };
+}
+
+// T-0011 (M7 пп. 1–3, 5; рішення Р-Т11-6): кожна подія ADM у events.jsonl з `ref: j4-ledger#seq=N` має відповідати запису N НАДАНОГО журналу:
+//   запис існує, а `ledger_hash` події дорівнює його hash (обов'язкове поле); вид запису відповідає виду події (escalation ↔ escalation_raised
+//   з тим самим escalation_id; report_filed ↔ message_accepted kind report з тим самим msg_id; інший вид події з таким ref — kind-mismatch);
+//   `installation_id` події обов'язковий, якщо запис N пізніший за запис прив'язки (нові події), і лише перевіряється, якщо передує їй
+//   (події часів до adopt). Історичні події не змінюються. Подія ADM без ref на журнал J4 (done) не звіряється.
+const LEDGER_REF = /^j4-ledger#seq=(\d+)$/;
+const EXPECTED_RECORD = {
+  escalation: (e, rec) => rec.event === 'escalation_raised' && rec.detail?.escalation_id === e.escalation_id,
+  report_filed: (e, rec) => rec.event === 'message_accepted' && rec.kind === 'report' && rec.msg_id === e.msg_id,
+};
+function reconcileEvents({ entries, ledgerEntries, installationId, binding }) {
+  const bySeq = new Map(ledgerEntries.map((x) => [x.seq, x]));
+  const problems = [];
+  for (const e of entries) {
+    if (e.by !== 'ADM') continue;
+    const m = LEDGER_REF.exec(typeof e.ref === 'string' ? e.ref : '');
+    if (!m) continue;
+    const n = Number(m[1]);
+    const at = `event-seq-${e.seq ?? '?'}`;
+    const rec = bySeq.get(n);
+    if (!rec || typeof e.ledger_hash !== 'string' || rec.hash !== e.ledger_hash) {
+      problems.push(`${at}:ledger-seq-${n}-mismatch`);
+      continue;
+    }
+    if (!(EXPECTED_RECORD[e.event]?.(e, rec) ?? false)) problems.push(`${at}:ledger-seq-${n}-kind-mismatch`);
+    if (e.installation_id === undefined) {
+      if (n > binding.seq) problems.push(`${at}:installation-id-missing`);
+    } else if (e.installation_id !== installationId) {
+      problems.push(`${at}:installation-mismatch`);
+    }
+  }
+  return problems;
+}
+
+export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledgerEntries, installationId, ledgerFirstHash, ledgerMinSeq, now = Date.now() }) {
   const refuse = (code, missing = []) => ({ ok: false, code, missing });
   if (!SHA40.test(subject ?? '')) return refuse('subject-invalid');
   // обидва джерела ескалацій J4 обов'язкові: без них перевірка «немає відкритої ескалації JE» мовчки б пропускалась
@@ -352,6 +425,11 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledger
     if (e instanceof TaskEventsError) return refuse(e.code);
     throw e;
   }
+  // T-0011 (M11): ідентичність пари — ДО ідемпотентності: повтор на чужій парі чи без закріпленого значення — теж відмова, а не `already`
+  const unknown = pinnedProblems({ installationId, ledgerFirstHash, ledgerMinSeq });
+  if (unknown.length) return refuse('installation-unknown', unknown);
+  const ident = checkInstallation({ store, ledgerEntries, installationId, ledgerFirstHash, ledgerMinSeq });
+  if (!ident.ok) return refuse('installation-mismatch', ident.missing);
   const done = entries.filter((e) => e.event === 'state_changed' && e.state === 'done');
   if (done.some((e) => e.subject === subject)) return { ok: true, already: true, entry: done.find((e) => e.subject === subject) };
   if (done.length) return refuse('done-exists-other-subject');
@@ -359,6 +437,10 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledger
   const gate = orderGate(staffRoot, taskId);
   if (!gate) return refuse('order-missing');
   if (gate.error) return refuse(gate.error);
+
+  // T-0011 (M7): події ADM ↔ журнал J4 — до перевірки відкритих ескалацій, щоб підміна події не маскувалась під «невідому ескалацію»
+  const eventProblems = reconcileEvents({ entries, ledgerEntries, installationId, binding: ident.binding });
+  if (eventProblems.length) return refuse('ledger-events-mismatch', eventProblems);
 
   let esc;
   try {
@@ -369,7 +451,8 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledger
     if (e instanceof SyntaxError || typeof e?.code === 'string') return refuse('escalation-source-unreadable', ['store-unreadable']);
     throw e;
   }
-  if (esc.length) return refuse('open-escalation', esc.map((x) => `escalation:${x}`));
+  if (esc.storeOnly.length) return refuse('installation-mismatch', ['store-ledger-escalation-unknown', ...esc.storeOnly.map((x) => `escalation:${x}`)]);
+  if (esc.open.length) return refuse('open-escalation', esc.open.map((x) => `escalation:${x}`));
 
   const ev = evidenceFromEvents(staffRoot, taskId);
   const { checks, sha256, reasons = [] } = checksFrom(staffRoot, subject, checksRef, gate.verify);
