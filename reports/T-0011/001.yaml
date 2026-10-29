@@ -1,0 +1,65 @@
+# T-0011: донесення J3 (раунд 1) — реалізація Дизайну 1 (ідентичність установки J4) на контрольному SHA, результати перевірок, що передається C3/J5/JE.
+task_id: T-0011
+from: J3
+to: J5
+cc: [JE, C3]
+stage: "реалізація завершена; повні прогони №1–2, мутанти 25/25, докази збережено; C3 раунд 1 — див. c3: нижче (заповнюється після рецензії); технічне приймання J3, змістове J5 і остаточне JE — на тому ж SHA"
+base_sha: dc7828752eab1c3e68e8d450c5d0c18293fc1b59                # код T-0012, прийнятий JE (events.jsonl T-0012 seq 9)
+branch_base: 49226f9261f074120206723221d71adb7565a263             # вершина t-0012/acceptance-barrier (PR №9, CI run 31 зелений); від dc78287 відрізняється лише tasks/T-0012/**, reports/T-0012/**
+control_sha: 061063598d49c6584e1e6b6c7328fce1948fd8b9             # коміт, що останнім змінює bridge/ і CONTRACT; наступні коміти — лише reports/T-0011/** і tasks/T-0011/**
+execution_branch: t-0011/installation-identity                    # відправлено на origin для checkpoint; PR і CI НЕ відкривались (workflow має тригери лише pull_request/workflow_dispatch)
+authorization: "JE-T12-01 п. 4 (G1–G6); JE 2026-10-29 00:42:08 «Відновити T-0011… продовжуй»; ліміт 180 (used + next ≤ 180)"
+
+changed_files_vs_branch_base:
+  bridge_src: [bridge/src/store.mjs, bridge/src/ledger.mjs, bridge/src/close.mjs, bridge/src/router.mjs, bridge/bin/j4.mjs]
+  tests_new: [bridge/test/t0011.test.mjs (59)]
+  tests_updated_in_scope: [bridge/test/helpers.mjs, bridge/test/recovery.test.mjs, bridge/test/t0007.test.mjs, bridge/test/t0009.test.mjs, bridge/test/t0010.test.mjs, bridge/test/t0012.test.mjs]
+  tests_updated_outside_literal_scope_in: [bridge/test/e2e.test.mjs, bridge/test/t0006.test.mjs]   # Р-Т11-19: виявлено при перевірці/прогоні №1; мінімальні посилення; для підтвердження J5/JE
+  docs: [bridge/docs/DESIGN.md (розд. 20), bridge/README.md, "CONTRACT_v0_4.md — по одному рядку: §4 (абзац після таблиці) і §9а п. 3"]
+  outside: ["tasks/T-0011/**", "reports/T-0011/**"]
+untouched_confirmed: "bridge/src/acceptance.mjs, bridge/config/**, .github/**, інші розділи CONTRACT — git diff 49226f9..061063598 порожній для них; старі tasks/*/events.jsonl не змінені (G2, 'історичні не переписуй')"
+
+decisions_applied:
+  G1: "Дизайн 1: marker J4_HOME/installation.json {installation_id (32 hex), created_at, format}; прив'язка журналу записом installation (seq 1) або installation_adopted у голові наявного журналу; ledger.mjs у межах; close і run --once відмовляють на невідповідній/неприв'язаній парі"
+  G2: "нові події ADM із ref на журнал J4 містять ledger_hash і installation_id; close вимагає ledger_hash завжди, installation_id — коли запис журналу пізніший за прив'язку (Р-Т11-6); CONTRACT §4 і 9а.3 — по одному рядку"
+  G3_G6: "закріплені значення (installation_id; необов'язково ledger_first_hash, ledger_min_seq) передаються CLI явно (прапорці/змінні середовища), значень за замовчуванням і нормалізації немає; bridge/config/** не змінено; реального adopt і реальних значень не створено"
+  G4: "DESIGN розд. 20: механізм не автентифікує by, --human і особу JE; F-9, F-3 і вікно до синхронізації (I11) лишаються відкритими"
+
+checks:
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 061063598d49c6584e1e6b6c7328fce1948fd8b9, result: "203/203 pass, fail 0, skipped 2 (A4 і A5 пропущено під root); 205 тестів: 146 базових + 59 T-0011", by: J3, calls: "44 dispatch + 4 прямих (derived)", ref: reports/T-0011/evidence/full-run-2-0610635.txt}
+  - {cmd: "node --test bridge/test/t0010.test.mjs (від користувача nobody, копія 0610635)", subject: 061063598d49c6584e1e6b6c7328fce1948fd8b9, result: "12/12 pass, fail 0, skipped 0 (A4 і A5 виконані); лічильник dispatch 0", by: J3, calls: 0, ref: reports/T-0011/evidence/t0010-nobody-0610635.txt}
+  - {cmd: "node --test bridge/test/t0011.test.mjs", subject: 061063598d49c6584e1e6b6c7328fce1948fd8b9, result: "59/59 pass, fail 0; лічильник dispatch 0", by: J3, calls: 0}
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 7fa48999e2292e925cce04d36e84930519da9d1f, result: "202/205 pass, 1 fail (t0006 F-4: 12 → 13 записів журналу через запис прив'язки), skipped 2; тест виправлено у 0610635, код не змінювався", by: J3, calls: "44 dispatch + 4 прямих (derived)", ref: reports/T-0011/evidence/full-run-1-7fa4899.txt, note: "прогін №1; не доказ готовності"}
+  - {cmd: "node --test bridge/test/t0011.test.mjs", subject: 49226f9261f074120206723221d71adb7565a263, result: "0/59 pass (сирий прогін: фікстура потребує Store.installation()); із шимом .installation?.(): 7/59 pass (контролі «поведінка без змін», характеризація залишку I11, порядок M11), 52 fail", by: J3, calls: 0, ref: reports/T-0011/evidence/red-base-t0011.txt, note: "контроль «тести до змін»; не доказ готовності"}
+
+mutants:   # reports/T-0011/mutants.yaml
+  total: 25
+  killed: 25
+  survived: 0
+  history: "перший прогін: 21 вбито, 4 вижили (M04, M11, M18, M22) → додано N32, N33, N16b, N34"
+  adapter_calls: 0
+
+calls_ledger:   # reports/T-0011/calls-ledger.yaml
+  limit: 180
+  used: 105
+  breakdown: "2 — помилковий запуск без фільтра (Р-Т11-17), 7 — фільтровані прогони t0009 Q1 / t0007 / e2e+recovery, 48 — повний прогін №1, 48 — повний прогін №2; мутанти, t0010–t0012, t0011, nobody — 0"
+  next_if_needed: "повний прогін №3 (після змін коду) → 153; CI (48) після цього не вміщується: 201 > 180 — потрібне рішення JE"
+  paid: 0
+  network: 0
+  ci_runs: 0
+
+legacy_tests_updated: "t0009 C5/C7: порожній або усічений до нуля журнал тепер відмова installation-mismatch[ledger-not-bound] (раніше ok:true / код 0) — Р-Т11-15; решта — закріплене значення у викликах close, bound-журнал у фікстурах (installJ4), копія marker-а для «іншої теки J4_HOME» тієї ж установки (t0009 C5/C6, t0010 B2), зсув індексів журналу на 1 (e2e, recovery, t0007 S1/S7, t0006 F-4). Видалених тверджень: 0; додано перевірки seq 1 = прив'язка"
+not_verified:
+  - "CI для T-0011 не запускався (PR не відкривався без дозволу JE)"
+  - "macOS/Windows; реальні J4_HOME/журнал JE; реальний adopt і реальні значення installation_id/first_hash/ledger_head_seq (G6 — окреме рішення JE)"
+  - "прямі adapter.call() у gate.test.mjs підраховані за базовим значенням (4), сканер їх не бачить"
+  - "I11: знімок журналу до несинхронізованої ескалації на чистому сховищі проходить (характеризація, залишок; пом'якшується --ledger-min-seq)"
+  - "auto-update/планувальник не вмикались; runbook-close.md і reconcile-close.mjs не змінювались (поза scope.in)"
+c3: "ЗАПОВНИТИ після рецензії (reports/T-0011/c3-review.yaml)"
+open_for_je:
+  - "Р-Т11-1/19: підтвердити межі — наявні тести в scope.in та два файли поза буквальним переліком (e2e.test.mjs, t0006.test.mjs)"
+  - "Р-Т11-2: база — вершина T-0012 (49226f9) замість dc78287 (різниця лише tasks/reports T-0012)"
+  - "Р-Т11-3: task_created від імені J5 записав J3 на підставі наказу J5 і рішення JE; повторного підтвердження J5 немає"
+  - "Р-Т11-12: I10 vs M7.4/N14 — вибрано installation-mismatch[store-ledger-escalation-unknown]; за потреби повернути open-escalation"
+  - "G6: фактичні значення (installation_id, first_hash, ledger_head_seq) і реальний adopt — лише окремим рішенням JE на реальній установці"
+  - "дозвіл на draft PR із кодом і CI (48 викликів; після прогону №3 — не вміщується в 180) — лише після приймань C3/J5 і остаточного JE"
