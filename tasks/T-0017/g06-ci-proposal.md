@@ -78,7 +78,8 @@ jobs:
           echo '<!doctype html><title>EasyWAR</title>' > dist/index.html
       - name: collective vectors
         shell: bash
-        run: cargo test --locked --manifest-path src-tauri/Cargo.toml collective::
+        run: |
+          cargo test --locked --manifest-path src-tauri/Cargo.toml collective::
 ```
 
 Доказ у будь-якому варіанті: точний SHA, ОС, rustc, підсумок «N passed, 1 ignored», exit code. J3 записує його окремим
@@ -96,3 +97,7 @@ jobs:
 Що tauri-build на Windows компілює крейт без sidecar-бінарника runner. На Linux у `checks` і на macOS (007.yaml)
 це працює без нього. Якщо збірка на Windows вимагатиме runner, workflow впаде до тестів, і це буде видно в лозі.
 Тоді знадобиться крок збірки runner, тобто більший обсяг.
+
+## Примітка J3 до виконання (29.10.2026 13:49Z)
+
+У YAML-фрагментах вище рядок `run: cargo test … collective::` у простому вигляді не є валідним YAML: двокрапка в кінці рядка робить із нього ключ. У файлі, що реально відправлено, і в цьому документі команду переведено в блок `run: |`. Виконано за В1: гілка `claude/g06-windows`, коміт 6f120493e29aa99465cf677ea8cde98ba23c2ea3, run 40885518249.
