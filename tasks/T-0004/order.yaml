@@ -3,7 +3,7 @@
 # після погодження J5, злиття PR #157 (C1b) і події task_accepted від C5.1. Лише синтетичні дані.
 
 id: T-0004
-version: 1
+version: 2
 parent_task_id: T-0002
 title: "E8 / C1c — ядро членства колективу й машина станів вступу Pair (виконавець Codex)"
 
@@ -80,7 +80,7 @@ checks:
   review_kind: code
 
 resources:
-  max_calls: 25                # для Codex; облік Codex — estimate (розділ 19); рецензія C3 і інтеграція J3 — окремо в бюджеті T-0002
+  max_calls: 35                # A-2 (JE 29.10): 25 → 35 для публікації C1c; для Codex; облік Codex — estimate (розділ 19); рецензія C3 і інтеграція J3 — окремо в бюджеті T-0002
   max_tokens: null
   max_cost_usd: null
   max_attempts: 2
@@ -103,3 +103,13 @@ amendments:
     decided_by: J3
     decided_at: 2026-10-22
     note: "уточнення без зміни обсягу (CONTRACT_v0_4.md, розділ 4: погоджує requester)" 
+  - id: A-2
+    proposed_by: J3
+    base_version: 1
+    change: {field: resources.max_calls, from: 25, to: 35}
+    reason: "C5.1 виконав C1c локально (коміт b29f5d7, 4 файли, цільові тести 28/28 за донесенням), але push заблоковано (DNS github.com, gh-токен нечинний) і estimate досяг 25; +10 викликів — лише на відновлення доступу й публікацію гілки codex/t-0004-c1c-membership, без змін коду"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-29
+    decision_ref: "tasks/T-0004/events.jsonl#12 (картка JE 29.10 01:55Z: «Бюджет Codex +10»)"
+    note: "альтернативи (push гілки JE власноруч; патч через JE до J3) відхилено JE; якщо DNS/токен не запрацюють — C5.1 зупиняється на 35 і доповідає, далі патч через JE до J3; загальний рахунок T-0002 (235) не змінюється, бо Codex обліковується окремо (розділ 19, estimate)"
