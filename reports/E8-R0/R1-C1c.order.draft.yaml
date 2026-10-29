@@ -1,0 +1,118 @@
+# ЧЕРНЕТКА R0 (E8-R0-READINESS, J3, 29.10.2026). НЕ НАКАЗ. Номер T-XXXX і task_created — за J5/JE.
+# Ключі за CONTRACT_v0_4.md, розділ 3. Лише синтетичні дані.
+# Варіант А: виконати чинний наказ T-0004 (Codex) без змін обсягу. Варіант Б: ті самі end_state для J3 новим наказом.
+# Різниця лише в assignee, resources і context_refs; обидва варіанти не повторюють C1a/C1b/C1d.
+
+id: T-XXXX                      # варіант А = T-0004 v1 (уже затверджено J5 22.10, чекає task_accepted C5.1)
+version: 1
+parent_task_id: T-0002
+title: "R1 / E8 C1c — ядро членства колективу, ролі JE-T6 і машина станів вступу Pair"
+
+intent:
+  purpose: >-
+    Завершити етап C1 чистим JS-ядром членства й вступу, на яке спираються C3b (Rust-політика),
+    C5 (екрани «Колективи»/«Вступити») і C6a (доставка заявки по LAN). Без мережі, криптографії,
+    сховищ, DOM, годинника й випадковості.
+  end_state:
+    - "src/collective-core.js, src/collective-pair-core.js, tests/collective.test.mjs, tests/collective-pair.test.mjs злито в main від бази не старшої за cf08ac449e1c66b57ba48aac11d8cdf1756170b5"
+    - "журнал членства згортається детерміновано; кожна подія перевіряється параметром verify (заглушка в тестах, позначена синтетичною); невалідна — відкидається з машинним кодом"
+    - "вступ лише за згодою кандидата І підтвердженням учасника з усіма епохами (JE-T2, К3, AC19); без епох — approver-missing-epochs"
+    - "ролі за таблицею JE-T6 повністю; невизначені операції — fail-closed; власника ніхто не відкликає, він не виходить; адміністратор не успадковує прав власника"
+    - "JE-T7: joinsUsed/maxJoins, invitation-exhausted, без стану EXHAUSTED; особисте запрошення maxJoins = 1"
+    - "машина станів ADR collective-pairing.md: DRAFT→ACTIVE→JOIN_REQUESTED→SAS_VERIFIED→APPROVED_BOTH→MEMBERSHIP_RECORDED→KEYS_DISTRIBUTED→HISTORY_VERIFIED→COMPLETE + гілки EXPIRED/REVOKED/REJECTED/RATE_LIMITED/WAITING_FOR_APPROVAL/PENDING_HISTORY/ERROR_RETRYABLE; недозволений перехід → invalid-transition без зміни стану; COMPLETE недосяжний без MEMBERSHIP_RECORDED, усіх ключів і історії"
+    - "ліміти (TTL, спроби, max_joins) — лише параметри config (JE-07 відкрито); без config — config-required"
+    - "попередження «один адміністратор» (К4, AC20); historyStatusByTable для моделі JE-08а"
+    - "обидва ядра входять до C1_CORES межового тесту (F-15 частина 2 — перевірити, не змінюючи tests/collective-core-boundaries.test.mjs)"
+    - "ядра не імпортуються застосунком; поведінка EasyWAR для користувача не змінена"
+    - "npm run test:unit зелений; CI checks і audit — success на head-коміті; C3 passed, J3 technical, J5 content на тому самому SHA"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "лише чотири файли scope.in; tests/collective-core-boundaries.test.mjs не змінювати"
+    - "src-tauri/**, міграції, capabilities, CSP, Cargo.*, package.json, package-lock.json, AGENTS.md, legacy HTML, docs/** — заборонено (рядок стану в docs/COLLECTIVES_PLAN.md §8 вносить J3 окремим комітом після приймання)"
+    - "без генерації кодів, PAKE, SAS-обчислення, мережі, пошуку учасників, криптографії, сховищ, DOM, Date.now, Math.random, нових залежностей"
+    - "без злиття PR виконавцем, без запису в main, без розширення обсягу; рекомендації J3 не записуються як рішення JE"
+
+mission: >-
+  Реалізувати C1c за tasks/T-0004/codex-prompt.md і j5-brief.md (розділ C1c) в окремій гілці
+  (codex/t-0004-c1c-membership або claude/e8-c1c-membership), відкрити PR у hellwikcoop-arch/EasyWAR,
+  передати SHA, diff і результати тестів на рецензію C3.
+
+scope:
+  in:
+    - src/collective-core.js
+    - src/collective-pair-core.js
+    - tests/collective.test.mjs
+    - tests/collective-pair.test.mjs
+  out:
+    - "tests/collective-core-boundaries.test.mjs та всі наявні тести"
+    - "файли C1a, C1b, C1d; docs/**"
+    - "C2–C8, P1, Rust, IPC, UI, мережа, Base44"
+
+context_refs:
+  - "EasyWAR main cf08ac449e1c66b57ba48aac11d8cdf1756170b5 (або новіший main, якщо PR #160 уже злито)"
+  - "AGENTS.md («Codex task-boundary board» — для Codex), CLAUDE.md, docs/WORKFLOW.md"
+  - "docs/COLLECTIVES_PLAN.md §2 (Q10в), §6 (К3, К4), §11 (AC01, AC02, AC10, AC19, AC20)"
+  - "docs/adr/collective-pairing.md"
+  - "src/sensitivity-core.js, src/shared-table-core.js, src/sync-policy-core.js (PR #160) — зразки стилю ядер C1"
+  - "easywar-staff: tasks/T-0002/{order.yaml,je-order.md,brief.md}, tasks/T-0004/{codex-prompt.md,j5-brief.md,j5-final-authorization.md}, CONTRACT_v0_4.md"
+materials:
+  - "tasks/T-0004/codex-prompt.md (специфікація, таблиця ролей JE-T6, JE-T7)"
+  - "reports/E8-R0/R0_PACKAGE.md (цей аудит)"
+
+data_class: synthetic
+requester: J3                   # варіант А (як у T-0004); варіант Б — J5/JE
+assignee: C5.1                  # варіант А — Codex; варіант Б — J3
+priority: normal
+important: true
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: false
+
+checks:
+  subject_kind: commit
+  verify:
+    - "node --test tests/collective.test.mjs tests/collective-pair.test.mjs tests/collective-core-boundaries.test.mjs"
+    - "npm run test:unit"
+    - "git diff --name-only origin/main...HEAD — лише чотири файли scope.in"
+    - "grep -L: у нових файлах немає fetch|XMLHttpRequest|WebSocket|EventSource|invoke|@tauri-apps|localStorage|indexedDB|document|window|Date.now|Math.random"
+    - "CI desktop-build: checks і audit — success на head-коміті PR"
+  review_kind: code
+
+# Очікувані результати тестів (мінімум):
+#   позитивні — P01–P05 (щасливий шлях станів), AC01 (кілька колективів без витоку ролей), AC02 (згода обох),
+#               AC19 (підтверджує лише учасник з усіма епохами), AC20 (попередження «один адміністратор»),
+#               JE-T6 кожна дозволена клітинка таблиці, JE-T7 joinsUsed=maxJoins → invitation-exhausted
+#   негативні — P06 SAS не збігся → REJECTED, P07 той самий request_id двічі → ідемпотентно, P08 без епох → PENDING_HISTORY,
+#               P09 профіль без пароля → Pair недоступний, invalid-transition, підроблений підпис → відкинуто,
+#               кожна заборонена клітинка JE-T6 → fail-closed, config відсутній → config-required
+
+resources:
+  max_calls: NOT_AUTHORIZED     # варіант А: T-0004 має 25 (Codex, JE-T8) — ДІЙСНИЙ; але C3 ≈10 + J3 ≈6 ідуть з T-0002, де лишок ≈29 при потребі ≈41 → потрібна поправка A-2 (F.1). Варіант Б: новий ліміт ≈45 — NOT_AUTHORIZED
+  max_tokens: null
+  max_cost_usd: null
+  max_attempts: 2
+  max_delegation_depth: 0       # Codex; для J3 — 1 (C3)
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "1–2 сеанси", accuracy: estimate}
+
+reporting:
+  milestones:
+    - "PR відкрито, verify пройдено, CI зелений"
+    - "C3 passed на head SHA"
+    - "J3 technical + J5 content на тому самому SHA; злиття J3 (JE-T5); рядок стану в COLLECTIVES_PLAN.md §8"
+  thresholds:
+    resources_used_pct: 70
+    on_last_attempt: true
+    on_provider_limit: true
+    on_review_incomplete: true
+    on_red_line_risk: true
+
+# Ризики й відкат: спокуса «тимчасової» криптографії в JS — заборонено; розбіжність із брифом (F-24 C1d) — звіряти
+# сигнатури з brief.md до PR; відкат — revert PR (нові файли, нічого не імпортується).
+# Дозволи JE, потрібні до старту: F.1 (бюджет), F.2 (виконавець/Codex). Паралель із R2 і R3 дозволена (немає спільного запису).
+
+amendments: []

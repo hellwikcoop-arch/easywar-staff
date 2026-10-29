@@ -2,7 +2,7 @@
 # і події task_accepted. Лише синтетичні дані.
 
 id: T-0002
-version: 1
+version: 4                     # A-1 (JE-T8, 22.10) → 2; A-2 (JE, 29.10) → 3; A-3 (JE, 29.10) → 4
 parent_task_id: null
 title: "E8 / C1 — чисте JS-ядро колективів: чутливість, операції, членство й вступ, політики обміну"
 
@@ -84,7 +84,7 @@ checks:
   review_kind: code
 
 resources:
-  max_calls: 190               # одиниця: виклик інструмента в сеансі J3 разом із C2/C3; розподіл — brief.md, розділ 3
+  max_calls: 235               # A-1: 190→210; A-2: 210→225; A-3: 225→235 (резерв під Codex 25 у єдиному бюджеті). Одиниця: виклик інструмента в сеансі J3 разом із C2/C3; розподіл — brief.md, розділ 3
   max_tokens: null
   max_cost_usd: null
   max_attempts: 2
@@ -120,4 +120,22 @@ amendments:
     status: approved
     decided_by: JE
     decided_at: 2026-10-22
-    decision_ref: "tasks/T-0004/j5-final-authorization.md, розділ 5 (JE-T8)" 
+    decision_ref: "tasks/T-0004/j5-final-authorization.md, розділ 5 (JE-T8)"
+  - id: A-2
+    proposed_by: J3
+    base_version: 2
+    change: {field: resources.max_calls, from: 210, to: 225}
+    reason: "R0 (reports/E8-R0/R0_PACKAGE.md F.1): на C1c лишалося ≈29 при потребі ≈41; історичні витрати ≈181 не обнуляються"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-29
+    decision_ref: "tasks/T-0002/je-decision-R0.md (п. 1 наказу JE 29.10.2026)"
+  - id: A-3
+    proposed_by: J3
+    base_version: 3
+    change: {field: resources.max_calls, from: 225, to: 235}
+    reason: "зауваження J5 (PR #10 easywar-staff, коментар 6483655733): за CONTRACT §3 витрати дочірнього T-0004 (Codex 25) входять до T-0002; рахунок ≈181 + 25 + C3 ≈10 + J3 ≈6 + приймання/злиття C1d ≈3 = ≈225 без резерву; +10 — резерв на другу спробу C3/J3 у C1c. Історичні витрати не обнуляються"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-29
+    decision_ref: "картка рішення в треді «Аудит готовності EasyWAR Sync (R0)», 29.10.2026 (tasks/T-0002/je-decision-R0.md, доповнення)"

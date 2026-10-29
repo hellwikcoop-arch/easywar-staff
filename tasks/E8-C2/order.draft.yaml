@@ -1,0 +1,47 @@
+# ЧЕРНЕТКА (J3, 29.10.2026, за п. 7 рішення JE за R3). НЕ НАКАЗ. Номер T-XXXX, max_calls і task_created — за J5/JE.
+# Не запускати автоматично. Передумови: злиття PR #172 за JE-T5; рішення JE-15 (Б, умовно), JE-16 (а), JE-18 (Ф) — є (29.10.2026).
+id: T-XXXX
+version: 1
+parent_task_id: null
+title: "R4 / E8 C2 — Rust Crypto Engine: ключі, епохи, конверт EnvelopeV1, сховище секретів (варіант Б, без мережі)"
+intent:
+  purpose: >-
+    Реалізувати криптопрофіль ADR collective-crypto.md (suite 1, варіант Б) у Rust без мережі й без UI:
+    ідентичність (Ed25519 + X25519 учасника, пристрій), ключ епохи й обгортки, EnvelopeV1 з AAD = усі відкриті
+    поля, two-level anti-replay, авторизація за журналом складу (membership_seq), сховище секретів за JE-18 (Ф).
+  end_state:
+    - "Cargo.toml: + ed25519-dalek 2.2 (rand_core, zeroize), x25519-dalek 2.0 (static_secrets, zeroize); spake2 — лише якщо C2p у цьому ж наказі (інакше C2p окремо); без ciborium (власний codec); Cargo.lock оновлено одним комітом; cargo audit зелений"
+    - "src-tauri/src/collective/{mod,identity,epoch,envelope,codec,replay,secret_store}.rs — pub mod collective у lib.rs; БЕЗ #[tauri::command], БЕЗ reqwest; підключення команд — C3b"
+    - "tests/fixtures/collective-crypto-vectors.json (розділ 4 ADR): RFC 8032/7748/5869/XChaCha вектори + синтетичні конверти + reencrypt + негативні (flipped byte, same op_id different payload, backdated signed operation, old envelope after revocation, membership_seq from the future); читають cargo test і node --test"
+    - "secret_store: файл + Argon2id за зразком office_library.rs, мітки easywar/collective/v1/*; тести: зміна пароля (rewrap), відновлення, ізоляція профілів, знищення ключів (zeroize + видалення файла), аварійне завершення (атомарний запис, журнал)"
+    - "docs/adr/collective-crypto.md: статус «Реалізовано в C2 (варіант Б), gate G12 — відкрито»; docs/COLLECTIVES_PLAN.md §8 рядок C2, §9 G12"
+    - "gate G12: незалежна перевірка дизайну протоколу (не автором коду) — окремий звіт у docs/evidence/collectives/ ДО злиття в main або явне рішення JE про злиття з відкритим G12 як feature behind nothing (модуль не викликається до C3b)"
+  red_lines:
+    - "тільки синтетичні дані; жодних реальних ключів у репозиторії"
+    - "без мережі, listener, команд Tauri, CSP/capabilities, міграцій (міграції — C3)"
+    - "Cargo.lock змінюється лише цим наказом; Dependabot #169/#165 закрити/злити ДО старту"
+    - "ADR лишаються з умовою JE-15 «умовно» до G12"
+scope:
+  in: [src-tauri/Cargo.toml, src-tauri/Cargo.lock, src-tauri/src/lib.rs (лише pub mod), src-tauri/src/collective/**, tests/fixtures/collective-crypto-vectors.json, tests/collective-crypto-vectors.test.mjs, docs/adr/collective-crypto.md, docs/COLLECTIVES_PLAN.md, docs/evidence/collectives/]
+  out: ["tauri.conf.json, capabilities/*, build.rs, generate_handler!, міграції, src/*.js, legacy HTML, AGENTS.md, office_library.rs"]
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: true
+acceptance: {technical: J3, content: J5, key_decision: true}
+checks:
+  subject_kind: commit
+  verify:
+    - "cargo test --locked --manifest-path src-tauri/Cargo.toml collective"
+    - "cargo clippy --locked --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings; cargo fmt --check"
+    - "cargo audit --file src-tauri/Cargo.lock (0 вразливостей; нові крейти лише з allowlist ADR §5)"
+    - "node --test tests/collective-crypto-vectors.test.mjs tests/network-boundary.test.mjs"
+    - "npm run test:unit; CI desktop-build checks + audit success"
+    - "G06: ті самі вектори на Windows і macOS (поза хмарною сесією — окремий доказ власника або CI на тегах)"
+  review_kind: code
+resources: {max_calls: NOT_AUTHORIZED, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
+reporting:
+  milestones: ["залежності + вектори + codec (PR чернетка)", "identity/epoch/envelope/replay зелені", "secret_store з 5 перевірками JE-18", "G12 звіт", "C3 passed; J3; J5"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+amendments: []
