@@ -1,0 +1,35 @@
+# ЧЕРНЕТКА (J3, 29.10.2026, за п. 7 рішення JE за R3 і JE-21 варіант а). НЕ НАКАЗ. Номер T-XXXX, max_calls і task_created — за J5/JE.
+# Не запускати автоматично. Передумови: злиття PR #172 (інвентар ресурсів ADR network-and-secret-boundaries.md §5).
+id: T-XXXX
+version: 1
+parent_task_id: null
+title: "CSP головного вікна замість null (P2-1, JE-21 варіант а) — окремий контрольований PR"
+intent:
+  purpose: >-
+    Увімкнути CSP у src-tauri/tauri.conf.json за інвентарем ресурсів ADR §5 без зламу legacy HTML, WASM «Офісу»,
+    web workers, 3D, карт і IPC; задокументувати залишкові ризики ('unsafe-inline' для legacy-скриптів, ключ Planet у URL).
+  end_state:
+    - "tauri.conf.json: app.security.csp — рядок за таблицею ADR §5 (default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; img-src 'self' data: blob: + 4 хости плиток; frame-src https://dimap.live; media-src 'self'; connect-src 'self' ipc: http://ipc.localhost; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'); dev-режим — devCsp окремо"
+    - "tests/network-boundary.test.mjs: гілка «CSP задано» перевіряє хости плиток і dimap; tests/desktop-frontend.test.mjs — текстовий контракт csp"
+    - "перевірки за скілом run-easywar (Linux, браузерний шлях): index/air/rocket, Офіс (EasyGreen/EasyDoc/EasySlide), 3D-довідники, карта з плитками (синтетичний ключ Planet не вводити), worker карти, splash-відео; скриншоти в docs/evidence/"
+    - "Windows/macOS: ручна перевірка власником або CI на тегах — записати як «не перевірено в хмарі» до отримання доказу"
+    - "docs/BACKLOG.md P2-1 → частково закрито з переліком залишкових ризиків; docs/adr/network-and-secret-boundaries.md §5 статус; docs/USER_GUIDE.md не змінюється (поведінка для користувача не змінюється)"
+  red_lines: ["без змін capabilities/build.rs/generate_handler!; без Cargo.lock; без listener; без переписування legacy inline-скриптів на хеші в цьому наказі (окремо)", "надто вузька CSP без перевірки сценаріїв не вважається виправленням (план P1)"]
+scope:
+  in: [src-tauri/tauri.conf.json, tests/network-boundary.test.mjs, tests/desktop-frontend.test.mjs, docs/BACKLOG.md, docs/adr/network-and-secret-boundaries.md, docs/evidence/**]
+  out: ["capabilities/*, build.rs, Cargo.*, src/*.js, legacy HTML (крім випадку, коли CSP ламає сценарій — тоді стоп і доповідь JE)"]
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: true
+acceptance: {technical: J3, content: J5, key_decision: true}
+checks:
+  subject_kind: commit
+  verify: ["node --test tests/network-boundary.test.mjs tests/office-isolation.test.mjs tests/desktop-frontend.test.mjs", "npm run build", "run-easywar: сценарії вище без помилок CSP у консолі", "CI desktop-build success"]
+  review_kind: code
+resources: {max_calls: NOT_AUTHORIZED, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 15}, accuracy: estimate, effort_estimate: {value: "2–3 сеанси (≈60–80 викликів)", accuracy: estimate}}
+reporting:
+  milestones: ["CSP-рядок + тести (PR чернетка)", "сценарії run-easywar пройдено, скриншоти", "C3 passed; J3; J5; рішення JE про злиття з відкритим Windows/macOS"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+amendments: []

@@ -5,7 +5,10 @@
 //     рядку у вигляді плоского YAML-відображення `{cmd: …, subject: <повний SHA>, result: "N/N pass …", by: …}` (T-0010,
 //     F-T9-22: суворий розбір без залежностей; SHA лише в полі `subject`; `result` починається з `pass`/`N/N pass`, без
 //     fail/error — `fail 0` / `0 fail` / `errors: 0` дозволені); якщо наказ має `verify: ["…", …]`, кожна його команда
-//     — у полі `cmd` такого ж запису; нечитаний `verify` — відмова. sha256 файлу доказів пишеться в подію done;
+//     — підрядком поля `cmd` запису, який пройшов; нечитаний `verify` — відмова. T-0012 (R-11, F-T10-11): для КОЖНОЇ
+//     вимоги діє ОСТАННІЙ запис серед тих, що її стосуються (cmd містить вимогу або cmd відсутній); пізніший збій варіантною
+//     командою, запис без cmd чи нерозпізнаний result скасовують раніший успіх (fail-closed; причини `evidence-*` у missing).
+//     sha256 файлу доказів пишеться в подію done;
 //   - рецензія виду checks.review_kind і приймання кожної ролі з acceptance наказу (+ JE для key_decision);
 //   - відсутність відкритих ескалацій JE за задачею: у сховищі J4, у журналі J4 (escalation_raised без
 //     escalation_resolved) і в events.jsonl; ескалація, невідома сховищу, але є в журналі, вважається відкритою;
@@ -134,7 +137,8 @@ function openEscalations({ store, ledgerEntries, taskId, entries }) {
 //   - SHA має бути значенням поля `subject` (повний, без регістрових розбіжностей), а не згадкою в note чи cmd;
 //   - `result` починається з `pass`/`passed` або `N/N pass` (N > 0, обидва числа рівні); далі — лише `, … ; … ( …`, без fail/error
 //     (звичайний підсумок `fail 0`, `0 fail`, `errors: 0` дозволений), без not/never/false;
-//   - команди `verify` наказу мають бути підрядками поля `cmd` записів, що пройшли; хоча б один запис має пройти.
+//   - команди `verify` наказу мають бути підрядками поля `cmd` записів, що пройшли; хоча б один запис має пройти
+//     (T-0012: правило «останнього релевантного запису» — evidenceVerdict нижче).
 // Файл — звичайний, не симлінк, realpath усередині сховища.
 const EVIDENCE_KEYS = new Set(['cmd', 'subject', 'result', 'by', 'calls', 'at', 'ref', 'date', 'note']);
 
@@ -228,11 +232,11 @@ function resultIsPass(res) {
   return !new RegExp(`\\b(?:${counter}|not|never|false|partial|incomplete)\\b`, 'i').test(cleaned) && !/(?<![\w.])0[ ]+tests?\b/i.test(cleaned);
 }
 
-// Записи доказу з тексту файла (T-0010, F-T10-2): пропускаються рядки всередині блокових скалярів YAML (`|`, `>`), де
-// «запис» лише текст; для кожної команди `cmd` діє ОСТАННІЙ запис на цьому subject — пізній збій скасовує ранній успіх,
-// пізній успіх після збою (повторний прогін) приймається.
-function passingCommands(text, subject) {
-  const latest = new Map();
+// Записи доказу з тексту файла на subject у порядку файла: { cmd (рядок після trim або null), pass } (T-0010, F-T10-2;
+// T-0012). Рядки всередині блокових скалярів YAML (`|`, `>`) пропускаються — там «запис» лише текст. `cmd` із самих
+// пробілів або порожній = відсутній (R11-7, C3H-1). `pass` — лише те, що розпізнає resultIsPass; інше = збій (fail-closed).
+function evidenceRecords(text, subject) {
+  const out = [];
   let blockIndent = null;
   for (const raw of text.split('\n')) {
     const indent = raw.match(/^[ \t]*/)[0].length;
@@ -240,14 +244,45 @@ function passingCommands(text, subject) {
       if (raw.trim() === '' || indent > blockIndent) continue;
       blockIndent = null;
     }
-    if (/(?:^|:|-)[ \t]*[|>][+\-0-9]*$/.test(stripComment(raw).trimEnd())) {
+    // T-0012 (R-10, F-T10-10): перед `|`/`>` допускаються теги (`!!str`, `!custom`) і якорі (`&a`) — такий заголовок теж відкриває
+    // блок. Побічний ефект (відомий, fail-closed): `note: ->` чи `key: -|` теж відкривають «блок»; запис на тому ж відступі далі діє.
+    if (/(?:^|:|-)[ \t]*(?:(?:![^\s]*|&[^\s]+)[ \t]+)*[|>][+\-0-9]*$/.test(stripComment(raw).trimEnd())) {
       blockIndent = indent;
       continue;
     }
     const r = evidenceRecord(raw);
-    if (r && r.get('subject') === subject) latest.set(r.get('cmd') ?? '', resultIsPass(r.get('result')));
+    if (r && r.get('subject') === subject) {
+      const cmd = r.has('cmd') ? r.get('cmd').trim() : '';
+      out.push({ cmd: cmd === '' ? null : cmd, pass: resultIsPass(r.get('result')) });
+    }
   }
-  return [...latest].filter(([, pass]) => pass).map(([cmd]) => cmd);
+  return out;
+}
+
+// T-0012 P1 (R-11, F-T10-11): для КОЖНОЇ вимоги verify діє останній запис серед тих, що її стосуються: запис, чий cmd містить
+// вимогу (підрядок, без канонізації лапок/пробілів/регістру — свідома межа, Р-Т12-4), або запис БЕЗ cmd (невідомо, якої
+// команди він стосується — отже стосується всіх; fail-closed). Останній такий запис має мати cmd і пройти: пізніший збій
+// варіантною командою, запис без cmd чи нерозпізнаний result скасовують раніший успіх; запис без cmd, що «пройшов», вимогу не
+// доводить. Без verify: потрібен хоча б один запис із cmd (C3H-8); групи за cmd (без cmd — своя група), остання в кожній групі
+// має пройти. Повертає { ok, reasons[] } — причини йдуть у `missing` події відмови / виводу CLI.
+function evidenceVerdict(records, verify) {
+  if (!records.length) return { ok: false, reasons: ['evidence-no-record-on-subject'] };
+  const reasons = [];
+  if (!verify.length) {
+    if (!records.some((r) => r.cmd !== null)) reasons.push('evidence-no-cmd-record');
+    const latest = new Map();
+    for (const r of records) latest.set(r.cmd ?? '', r);
+    for (const [cmd, r] of latest) if (!r.pass) reasons.push(`evidence-latest-failed:${cmd || '<без cmd>'}`);
+    return { ok: reasons.length === 0, reasons };
+  }
+  for (const req of verify) {
+    const related = records.filter((r) => r.cmd === null || r.cmd.includes(req));
+    const last = related.at(-1);
+    if (!last) reasons.push(`evidence-missing:${req}`);
+    else if (last.cmd === null) reasons.push(`evidence-latest-without-cmd:${req}`);
+    else if (!last.pass) reasons.push(`evidence-latest-failed:${req}`);
+  }
+  return { ok: reasons.length === 0, reasons };
 }
 
 function checksFrom(staffRoot, subject, checksRef, verify = []) {
@@ -265,9 +300,8 @@ function checksFrom(staffRoot, subject, checksRef, verify = []) {
     return bad;
   }
   const buf = fs.readFileSync(real);
-  const passing = passingCommands(buf.toString('utf8'), subject);
-  const ok = passing.length > 0 && verify.every((cmd) => passing.some((c) => c.includes(cmd)));
-  return { checks: [{ subject, passed: ok, evidence_ref: ok ? rel : null }], sha256: ok ? createHash('sha256').update(buf).digest('hex') : null };
+  const v = evidenceVerdict(evidenceRecords(buf.toString('utf8'), subject), verify);
+  return { checks: [{ subject, passed: v.ok, evidence_ref: v.ok ? rel : null }], sha256: v.ok ? createHash('sha256').update(buf).digest('hex') : null, reasons: v.reasons };
 }
 
 // Журнал J4 для перевірки відкритих ескалацій: читається лише достовірний. Відсутній файл, не файл, обірваний останній
@@ -338,9 +372,10 @@ export function closeTask({ staffRoot, taskId, subject, checksRef, store, ledger
   if (esc.length) return refuse('open-escalation', esc.map((x) => `escalation:${x}`));
 
   const ev = evidenceFromEvents(staffRoot, taskId);
-  const { checks, sha256 } = checksFrom(staffRoot, subject, checksRef, gate.verify);
+  const { checks, sha256, reasons = [] } = checksFrom(staffRoot, subject, checksRef, gate.verify);
   const r = requestDone({ by: 'ADM', subject, checks, reviews: ev.reviews, acceptances: ev.acceptances, keyDecision: gate.keyDecision, reviewKind: gate.reviewKind, requiredRoles: gate.requiredRoles });
-  if (!r.allowed) return refuse('barrier-not-passed', r.missing);
+  // T-0012: причини з розбору доказів — лише доповнення до кодів бар'єра (діагностика, не окремий механізм приймання)
+  if (!r.allowed) return refuse('barrier-not-passed', [...r.missing, ...reasons]);
 
   try {
     const res = appendAdmEvent(staffRoot, taskId, {

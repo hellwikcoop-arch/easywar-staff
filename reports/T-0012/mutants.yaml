@@ -1,0 +1,97 @@
+# Мутанти T-0012 (спец. 04-spec-T-0012.md §4.6 + додаткові). Кожен — одна правка в копії bridge/src на SHA dc78287; прогін node --test bridge/test/t0012.test.mjs bridge/test/t0010.test.mjs (53 тести, 0 dispatch_attempt).
+# killed: true = хоча б один тест червоний. Сценарій: /tmp/claude-0/-home-user/0c488177-7a0b-5854-9250-dc5836d9653f/scratchpad/mutants.py (поза репозиторієм).
+subject: dc7828752eab1c3e68e8d450c5d0c18293fc1b59
+total: 15
+killed: 15
+survived: 0
+mutants:
+  - id: M1
+    file: bridge/src/acceptance.mjs
+    mutation: "review_status: e.review_status ?? null -> review_status: e.review_status ?? 'complete'"
+    killed: true
+    failing_tests: 2
+    killers: ["T-0012 F16-1: review_finished + passed без review_status → review-C3-incomplete", "T-0012 F16-2: review_status: null явно → incomplete"]
+  - id: M2
+    file: bridge/src/acceptance.mjs
+    mutation: "result: e.result ?? null -> result: e.result ?? 'accepted'"
+    killed: true
+    failing_tests: 2
+    killers: ["T-0012 F16-6: acceptance без result → not-accepted", "T-0012 F16-7: acceptance result: null → not-accepted"]
+  - id: M3
+    file: bridge/src/acceptance.mjs
+    mutation: "last.scope !== 'full' -> last.scope === 'limited'"
+    killed: true
+    failing_tests: 4
+    killers: ["T-0012 SC1-0: acceptance без scope (форма T-0005…T-0010) → scope-not-full", "T-0012 SC1-2: scope як масив, число, Full з великої → не full", "T-0012 SC1-3: scope: full у review_finished не замінює scope у acceptance", "T-0012 SC1-5: обидві ролі й JE (key_decision) потребують scope: full"]
+  - id: M4
+    file: bridge/src/acceptance.mjs
+    mutation: "else if (last.review_status !== 'complete') missing.push(`review-${who}-incomplete`); -> else if (false) missing.push(`review-${who}-incomplete`);"
+    killed: true
+    failing_tests: 3
+    killers: ["T-0012 F16-1: review_finished + passed без review_status → review-C3-incomplete", "T-0012 F16-2: review_status: null явно → incomplete", "T-0012 F16-3: review_status: partial → incomplete (як і раніше не зараховано)"]
+  - id: M5
+    file: bridge/src/close.mjs
+    mutation: "r.cmd === null || r.cmd.includes(req) -> r.cmd !== null && r.cmd.includes(req)"
+    killed: true
+    failing_tests: 2
+    killers: ["T-0012 R11-3: успіх, далі збій без cmd → відмова (запис без cmd стосується всіх вимог)", "T-0012 R11-7: успіх, далі збій із cmd: \"\" або cmd лише з пробілів → відмова (порожній післ"]
+  - id: M6
+    file: bridge/src/close.mjs
+    mutation: "related.at(-1) -> related[0]"
+    killed: true
+    failing_tests: 11
+    killers: ["T-0010 C1: F-T9-22 — форми, що раніше проходили евристику, більше не є доказом перевірок", "T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймают", "T-0012 R11-1: успіх, далі збій варіантною cmd (прапорець) → відмова з причиною", "T-0012 R11-2: успіх, далі збій cmd з пробілом наприкінці → відмова"]
+  - id: M7
+    file: bridge/src/close.mjs
+    mutation: "r.cmd === null || r.cmd.includes(req) -> r.cmd === null || r.cmd === req"
+    killed: true
+    failing_tests: 4
+    killers: ["T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймают", "T-0012 R11-1: успіх, далі збій варіантною cmd (прапорець) → відмова з причиною", "T-0012 R11-9: збій базовою, далі успіх варіантною, що містить вимогу → done (контроль)", "T-0012 R11-10: дві вимоги verify — друга провалена варіантною → відмова саме за другою; об"]
+  - id: M8
+    file: bridge/src/close.mjs
+    mutation: "/(?:^|:|-)[ \\t]*(?:(?:![^\\s]*|&[^\\s]+)[ \\t]+)*[|>][+\\-0-9]*$/ -> /(?:^|:|-)[ \\t]*[|>][+\\-0-9]*$/"
+    killed: true
+    failing_tests: 4
+    killers: ["T-0012 R10-1: «запис» усередині блоку «note: !!str |» не є доказом", "T-0012 R10-2: «запис» усередині блоку «note: &a |» не є доказом", "T-0012 R10-3: «запис» усередині блоку «note: !!str >-» не є доказом", "T-0012 R10-5: «запис» усередині блоку «- !custom |2» не є доказом"]
+  - id: M9
+    file: bridge/src/close.mjs
+    mutation: "refuse('barrier-not-passed', [...r.missing, ...reasons]) -> refuse('barrier-not-passed', r.missing)"
+    killed: true
+    failing_tests: 19
+    killers: ["T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймают", "T-0012 R11-1: успіх, далі збій варіантною cmd (прапорець) → відмова з причиною", "T-0012 R11-2: успіх, далі збій cmd з пробілом наприкінці → відмова", "T-0012 R11-3: успіх, далі збій без cmd → відмова (запис без cmd стосується всіх вимог)"]
+  - id: M10
+    file: bridge/src/acceptance.mjs
+    mutation: "else if (hasLimits(last.limits)) -> else if (false && hasLimits(last.limits))"
+    killed: true
+    failing_tests: 1
+    killers: ["T-0012 SC1-6: scope: full із непорожнім limits — суперечливий запис → scope-contradictory "]
+  - id: M11
+    file: bridge/src/close.mjs
+    mutation: "out.push({ cmd: cmd === '' ? null : cmd, -> out.push({ cmd: r.has('cmd') ? r.get('cmd') : null,"
+    killed: true
+    failing_tests: 1
+    killers: ["T-0012 R11-7: успіх, далі збій із cmd: \"\" або cmd лише з пробілів → відмова (порожній післ"]
+  - id: M12
+    file: bridge/src/close.mjs
+    mutation: "if (raw.trim() === '' || indent > blockIndent) continue; -> if (indent > blockIndent) continue;"
+    killed: true
+    failing_tests: 1
+    killers: ["T-0012 R12-1: порожній рядок усередині блокового скаляра не закриває блок; запис після ded"]
+  - id: M13
+    file: bridge/src/close.mjs
+    mutation: "if (!records.some((r) => r.cmd !== null)) reasons.push('evidence-no-cmd-record'); -> <видалено>"
+    killed: true
+    failing_tests: 2
+    killers: ["T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймают", "T-0012 R11-13: без verify єдиний запис без cmd із pass не є доказом (C3H-8)"]
+  - id: M14
+    file: bridge/src/close.mjs
+    mutation: "pass: resultIsPass(r.get('result')) -> pass: !/fail/i.test(String(r.get('result')))"
+    killed: true
+    failing_tests: 4
+    killers: ["T-0010 C1: F-T9-22 — форми, що раніше проходили евристику, більше не є доказом перевірок", "T-0010 C2: F-T9-22 — справжні форми запису (reports/T-0007…T-0009) і прості форми приймают", "T-0012 R11-15 (C3H-19): успіх, далі запис із нерозпізнаним result («unknown») → трактуєтьс", "T-0012 COMPAT-2: справжній файл доказів reports/T-0010/003.yaml розбирається як раніше (жо"]
+  - id: M15
+    file: bridge/src/close.mjs
+    mutation: "for (const [cmd, r] of latest) if (!r.pass) -> for (const [cmd, r] of latest) if (false && !r.pass)"
+    killed: true
+    failing_tests: 1
+    killers: ["T-0012 R11-8: verify порожній — остання запис будь-якої команди провальний → відмова"]

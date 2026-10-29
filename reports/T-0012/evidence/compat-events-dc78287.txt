@@ -1,0 +1,25 @@
+T-0002 e1e11dbc  old: not-ready[acceptance-J3-technical-missing,acceptance-J5-content-missing]
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-missing,acceptance-J5-content-missing]
+T-0002 90b3a334  old: not-ready[acceptance-J5-content-missing]
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-not-accepted,acceptance-J5-content-missing]
+T-0002 5923b49d  old: ready
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-not-accepted,acceptance-J5-content-not-accepted]
+T-0002 32e43fb3  old: not-ready[review-C3-not-passed,acceptance-J3-technical-missing,acceptance-J5-content-missing]
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-missing,acceptance-J5-content-missing]
+T-0002 9ec729ee  old: ready
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-not-accepted,acceptance-J5-content-not-accepted]
+T-0002 e9db3ead  old: not-ready[review-C3-not-passed,acceptance-J3-technical-missing,acceptance-J5-content-missing]
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-missing,acceptance-J5-content-missing]
+T-0002 923e1bc1  old: not-ready[acceptance-J3-technical-missing,acceptance-J5-content-missing]
+                 new: not-ready[review-C3-incomplete,acceptance-J3-technical-missing,acceptance-J5-content-missing]
+T-0004 —         subject-ів із повним SHA: 0 (0 подій приймання/рецензії) — бар'єр не застосовний
+T-0006 359178c7  old: ready
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-scope-not-full]
+T-0006 1144aea3  old: ready
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-scope-not-full]
+T-0007 071bf148  old: ready
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-scope-not-full]
+T-0009 67eb3310  old: not-ready[acceptance-J5-content-missing]
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-missing]
+T-0010 96ff45a2  old: not-ready[acceptance-J5-content-missing]
+                 new: not-ready[acceptance-J3-technical-scope-not-full,acceptance-J5-content-missing]

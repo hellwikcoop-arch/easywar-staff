@@ -1,0 +1,61 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ J5: tasks/T-0012/order-j5.md (розд. 1–5 — проєкт-ворота з orders/T-0010-12;
+# розд. 7 — проєкт JE-T12-01 від J5, пересланий JE 2026-10-28). Зареєстровано наказом JE 2026-10-28 08:04 (je-decision-T12-01.md)
+# після C3 passed (раунд 2) на пакеті reports/J4-HARDENING/ (c4a71f6). Лише синтетичні дані. Розбіжності — decisions-register.md.
+
+id: T-0012
+version: 1
+parent_task_id: T-0009
+title: "Бар'єр приймання без значень за замовчуванням, межі приймання, бар'єр доказів (F-T9-16, SCOPE-1, R-11 + R-10 + R-12)"
+
+intent:
+  purpose: "Унеможливити помилкове done: лише явні review_status: complete, result: accepted, scope: full; пізніший збій або неоднозначний доказ скасовує раніший успіх"
+  end_state:
+    - "review_finished без review_status: complete і acceptance без result: accepted / scope: full бар'єр не відкривають; scope: full із непорожнім limits — відмова scope-contradictory"
+    - "для кожної вимоги verify діє останній релевантний запис доказу; нерозпізнаний result або запис без cmd після успіху — fail-closed з причиною у missing"
+    - "заголовок блокового скаляра з тегом/якорем відкриває блок (R-10); тест порожнього рядка в блоці, README про код 1, A5 про замок (R-12)"
+    - "кожний дефект має тест, червоний на 0f2cd0b, і мутант, який тест знаходить; старі тести доповнені scope: 'full' без ослаблення"
+    - "старі events.jsonl не переписані; сумісність T-0002…T-0010 перевірена на контрольному SHA; C3 за diff; технічне J3; змістове J5; остаточне JE"
+  red_lines:
+    - "тільки синтетичні дані; live і платні API — заборонено"
+    - "не змінювати bridge/src/store.mjs, bridge/src/ledger.mjs, bridge/bin/j4.mjs, bridge/config/**, .github/**; CONTRACT — лише §4 (один рядок) і розд. 6 п. 4 (один рядок)"
+    - "не зливати PR; не встановлювати done; реальний j4 close заборонено; PR із кодом і CI — лише за окремим дозволом JE"
+    - "R-13 (j4 acceptance через checksFrom), автентифікація by (F-9), ідентичність установки (T-0011) не входять"
+    - "зміна моделі довіри — зупинитися й передати JE"
+
+mission: "F-T9-16, SCOPE-1 (варіант B + scope-contradictory), R-11 + R-10 + R-12 в одному контрольному SHA; тести, мутанти, compat, C3"
+scope:
+  in: ["bridge/src/acceptance.mjs", "bridge/src/close.mjs", "bridge/test/t0012.test.mjs (новий)", "bridge/test/t0006.test.mjs", "bridge/test/t0007.test.mjs", "bridge/test/t0009.test.mjs", "bridge/test/t0010.test.mjs", "bridge/docs/DESIGN.md", "bridge/README.md", "CONTRACT_v0_4.md §4 (один рядок до review_finished/acceptance) і розд. 6 п. 4 (один рядок)", "tasks/T-0012/**", "reports/T-0012/**"]
+  out: ["bridge/src/store.mjs", "bridge/src/ledger.mjs", "bridge/bin/j4.mjs (R-13 не включати — JE G4)", "bridge/config/**", ".github/**", "інші розділи CONTRACT", "автентифікація by (F-9)", "ідентичність установки (T-0011)", "варіант C SCOPE-1 (відкладено JE G2)", "застосунок EasyWAR"]
+context_refs: ["reports/J4-HARDENING/04-spec-T-0012.md", "reports/J4-HARDENING/08-c3-review.yaml", "reports/J4-HARDENING/11-je-decisions-draft.md", "reports/T-0009/risk-register.yaml", "reports/T-0010/c3-reviews.yaml", "tasks/T-0012/je-decision-T12-01.md", "tasks/T-0012/decisions-register.md"]
+materials: ["tasks/T-0012/order-j5.md", "tasks/T-0012/je-program-2026-10-28.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: normal
+important: false
+
+acceptance: {technical: J3, content: J5, key_decision: true}   # бар'єр приймання і контракт: остаточно приймає JE
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'"]
+  review_kind: code
+
+resources:
+  max_calls: 150               # чинний ліміт за програмою JE 08:11 (наказ 08:04 — 200; проєкт JE-T12-01 — 240, не діє); HALT-поріг 144; див. decisions-register Р-Т12-2
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2              # на сценарій
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: exact
+
+reporting:
+  milestones: ["тести до змін червоні на базі", "контрольний SHA і рецензія C3", "технічне приймання J3", "пакет J5", "пакет JE"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: 0f2cd0b819f25d386311a9f16e3c78b6e923903f   # t-0010/stabilization (PR №7, чернетка); bridge/ == 96ff45a2feafcf0964eda290a2eacca52d3ab2e3; гілка виконання t-0012/acceptance-barrier
+
+amendments: []

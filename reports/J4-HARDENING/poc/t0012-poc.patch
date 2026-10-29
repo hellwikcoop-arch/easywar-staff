@@ -1,0 +1,120 @@
+--- a/bridge/src/acceptance.mjs
++++ b/bridge/src/acceptance.mjs
+@@ -22,7 +22,9 @@
+       // остання завершена рецензія цього рецензента на тому самому subject
+       const last = reviews.filter((r) => r.by === who && r.subject === subject).at(-1);
+       if (!last) missing.push(`review-${who}-missing`);
+-      else if (last.review_status !== 'complete' || last.verdict !== 'passed' || !last.evidence_ref) missing.push(`review-${who}-not-passed`);
++      // T-0012 (F-T9-16): review_status має бути ЯВНО complete; відсутнє, null чи інше — рецензія не завершена
++      else if (last.review_status !== 'complete') missing.push(`review-${who}-incomplete`);
++      else if (last.verdict !== 'passed' || !last.evidence_ref) missing.push(`review-${who}-not-passed`);
+     }
+   }
+   const req = [...requiredRoles];
+@@ -31,7 +33,10 @@
+     // діє останній запис ролі на цьому SHA; прийнятим вважається лише явне accepted (F-1, C3)
+     const last = acceptances.filter((a) => a.by === by && a.role === role && a.subject === subject).at(-1);
+     if (!last) missing.push(`acceptance-${by}-${role}-missing`);
++    // T-0012 (F-T9-16): result має бути ЯВНО accepted; (SCOPE-1, варіант B): scope має бути ЯВНО full — приймання з межами
++    // (scope: limited, список компонентів, будь-що інше чи відсутнє) бар'єра не відкриває
+     else if (last.result !== 'accepted' || !last.evidence_ref) missing.push(`acceptance-${by}-${role}-not-accepted`);
++    else if (last.scope !== 'full') missing.push(`acceptance-${by}-${role}-scope-not-full`);
+   }
+   return { ready: missing.length === 0, missing };
+ }
+@@ -52,10 +57,11 @@
+     }
+     if (e.task_id !== taskId) continue;
+     if (e.event === 'review_finished') {
+-      reviews.push({ by: e.by, subject: e.subject, verdict: e.verdict, review_status: e.review_status ?? (e.verdict ? 'complete' : null), evidence_ref: e.ref });
++      // T-0012 (F-T9-16): без значень за замовчуванням — відсутнє поле лишається відсутнім
++      reviews.push({ by: e.by, subject: e.subject, verdict: e.verdict, review_status: e.review_status ?? null, evidence_ref: e.ref });
+     }
+     if (e.event === 'acceptance') {
+-      acceptances.push({ by: e.by, role: e.role, subject: e.subject, evidence_ref: e.ref, result: e.result ?? 'accepted' });
++      acceptances.push({ by: e.by, role: e.role, subject: e.subject, evidence_ref: e.ref, result: e.result ?? null, scope: e.scope ?? null });
+     }
+   }
+   return { reviews, acceptances, found: true };
+--- a/bridge/src/close.mjs
++++ b/bridge/src/close.mjs
+@@ -231,8 +231,9 @@
+ // Записи доказу з тексту файла (T-0010, F-T10-2): пропускаються рядки всередині блокових скалярів YAML (`|`, `>`), де
+ // «запис» лише текст; для кожної команди `cmd` діє ОСТАННІЙ запис на цьому subject — пізній збій скасовує ранній успіх,
+ // пізній успіх після збою (повторний прогін) приймається.
+-function passingCommands(text, subject) {
+-  const latest = new Map();
++// Записи доказу на subject у порядку файла: {cmd (або null), pass}. Рядки всередині блокових скалярів пропускаються (T-0010, F-T10-2).
++function evidenceRecords(text, subject) {
++  const out = [];
+   let blockIndent = null;
+   for (const raw of text.split('\n')) {
+     const indent = raw.match(/^[ \t]*/)[0].length;
+@@ -240,14 +241,39 @@
+       if (raw.trim() === '' || indent > blockIndent) continue;
+       blockIndent = null;
+     }
+-    if (/(?:^|:|-)[ \t]*[|>][+\-0-9]*$/.test(stripComment(raw).trimEnd())) {
++    // T-0012 P1 (R-10, F-T10-10): перед `|`/`>` допускаються теги (!!str) і якорі (&a) — такий заголовок теж відкриває блок
++    if (/(?:^|:|-)[ \t]*(?:(?:![^\s]*|&[^\s]+)[ \t]+)*[|>][+\-0-9]*$/.test(stripComment(raw).trimEnd())) {
+       blockIndent = indent;
+       continue;
+     }
+     const r = evidenceRecord(raw);
+-    if (r && r.get('subject') === subject) latest.set(r.get('cmd') ?? '', resultIsPass(r.get('result')));
++    if (r && r.get('subject') === subject) out.push({ cmd: r.has('cmd') ? r.get('cmd') : null, pass: resultIsPass(r.get('result')) });
+   }
+-  return [...latest].filter(([, pass]) => pass).map(([cmd]) => cmd);
++  return out;
++}
++
++// T-0012 P1 (R-11, F-T10-11): для КОЖНОЇ вимоги verify діє останній запис серед тих, що її стосуються: запис, чий cmd містить
++// вимогу, або запис БЕЗ cmd (невідомо, якої команди він стосується — тож стосується всіх; fail-closed). Останній такий запис
++// має мати cmd і пройти: пізніший збій варіантною командою чи записом без cmd скасовує раніший успіх; запис без cmd, що
++// «пройшов», вимогу не доводить. Без verify: групи за cmd (без cmd — своя група), остання в кожній групі має пройти,
++// груп ≥ 1. Повертає { ok, reasons[] } — причини для діагностики відмови (у `missing` події/виводу CLI).
++function evidenceVerdict(records, verify) {
++  const reasons = [];
++  if (!records.length) return { ok: false, reasons: ['evidence-no-record-on-subject'] };
++  if (!verify.length) {
++    const latest = new Map();
++    for (const r of records) latest.set(r.cmd ?? '', r);
++    for (const [cmd, r] of latest) if (!r.pass) reasons.push(`evidence-latest-failed:${cmd || '<без cmd>'}`);
++    return { ok: reasons.length === 0, reasons };
++  }
++  for (const req of verify) {
++    const related = records.filter((r) => r.cmd === null || r.cmd.includes(req));
++    const last = related.at(-1);
++    if (!last) reasons.push(`evidence-missing:${req}`);
++    else if (last.cmd === null) reasons.push(`evidence-latest-without-cmd:${req}`);
++    else if (!last.pass) reasons.push(`evidence-latest-failed:${req}`);
++  }
++  return { ok: reasons.length === 0, reasons };
+ }
+ 
+ function checksFrom(staffRoot, subject, checksRef, verify = []) {
+@@ -265,9 +291,8 @@
+     return bad;
+   }
+   const buf = fs.readFileSync(real);
+-  const passing = passingCommands(buf.toString('utf8'), subject);
+-  const ok = passing.length > 0 && verify.every((cmd) => passing.some((c) => c.includes(cmd)));
+-  return { checks: [{ subject, passed: ok, evidence_ref: ok ? rel : null }], sha256: ok ? createHash('sha256').update(buf).digest('hex') : null };
++  const v = evidenceVerdict(evidenceRecords(buf.toString('utf8'), subject), verify);
++  return { checks: [{ subject, passed: v.ok, evidence_ref: v.ok ? rel : null }], sha256: v.ok ? createHash('sha256').update(buf).digest('hex') : null, reasons: v.reasons };
+ }
+ 
+ // Журнал J4 для перевірки відкритих ескалацій: читається лише достовірний. Відсутній файл, не файл, обірваний останній
+@@ -338,9 +363,10 @@
+   if (esc.length) return refuse('open-escalation', esc.map((x) => `escalation:${x}`));
+ 
+   const ev = evidenceFromEvents(staffRoot, taskId);
+-  const { checks, sha256 } = checksFrom(staffRoot, subject, checksRef, gate.verify);
++  const { checks, sha256, reasons = [] } = checksFrom(staffRoot, subject, checksRef, gate.verify);
+   const r = requestDone({ by: 'ADM', subject, checks, reviews: ev.reviews, acceptances: ev.acceptances, keyDecision: gate.keyDecision, reviewKind: gate.reviewKind, requiredRoles: gate.requiredRoles });
+-  if (!r.allowed) return refuse('barrier-not-passed', r.missing);
++  // діагностика доказів — лише доповнення до кодів бар'єра (acceptance.mjs незмінний у цій частині)
++  if (!r.allowed) return refuse('barrier-not-passed', [...r.missing, ...reasons]);
+ 
+   try {
+     const res = appendAdmEvent(staffRoot, taskId, {

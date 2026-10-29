@@ -1,0 +1,85 @@
+# ЧЕРНЕТКА R0 (E8-R0-READINESS, J3, 29.10.2026). НЕ НАКАЗ.
+# R2 — НЕ повторна реалізація C1d: код є (PR #160, 923e1bc), C3 passed, J3 technical accepted.
+# Залишок — приймання змісту J5, злиття за JE-T5, рядок стану. Виконується в межах чинного T-0002 (крок C1d).
+
+id: T-0002                      # чинний наказ, крок C1d; нового номера не потрібно
+version: 2
+parent_task_id: null
+title: "R2 / E8 C1d — приймання змісту J5, злиття PR #160, фіксація стану"
+
+intent:
+  purpose: "Закрити C1d так само, як C1a/C1b: три приймання на одному SHA, злиття, запис у журналі й документах."
+  end_state:
+    - "acceptance J5 role=content на 923e1bc19d106a6f65a5a903d21c16c275abb380 записано в tasks/T-0002/events.jsonl (подію записує J5 або J3 переносить рішення J5 з посиланням, як для C1b seq 22)"
+    - "PR #160 злито J3 після повторної перевірки head = 923e1bc, checks/audit success, main без конфліктів (зараз ahead 2 / behind 0)"
+    - "merge SHA зафіксовано подією report_filed; tasks/T-0002/acceptance-c1d.json за зразком acceptance-c1b.json"
+    - "docs/COLLECTIVES_PLAN.md §8 рядок стану C1d — уже в гілці #160 (злиття його вносить); рядок про C1c лишається «у роботі»"
+    - "F-21 (low, частково відкрито) і F-24 (бриф) перенесено в tasks/T-0002/tracked/ або закрито рішенням J5 — без змін коду"
+    - "якщо J5 вимагає правок коду: лише src/sync-policy-core.js, src/report-submission-core.js і два тести; нова рецензія C3; спроба 3 — лише рішенням JE (max_attempts 2 вичерпано на C1d)"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "злиття без приймання J5 на тому самому SHA заборонено (JE-T5)"
+    - "жодних змін поза чотирма файлами C1d і рядком стану в docs; ніяких нових комітів у гілку без повторної C3"
+    - "не обходити запобіжник середовища при злитті; при блокуванні — зупинитися й доповісти JE, як для #157"
+
+mission: "Отримати приймання J5, злити PR #160 штатним способом, зафіксувати результат у журналі T-0002."
+
+scope:
+  in:
+    - "easywar-staff: tasks/T-0002/events.jsonl, tasks/T-0002/acceptance-c1d.json, reports/T-0002/018+.yaml"
+    - "EasyWAR PR #160 (merge)"
+    - "за потреби правок: src/sync-policy-core.js, src/report-submission-core.js, tests/sync-policy.test.mjs, tests/report-submission.test.mjs"
+  out:
+    - "C1c, C2+, Rust, docs поза рядком стану, AGENTS.md"
+
+context_refs:
+  - "EasyWAR PR #160, head 923e1bc19d106a6f65a5a903d21c16c275abb380, база main cf08ac449e1c66b57ba48aac11d8cdf1756170b5"
+  - "easywar-staff reports/T-0002/015.yaml (C3 раунд 1), 016.yaml (C3 раунд 2 passed), 017.yaml (J3 technical)"
+  - "tasks/T-0002/je-order.md (JE-T5), tasks/T-0004/j5-final-authorization.md (зразок порядку злиття C1b)"
+materials:
+  - "reports/E8-R0/R0_PACKAGE.md"
+
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: true
+
+acceptance:
+  technical: J3                 # уже є (017)
+  content: J5                   # ВІДКРИТО
+  key_decision: false
+
+checks:
+  subject_kind: commit
+  verify:
+    - "pull_request_read #160: head == 923e1bc19d106a6f65a5a903d21c16c275abb380; checks success; audit success (run 39836049078)"
+    - "node --test tests/sync-policy.test.mjs tests/report-submission.test.mjs tests/collective-core-boundaries.test.mjs → 24 pass (перевірено R0 29.10)"
+    - "після злиття: npm run test:unit на main; CI push-run success"
+  review_kind: none             # код уже рецензовано; нова рецензія лише при нових комітах
+
+resources:
+  max_calls: NOT_AUTHORIZED     # у межах лишку T-0002 (≈29, estimate); злиття + журнал ≈5; якщо J5 вимагає правок — потрібна поправка A-2 (F.1)
+  max_tokens: null
+  max_cost_usd: null
+  max_attempts: 2               # на C1d вичерпано (спроби 1 і 2 — рецензія C3); третя — лише рішенням JE
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "≤ 0.5 сеансу", accuracy: estimate}
+
+reporting:
+  milestones:
+    - "J5 content accepted / changes_requested на 923e1bc"
+    - "PR #160 злито; merge SHA; C1d закрито; підсумкове донесення C1 (без C1c — окремо)"
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+# Очікувані результати: позитивний — злиття без конфліктів (гілка на cf08ac4), тести 24/24, test:unit зелений;
+# негативний — якщо main рушить уперед до злиття (наприклад, #170 або #158), конфлікт неможливий (інші файли), але
+# CI треба перезапустити на новому merge; якщо запобіжник знову блокує merge — доповідь JE (як C1b, звіт 012).
+# Ризик: нестабільний Rust-тест у CI (F.12) → перезапуск лише впалого job, без змін коду.
+# Відкат: revert merge-коміту (файли не імпортуються).
+# Дозволи JE: не потрібні (діють JE-01, JE-T5); потрібна лише дія J5.
+
+amendments: []
