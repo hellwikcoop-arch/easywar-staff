@@ -4,7 +4,7 @@
 # Розбіжності й уточнення меж — tasks/T-0011/decisions-register.md.
 
 id: T-0011
-version: 1
+version: 2
 parent_task_id: T-0009
 depends_on: [T-0010, T-0012]
 title: "B2 / F-T9-18: ідентичність установки J4 — marker сховища, прив'язка журналу, звірка подій і ескалацій"
@@ -84,4 +84,13 @@ reporting:
 
 base_sha: dc7828752eab1c3e68e8d450c5d0c18293fc1b59   # код, прийнятий JE (T-0012, seq 9); гілка виконання t-0011/installation-identity відгалужена від 49226f9 (лише tasks/T-0012, reports/T-0012 відрізняються)
 
-amendments: []
+amendments:
+  - id: A-1
+    proposed_by: J3          # пропозиція — reports/T-0011/002.yaml, recommended_decisions_for_je (Р-Т11-1/19); окремої події amendment_proposed немає
+    base_version: 1
+    change: {field: scope.in, add: ["bridge/test/e2e.test.mjs", "bridge/test/t0006.test.mjs"], note: "мінімальні зміни вже в PR #15 (a9baf25): лише посилення, 0 ослаблених перевірок (Р-Т11-1, Р-Т11-19)"}
+    reason: "Дизайн 1 змінює номери записів журналу й вимагає закріпленого значення; e2e і t0006 перелік подій журналу починали з installation (Р-Т11-13, Р-Т11-19)"
+    status: approved         # post factum: зміни злито до рішення (Р-Т11-26)
+    decided_by: JE
+    decided_at: 2026-10-29
+    decision_ref: "tasks/T-0011/je-decision-T11-02.md, п. 1 (повідомлення JE cmsg_012JDmHaeKDsqjDfbG3nLvCA4uy7zoSZTYM98QG58HfMbe, 2026-10-29T05:16:26Z)"
