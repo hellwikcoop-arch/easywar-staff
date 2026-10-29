@@ -1,0 +1,39 @@
+# Донесення J3 за T-0017: виправлення A7 за рішенням J5 (29.10.2026 05:08Z). Лише синтетичні дані.
+task_id: T-0017
+task_version: 2
+report_no: 3
+by: J3
+at: 2026-10-29T05:20:00+00:00
+state: review_pending
+basis: "J5 → J3 (через JE у треді, 05:08Z): A7 дозволено, лише документація в межах T-0017; G12 і merge відкриті"
+subject: 9ea099433f83088fb97d04c6a0521e3379446fa0
+previous_subject: c2d8d4fc199ea520c57c0ebe78094757c24a6cbb
+pr: "hellwikcoop-arch/EasyWAR#180, гілка claude/e8-c2-crypto-engine"
+changed_files:
+  - "docs/evidence/collectives/2026-10-29-c2-g12-checklist.md"
+  - "docs/adr/collective-crypto.md"
+  - "src-tauri/src/collective/envelope.rs (лише рядок doc-коментаря 174)"
+a7_fixed:
+  - {n: 1, what: "кількість тестів у чеклісті: 37 пройдено + 1 ignored (опис PR #180 теж оновлено)"}
+  - {n: 2, what: "envelope.rs:174 replay::authorize → replay::receive"}
+  - {n: 3, what: "чекліст: п. 14 перед п. 15"}
+  - {n: 4, what: "ADR §3: замість неіснуючого src/collective-envelope-core.js — друга реалізація лише в tests/collective-crypto-vectors.test.mjs + фікстура"}
+  - {n: 5, what: "п. 15 посилається на ADR 2.2 (окрема пара X25519, member_id з ключа підпису) і 2.3 (обгортка на member_x25519_pub); зв'язування в ADR ще не описане — вимога U1 для C2p"}
+  - {n: 6, what: "ADR §2.4 payload: device_id → device_pub (як у envelope.rs Payload)"}
+also_recorded_in_checklist:
+  - "розділ «Огляд C3 №2 і рішення J5»: G12 відкрито; п. 15 відкрито для C2p/C3b з U1–U3; A3, A6, N1 — блокувальні передумови C3b; пп. 10 і 13 не підтверджено"
+not_changed: "Rust-код (крім одного коментаря), залежності, Cargo.lock, тестова логіка, API, фікстура; docs/COLLECTIVES_PLAN.md:214 (ескіз Op C1b, «контракт не затверджено») лишився з device_id — це не контракт C2"
+checks:
+  - {cmd: "cargo test --locked --manifest-path src-tauri/Cargo.toml collective::", subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, result: "37 passed, 0 failed, 1 ignored"}
+  - {cmd: "cargo fmt --manifest-path src-tauri/Cargo.toml --check", subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, result: "чисто"}
+  - {cmd: "node --test tests/collective-crypto-vectors.test.mjs tests/network-boundary.test.mjs", subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, result: "17/17 pass"}
+  - {cmd: "npm run test:unit", subject: 9ea099433f83088fb97d04c6a0521e3379446fa0, result: "1596/1596 pass (перший прогін 1239/1270 — у робочій копії не було node_modules; після тимчасового посилання на node_modules основної копії, package.json/lock не змінені відносно бази, — зелено)"}
+unverified:
+  - "CI desktop-build на 9ea0994 — очікується"
+  - "повний cargo test і clippy на 9ea0994 локально не запускались (лише collective:: і fmt; зміна — коментар) — їх дає CI"
+  - "G06 Windows/macOS — skipped на PR"
+next:
+  - "CI на 9ea0994"
+  - "рецензія C3 змін на 9ea0994 з підтвердженим походженням — потрібен окремий ресурсний дозвіл JE"
+  - "J3 technical і J5 content на 9ea0994; G06 — доказ або рішення JE; #180 не зливати до JE-T5"
+resources_used: {calls_estimate: 110, max_calls: 150, pct: 73}
