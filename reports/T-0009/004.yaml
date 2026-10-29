@@ -1,0 +1,59 @@
+task_id: T-0009
+task_version: 2
+seq: 4
+author: J3
+to: J5
+cc: JE
+kind: acceptance_request   # технічне приймання J3 записано; запит змістового приймання J5 (JE-T9-02 п. 5, JE-T9-03)
+at: 2026-10-27T07:18:15+00:00
+subject: {kind: commit, ref: 67eb3310db5f69f2451ce748d72722c614409425}   # КОНТРОЛЬНИЙ SHA; bridge/ на HEAD журнальних комітів ідентичний
+base: {branch: setup/staff-bootstrap, sha: 7313085f44ae5c8dcbc37235bc43207bfaf94c19}
+branch: t-0009/j4-automation
+result: technical_accepted_awaiting_J5_content   # не done; PR не відкрито; змістове приймання J5 — наступний крок
+
+j3_technical_acceptance:
+  scope: "код і тести T-0009 відповідають критеріям A/B/C наказу в межах stub/synthetic; регресія, незалежна рецензія і облік — на одному SHA"
+  basis:
+    - "регресія J3-3: 93/93 pass, fail 0 (A-005; 44 dispatch exact + 4 прямих derived), reports/T-0009/003.yaml"
+    - "C3 раунд 3: passed на 67eb3310db5f69f2451ce748d72722c614409425 (reports/T-0009/c3-reviews.yaml#seq=3; events seq 16); раунди 1 і 2 — changes_requested, усі обов'язкові зауваження усунуто"
+    - "git diff 7313085..67eb3310db5f69f2451ce748d72722c614409425 порожній для CONTRACT_v0_4.md (sha256 2fdc2f9d…55de), bridge/config/**, bridge/src/acceptance.mjs, .github/**; CSP, Tauri, міграції, секрети не торкнуті"
+    - "сухий прогін j4 close на копії: єдиний пропуск — acceptance-J5-content-missing (перевірки, C3 і приймання J3 зараховано); 0 викликів адаптера"
+  not_a_substitute: "приймання J3 не підміняє висновок C3 (JE-T9-02 п. 3): C3 passed отримано окремо й раніше за цей запис"
+  limits_of_acceptance: "приймання не охоплює live-режим, платні API, активацію планувальника, автентифікацію JE, F-T9-16 (acceptance.mjs, окремий наказ) і закриття задачі (done — лише після змістового приймання J5 і окремого рішення JE)"
+
+order_criteria:   # tasks/T-0009/order-j5.md, розд. 2
+  A_queue: "j4 run --once, j4-tick.sh (stub за замовчуванням), замок паралельних обробників (код 75), відновлення мертвого замка, J4_HALT і bridge/HALT (код 4), live заборонено; планувальник НЕ активовано — тести Q1–Q3, H1"
+  B_journal: "події ADM report_filed/escalation у tasks/<id>/events.jsonl: seq, дописування O_APPEND під замком, без дублікатів, ref на журнал J4 (файл і seq) і SHA; приймань J3/J5/C3/JE і рішень JE автоматично немає — тести E1–E5"
+  C_close: "j4 close --task --subject через acceptanceReady/requestDone; відмова без перевірок, рецензії, приймання ролі, на іншому SHA, при відкритій ескалації JE; ідемпотентність; суворе читання журналу й сховища J4 — тести C1–C8"
+
+accounting:   # reports/T-0009/calls-ledger.yaml: K-001, A-005, A-006, P-006
+  limit: 250
+  used: {local_J3: 146, C3: 48, CI: 0, total: 194, remaining: 56}
+  accuracy: {local: "dispatch exact, прямі derived", C3: exact, CI: "estimate"}
+  full_runs_J3: {used: 3, limit: 3}
+  C3_runs: {round_1: 48, round_2: 0, round_3: 0}
+  paid_api_calls: 0
+  network_calls: 0
+  CI_reserve: {id: P-006, estimate: 48, cumulative_estimate: 242, remaining_estimate: 8, results: "ще немає: PR не відкрито; після CI результат — у коментарі PR і звіті J5 без push"}
+
+review_history:
+  - {round: 1, subject: 9a3048cd65e07dd45be74048b9d437b831d83351, verdict: changes_requested, mandatory: "F-T9-1…5"}
+  - {round: 2, subject: d05dc5aaf449fc9c5be03a0869035e2871d6b57a, verdict: changes_requested, mandatory: "F-T9-11, F-T9-12 (+ F-T9-2 частково)"}
+  - {round: 3, subject: 67eb3310db5f69f2451ce748d72722c614409425, verdict: passed, mandatory: "немає"}
+
+residual_blocks:   # перелік залишкових блокувань і ризиків для J5/JE
+  open_manual: ["M-1 справжній J5 — лише stub", "M-2 C3 запускає J3 і вносить review_* вручну", "M-5 --human не автентифікований (F-3)", "M-7 маршрути C5.1 вручну"]
+  closed_with_limits: ["M-3 (події комітити; перше ввімкнення --task-events відтворює історію; by не автентифіковано, F-9)", "M-6 (j4 close; докази — рядок у reports/** із SHA, result: pass)"]
+  script_ready_not_enabled: ["M-4 планувальник: j4-tick.sh є, активація — лише рішення JE"]
+  residual_findings_not_fixed:
+    F-T9-15: "бар'єр поза файловим замком, вікно від мілісекунд — задокументовано"
+    F-T9-16: "acceptance.mjs: review_finished без review_status (і acceptance без result) зараховуються за замовчуванням — окремий наказ, проєкт у reports/T-0009/f-t9-16-proposal.md (JE-T9-03 D-6)"
+    F-T9-18: "хибна, але наявна й ціла пара J4_HOME/J4_LEDGER дає done при відкритій ескалації, якщо її немає в events.jsonl; повне усунення потребує закріплення ідентичності сховища (рішення про модель довіри — JE)"
+    F-T9-19_20_21_22_23: "рекомендаційні C3 (reports/T-0009/c3-reviews.yaml#seq=3): Store.list ковтає помилки читання; слабкий маркер сховища J4 і створення тек у чужій; повторний close залежить від читності джерел; евристика result: pass у крайніх формах; прогалини тестів (m6) — bridge/ після C3 passed не змінювався, бо новий SHA вимагав би нового C3 і рішення JE"
+  doc_inaccuracy_to_be_fixed_later: "DESIGN §17: «повтор нічого не пише (already: true)» і «відхиляє лише partial» — вужчі за факт; правильний опис — c3-reviews seq 3 і f-t9-16-proposal.md"
+  protections_unchanged: "live вимкнено, платні API 0, планувальник не активовано, автопогодження рішень JE немає, CONTRACT не змінювався"
+
+request_to_J5:
+  question: "Чи приймає J5 змістово T-0009 (етап 1 автоматизації J4 Bridge: A черга, B журнал, C закриття через ADM) на контрольному SHA 67eb3310db5f69f2451ce748d72722c614409425 з урахуванням залишкових блокувань вище?"
+  how_recorded: "J5 відповідає повідомленням; J3 записує event acceptance by J5, role content, subject 67eb3310db5f69f2451ce748d72722c614409425 (за прецедентом T-0007 seq 11)"
+  after_acceptance: "PR t-0009/j4-automation -> setup/staff-bootstrap без злиття; один CI (резерв P-006); звіт J5 із SHA, висновком C3, результатами CI, обліком і залишковими блокуваннями; done і злиття — лише за окремим рішенням JE"

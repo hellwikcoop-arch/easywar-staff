@@ -1,0 +1,81 @@
+task_id: T-0009
+task_version: 2
+seq: 1
+author: J3
+to: JE
+cc: J5
+kind: milestone
+at: 2026-10-26T17:21:56+00:00
+subject: {kind: commit, ref: d05dc5aaf449fc9c5be03a0869035e2871d6b57a}   # КОНТРОЛЬНИЙ SHA-КАНДИДАТ №2; bridge/ у наступних журнальних комітах не змінюється
+base: {branch: setup/staff-bootstrap, sha: 7313085f44ae5c8dcbc37235bc43207bfaf94c19}
+branch: t-0009/j4-automation
+result: implemented_regression_green_awaiting_C3_round2   # не done; PR ще не відкрито; рішення JE щодо другого проходу C3 — нижче
+
+# Звіт за JE-T9-01 (tasks/T-0009/je-decision-T9-01.md): ліміт 250, облік локальних/C3/CI, ≤3 повні прогони J3 і 1 прогін C3.
+
+changed_vs_base:   # git diff --name-status 7313085..d05dc5a
+  code: ["bridge/src/events.mjs (A)", "bridge/src/close.mjs (A)", "bridge/src/router.mjs (M)", "bridge/bin/j4.mjs (M)", "bridge/bin/j4-tick.sh (A)", "bridge/test/t0009.test.mjs (A, 14 тестів)"]
+  docs: ["bridge/README.md (M)", "bridge/docs/DESIGN.md (M, розд. 17)", ".gitignore (M)"]
+  task_records: ["tasks/T-0009/{order.yaml, order-j5.md, amendments.md, je-decision-T9-01.md, events.jsonl, tools/call-counter.mjs}", "reports/T-0009/{c3-reviews.yaml, calls-ledger.yaml, 001.yaml}", "reports/T-0007/{004.yaml, 005.yaml}", "tasks/T-0007/events.jsonl (лише додано seq 16, 17)"]
+unchanged_verified: "CONTRACT_v0_4.md (sha256 2fdc2f9d…55de), bridge/config/**, bridge/src/acceptance.mjs, .github/**, tasks/T-0002, tasks/T-0004, tasks/T-0007/order.yaml — git diff 7313085..d05dc5a порожній; CSP, Tauri, міграції, секрети не торкнуті"
+
+checks:
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: d05dc5aaf449fc9c5be03a0869035e2871d6b57a, result: "90/90 pass, fail 0 (68 базових + 8 T-0007 + 14 T-0009)", by: J3, calls: 44}
+  - {cmd: "node --test 'bridge/test/*.test.mjs'", subject: 9a3048cd65e07dd45be74048b9d437b831d83351, result: "86/86 pass, fail 0 (історія: прогін J3-1 і прогін C3 до виправлень)", by: J3, calls: 44}
+
+c3_round_1:   # reports/T-0009/c3-reviews.yaml#seq=1 — changes_requested на 9a3048c; 5 обов'язкових відтворено J3 і виправлено на d05dc5aaf449fc9c5be03a0869035e2871d6b57a
+  F-T9-1: "events.mjs: запис — одним рядком у режимі додавання під замком із повторною перевіркою розміру (≤5 спроб, events-busy), без перезапису файла; чужі рядки не губляться"
+  F-T9-2: "close.mjs: відкриті ескалації з трьох джерел — сховище J4, журнал J4 (raised без resolved), events.jsonl; невідома сховищу, але є в журналі → відкрита; j4 close вимагає явні J4_HOME і J4_LEDGER"
+  F-T9-3: "close.mjs: коментар YAML лише поза лапками; verify розбирається суворо (з будь-яким відступом), нечитаний verify → відмова"
+  F-T9-4: "close.mjs: файл доказів — звичайний не симлінк із realpath у сховищі; один рядок із SHA, result: pass і без fail/error поза cmd; sha256 у події done"
+  F-T9-5: "тести Q1 (реальний мертвий pid і свіжий at), Q2 (shim node у PATH спостерігає env/аргументи), C3 (ескалації) переписано; E5, C3, C4, C5, Q3 падають на старому коді 9a3048c"
+  F-T9-6_10: "рекомендаційні: H1 (канонічний bridge/HALT), C1/C2, код виходу 6, ledger_file+ledger_hash у ref, done лише з SHA40, не-об'єктні рядки журналу → events-corrupt, N-001 щодо обліку та at у seq 3; частину залишків розкрито в DESIGN розд. 17"
+
+review_status:
+  C3_round_1: {verdict: changes_requested, subject: 9a3048cd65e07dd45be74048b9d437b831d83351, events_seq: 7}
+  C3_round_2: "ще не проведено — потребує рішення JE (JE-T9-01 дозволяє 1 прогін C3, він використаний)"
+  J3_technical: not_recorded   # лише після C3 passed на тому ж SHA
+  J5_content: not_recorded
+
+accounting:   # reports/T-0009/calls-ledger.yaml; одиниця — виклик адаптера J4 (stub або fake без мережі)
+  limit: 250
+  used: {local_J3: 90, C3: 44, CI: 0, total: 134, remaining: 116}
+  breakdown: "L-001 2 (база) + A-001 44 (J3-1) + A-003 44 (J3-2) = 90 локально; A-002 44 (C3-1); CI ще не запускався"
+  accuracy: {local: exact, C3: exact, CI: "estimate (лічильника в CI немає; очікуваний прогін = 44 на кожну подію PR)"}
+  full_runs_J3: {used: 2, limit: 3}
+  runs_C3: {used: 1, limit: 1}
+  paid_api_calls: 0
+  network_calls: 0
+  cost_usd: 0
+  not_counted: "4 прямі adapter.call() із fake fetch/spawn у gate.test.mjs за прогін — не dispatch через router (ledger N-001)"
+  forecast:
+    CI_on_PR_open: {estimate: 44, cumulative_estimate: 178, remaining_estimate: 72}
+    C3_round_2_delta_only: {calls: 0, cumulative_estimate: 178}
+    C3_round_2_with_suite_run: {calls: 44, cumulative_estimate: 222, remaining_estimate: 28}
+    J3_3_extra_run: "44; разом із прогоном у C3-2 і одним CI дало б 266 > 250 — у такому разі зупинка й доповідь JE (JE-T9-01 п. 6)"
+  T-0007_correction: "reports/T-0007/005.yaml: N=44 виміряно; сукупно за T-0007 ≈218 (derived), не 29 і не 218–268"
+
+residual_manual_operations:   # нумерація M-1…M-7 — reports/T-0007/001.yaml
+  - {id: M-1, status: open, what: "справжній J5 — лише stub; змістове приймання J5 передає людина"}
+  - {id: M-2, status: open, what: "C3 запускає J3 (read-only субагент) і вносить review_* в events.jsonl вручну"}
+  - {id: M-3, status: closed_with_limits, what: "report_filed і escalation пише J4 (--task-events); acceptance/рішення JE автоматично не пишуться за замислом", limits: "події слід комітити; перше ввімкнення відтворює історію журналу; поле by довіряє джерелу (F-9); ручний >> поруч із записом J4 може дати дубль seq, але рядок не губиться"}
+  - {id: M-4, status: script_ready_not_enabled, what: "bridge/bin/j4-tick.sh і j4 run --once готові; планувальник НЕ активовано (заборона JE); PATH і ротація tick.log — на власника розкладу"}
+  - {id: M-5, status: open, what: "--human не автентифікований (F-3); рішення JE ескалацій — організаційно"}
+  - {id: M-6, status: closed_with_limits, what: "j4 close --task --subject пише done лише після requestDone(ADM).allowed", limits: "потребує C3 passed, J3 technical і J5 content на одному SHA; докази перевірок — рядок у reports/** із SHA, result: pass; відкриті обов'язкові зауваження окремим джерелом не рахуються"}
+  - {id: M-7, status: open, what: "маршрути C5.1 — вручну"}
+
+residual_risks:
+  - "C3 раунд 2 не проведено: виправлення F-T9-1…5 перевірені лише власними тестами J3 (негативні контролі на старому коді) і не мають незалежного підтвердження"
+  - "CI-облік — estimate; push у відкритий PR додає ≈44 за кожну подію"
+  - "події done через j4 close перевірялися лише на синтетичних задачах у тимчасових теках; реальне закриття T-0009 не виконувалось і не виконується без рішення JE"
+  - "live-режим, платні API, планувальник, автопогодження JE — не активовано й не змінювалось"
+
+decisions_needed_from_JE:
+  - id: D-1
+    question: "Дозволити другий прохід C3 (поза ліміт «1 прогін C3» з JE-T9-01) для раунду 2 на d05dc5aaf449fc9c5be03a0869035e2871d6b57a?"
+    options:
+      - {id: a, recommended: true, what: "рецензія лише за diff 9a3048c..d05dc5aaf449fc9c5be03a0869035e2871d6b57a без прогону набору (0 викликів; опора — A-003 і лічильник 44), як у T-0007 раунд 2", cumulative_estimate: 178}
+      - {id: b, what: "рецензія з прогоном набору й лічильником", extra_calls: 44, cumulative_estimate: 222}
+  - id: D-2
+    question: "Після C3 passed і приймання J3/J5 — відкрити PR у setup/staff-bootstrap без злиття (CI ≈44, estimate)?"
+    note: "відповідно до JE-T9-01 п. 7 PR відкривається після успішної регресії й C3; done і злиття — лише за окремим рішенням JE"

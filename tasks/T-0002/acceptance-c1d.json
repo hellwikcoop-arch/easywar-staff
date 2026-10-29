@@ -1,0 +1,14 @@
+{
+  "task_id": "T-0002",
+  "subtask": "C1d",
+  "pr": "https://github.com/hellwikcoop-arch/EasyWAR/pull/160",
+  "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380",
+  "review_c3": {"verdict": "passed", "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380", "ref": "reports/T-0002/016.yaml"},
+  "acceptance_j3_technical": {"result": "accepted", "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380", "ref": "reports/T-0002/017.yaml"},
+  "acceptance_j5_content": {"result": "accepted", "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380", "ref": "reports/T-0002/018.yaml", "source": "https://github.com/hellwikcoop-arch/EasyWAR/pull/160#issuecomment-6483649302"},
+  "ci": {"run": 39836049078, "checks": "success", "checks_attempt": 2, "audit": "success", "subject_sha": "923e1bc19d106a6f65a5a903d21c16c275abb380"},
+  "merge": {"merge_commit": "f5b857ce4518313d99b75e6414d97fc75317231d", "merged_by": "hellwikcoop-arch", "merged_at": "2026-10-28T23:44:02Z"},
+  "residual": ["F-21 partially_open (low)"],
+  "recorded_by": "J3",
+  "recorded_at": "2026-10-28T23:45:16+00:00"
+}

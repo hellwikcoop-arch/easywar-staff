@@ -1,0 +1,36 @@
+task_id: T-0007
+task_version: 1
+seq: 2
+author: J3
+to: JE
+kind: milestone
+at: 2026-10-26T12:57:00+00:00
+subject: {kind: commit, ref: 071bf148efc5aca1a29643d58e860a9019087c60}   # контрольний SHA
+pr: {url: https://github.com/hellwikcoop-arch/easywar-staff/pull/5, head: "журнальні коміти поверх 071bf14 (лише tasks/T-0007, reports/T-0007)", base: setup/staff-bootstrap, ci: "test success; route-stub/route-live skipped (на 817df4c)", mergeable: clean}
+result: barrier_passed_awaiting_JE_merge_decision   # done не встановлено: done ставить ADM; у T-0006 — після злиття
+
+barrier:   # перевірено без викликів агентів (локальні функції й CLI acceptance)
+  acceptanceReady: '{"ready":true,"missing":[]}'
+  requestDone_ADM: '{"allowed":true,"missing":[]}'
+  requestDone_J3: '{"allowed":false,"missing":["done-only-adm"]}'
+  basis: {C3: "passed — events seq 8", J3_technical: "accepted — seq 9", J5_content: "accepted — seq 11"}
+  control_content: "bridge/ і CONTRACT_v0_4.md на HEAD гілки ідентичні 071bf14 (git diff порожній)"
+
+accounting_deviation:   # доручення J5 п. 2: не списувати як нуль
+  unit: "виклик адаптера J4 (stub)"
+  limit: {value: 20, source: "tasks/T-0007/order.yaml resources.max_calls"}
+  used: {value: 29, accuracy: exact, breakdown: "J3: 1 пробний CLI + 3 прогони набору × 7 = 22; C3: 1 прогін × 7 = 7"}
+  over_limit: {value: 9, accuracy: exact}
+  written_off: false
+  cost_usd: {value: 0, accuracy: exact, note: "stub не тарифікується; на кількість перевищення це не впливає"}
+  paid_api_calls: 0
+  cause: "ліміт не був зведений у сукупний лічильник: J4 рахує виклики окремо в кожному тимчасовому J4_HOME (max 2 на пісочницю), а прогони тестів J3 і C3 не враховувались проти 20 до виконання"
+  lesson: "у наступних задачах — сукупний облік прогонів тестів наперед (кількість stub-викликів на прогін × прогони ≤ ліміт) або явний окремий ліміт на тестові прогони в наказі"
+
+scope_of_acceptance: "синтетичний цикл J4 Bridge; без підтвердження готовності live-автономності (J5)"
+residual_blocks: ["F-3: --human не автентифікований", "M-1…M-7 з reports/T-0007/001.yaml", "F-2, F-9 (рівень C, з T-0006)", "конфлікт номера з t-0007/draft"]
+for_JE:
+  - "рішення щодо злиття PR #5"
+  - "після злиття — запис state_changed=done від ADM (бар'єр пройдено), як у T-0006"
+  - "номер для проєкту в t-0007/draft і для наступного завдання автоматизації черги, журналу й done"
+restrictions: "PR не зливати, live не активувати, платних викликів не робити до окремого дозволу JE"

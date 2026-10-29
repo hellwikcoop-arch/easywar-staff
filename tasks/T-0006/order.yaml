@@ -1,0 +1,60 @@
+# Картка за CONTRACT_v0_4.md, розділ 3. Наказ: tasks/T-0006/je-order.md (J5 за рішенням JE, 22.10.2026).
+# Лише синтетичні дані.
+
+id: T-0006
+version: 1
+parent_task_id: T-0005
+title: "Єдина реалізація ADM / J4 Bridge"
+
+intent:
+  purpose: "Одна узгоджена, контрольована й відновлювана система координації: ADM — роль, J4 Bridge (bridge/, Node.js) — його компонент"
+  end_state:
+    - "bridge/ — єдина канонічна реалізація; PR #3 закрито як замінений після штатного злиття T-0006"
+    - "ADM і J4 Bridge розмежовані в контракті (розділи 1, 9а)"
+    - "J5 не підміняється Codex"
+    - "платні виклики без погодження JE неможливі"
+    - "місячна стеля $50 і пороги $35/$45/$50 працюють, облік переживає перезапуск"
+    - "рішення рівня C неможливо автоматично схвалити"
+    - "приймання перевіряються на одному SHA; done лише ADM"
+    - "журнал без секретів і повних текстів"
+    - "відновлення й ідемпотентність підтверджені тестами"
+    - "поправки A-T5-01…09 документально врегульовані"
+    - "C3, J3 і J5 підтвердили один контрольний коміт"
+  red_lines: ["тільки синтетичні дані", "платні API — 0", "без автоматичного злиття", "без зміни застосунку EasyWAR, Tauri, CSP, міграцій, production", "без другої реалізації Bridge", "Codex не виконує роль J5"]
+
+mission: "Закріпити bridge/ як єдину реалізацію; перенести з PR #3 лише acceptance_ready, відмову done і місячний бюджет; оформити рішення JE; аудит безпеки C3"
+scope:
+  in: ["bridge/**", "CONTRACT_v0_4.md (розділи 1, 2, 9а, 25.1)", "tasks/T-0005/amendments.md (статуси)", "tasks/T-0005/events.jsonl (нова подія)", "tasks/T-0006/**", "reports/T-0006/**", "EasyWAR AGENTS.md (A-T5-09, окремий PR)"]
+  out: ["j4_bridge/** (PR #3)", "застосунок EasyWAR", "CONTRACT_v0_4.md поза затвердженими рішеннями", "розділи 16–20 сторони J5"]
+context_refs: ["tasks/T-0005/amendments.md", "reports/T-0005/technical-report.md", "PR #3 fb5c12ea192d974144358e315e53578168a6e3cd"]
+materials: ["tasks/T-0006/je-order.md"]
+
+data_class: synthetic
+requester: J5
+assignee: J3
+priority: high
+important: true
+
+acceptance: {technical: J3, content: J5, key_decision: false}
+
+checks:
+  subject_kind: commit
+  verify: ["node --test 'bridge/test/*.test.mjs'", "node bridge/bin/j4.mjs verify --ledger reports/T-0005/evidence/ledger.jsonl"]
+  review_kind: code
+
+resources:
+  max_calls: 30           # J3
+  max_tokens: null
+  max_cost_usd: 0
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15, max_calls: 10}
+  reserve_pct: 0
+  accuracy: estimate
+
+reporting:
+  milestones: ["реєстрація", "документація", "реалізація", "перевірка C3", "приймання"]
+  thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
+
+base_sha: 3f0af115c2fb012b63212012ddf8276b8c05e77b
+amendments: []

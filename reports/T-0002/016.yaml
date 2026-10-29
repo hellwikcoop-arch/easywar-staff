@@ -1,0 +1,18 @@
+# Донесення C3 (рецензія C1d, раунд 2). Перенесено J3 з висновку рецензента; стиснуто.
+task_id: T-0002
+task_version: 2
+seq: 16
+author: C3
+kind: milestone
+subject: {kind: commit, ref: 923e1bc19d106a6f65a5a903d21c16c275abb380}
+review: {review_status: complete, verdict: passed, subject_ref: 923e1bc19d106a6f65a5a903d21c16c275abb380}
+findings:
+  - {id: F-16, severity: medium, mandatory: true, status: closed}
+  - {id: F-17, severity: medium, mandatory: true, status: closed}
+  - {id: F-18, severity: medium, mandatory: false, status: closed}
+  - {id: F-19, severity: medium, mandatory: false, status: closed}
+  - {id: F-20, severity: medium, mandatory: false, status: closed}
+  - {id: F-21, severity: low, mandatory: false, status: partially_open, description: "фіксація перевіряє форму й замороженість перегляду, але не його походження з previewReport; прийнятно для чистого ядра, авторитетна перевірка — Rust (C3b)"}
+  - {id: F-22, severity: low, mandatory: false, status: closed}
+  - {id: F-23, severity: low, mandatory: false, status: closed}
+  - {id: F-24, severity: low, mandatory: false, status: deferred, description: "бриф уточнено в easywar-staff 7551c4a; код не змінювався"}

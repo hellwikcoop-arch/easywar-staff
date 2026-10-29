@@ -1,0 +1,123 @@
+# Наказ за CONTRACT_v0_4.md, розділ 3. Проєкт; набирає чинності після рішень JE (див. brief.md, розділ 4)
+# і події task_accepted. Лише синтетичні дані.
+
+id: T-0002
+version: 1
+parent_task_id: null
+title: "E8 / C1 — чисте JS-ядро колективів: чутливість, операції, членство й вступ, політики обміну"
+
+intent:
+  purpose: >-
+    Мати перевірену локальну логіку колективів без мережі, криптографії й бази, на яку спираються
+    C2–C6: класи чутливості й маршрут, операції над рядками спільної таблиці, журнал членства й
+    машину станів вступу, політики комбінованої синхронізації й перегляд «Доповісти».
+  end_state:
+    - "C1a: src/sensitivity-core.js і тести злито в main; клас таблиці = MAX, без підтвердженого класу = D, змішана = D, D проходить лише lan, peer_wan відхилено завжди"
+    - "C1b: src/shared-table-core.js і тести злито в main; повний рядок в upsert, конфлікт від однієї base_version без LWW, той самий op_id з тими самими байтами = дубль, з іншими = порушення цілісності, видалення/відновлення без обмеження за часом"
+    - "C1c: src/collective-core.js (+ src/collective-pair-core.js, лише якщо JE-02 дозволено) і тести злито в main; додавання за згодою обох, відкликання адміністратором/власником, вихід, попередження про одного адміністратора, PENDING_HISTORY без усіх епох"
+    - "C1d: src/sync-policy-core.js і src/report-submission-core.js і тести злито в main; неактивні значення політик відхиляються з OwnerDecisionRequired; перегляд «Доповісти» показує все, що піде"
+    - "Жоден новий файл не імпортується застосунком; поведінка EasyWAR для користувача не змінилася"
+    - "npm run test:unit зелений на кожному коміті, що подається на приймання; CI checks і audit зелені на кожному PR"
+    - "Для кожного PR є рецензія C3 з verdict: passed на тому самому коміті, технічне приймання J3 і змістове приймання J5"
+  red_lines:
+    - "тільки синтетичні дані"
+    - "без змін у src-tauri/** (Rust, міграції, capabilities, build.rs, Cargo.toml, Cargo.lock, tauri.conf.json/CSP)"
+    - "без змін package.json і package-lock.json, без нових залежностей"
+    - "без мережі: у нових файлах немає fetch, XMLHttpRequest, WebSocket, EventSource, invoke, import з @tauri-apps"
+    - "без криптографії в JS: підпис і перевірка — лише інтерфейс-параметр; у тестах заглушки, позначені синтетичними"
+    - "без сховищ, DOM і годинника в ядрі: немає localStorage, sessionStorage, indexedDB, document, window, Date.now; час — параметр"
+    - "без змін AGENTS.md і legacy HTML (src/air.html, src/rocket.html, src/index.html)"
+    - "неактивні значення політик (автовідправка, ручне приймання, вимкнення) не можуть дати allowed"
+    - "рекомендації J3 не записуються як рішення власника"
+
+mission: >-
+  Реалізувати етап C1 (підетапи C1a–C1d з docs/plans/2026-10-21-easywar-sync-pair-mesh-review.md, розділ 4)
+  чотирма послідовними PR у hellwikcoop-arch/EasyWAR, кожен — один підетап із тестами й рецензією C3.
+
+scope:
+  in:
+    - "C1a: src/sensitivity-core.js, tests/sensitivity.test.mjs"
+    - "C1b: src/shared-table-core.js, tests/shared-table.test.mjs"
+    - "C1c: src/collective-core.js, tests/collective.test.mjs; src/collective-pair-core.js, tests/collective-pair.test.mjs — лише за JE-02"
+    - "C1d: src/sync-policy-core.js, src/report-submission-core.js, tests/sync-policy.test.mjs, tests/report-submission.test.mjs"
+    - "Спільний текстовий контракт: tests/collective-core-boundaries.test.mjs (у C1a, розширюється в C1b–C1d)"
+    - "Документи: docs/COLLECTIVES_PLAN.md (§7, §8 — позначка стану підетапу), docs/plans/2026-10-21-easywar-sync-pair-mesh-review.md (розділ 4 — стан); USER_GUIDE.md не змінюється, бо UI не змінюється"
+  out:
+    - "C2–C8, P1, будь-який Rust, міграції, IPC, capabilities, CSP, Cargo.*"
+    - "інтерфейс (src/collective-ui.js, сторінки), підключення нових файлів до застосунку"
+    - "мережа, LAN, Base44, rendezvous, WAN, будь-які зовнішні сервіси"
+    - "криптографія, генерація ключів і кодів, PAKE, SAS-обчислення"
+    - "значення за замовчуванням для TTL, лімітів спроб і max_joins (JE-07): лише параметри"
+    - "AGENTS.md, legacy HTML, package.json, package-lock.json"
+
+context_refs:
+  - "EasyWAR main 611841c (PR #155)"
+  - "AGENTS.md; CLAUDE.md; docs/WORKFLOW.md"
+  - "docs/COLLECTIVES_PLAN.md: §2, §4, §5.1–5.6, §6, §7, §8, §11 (AC01–AC08, AC10, AC14, AC19–AC23, AC25), додаток А"
+  - "docs/adr/collective-pairing.md; docs/adr/collective-sync-policies.md"
+  - "docs/plans/2026-10-21-easywar-sync-pair-mesh-review.md: розділи 1, 4 (C1a–C1d), 5"
+  - "docs/plans/2026-10-21-easywar-accounts-sync.md: A4a"
+  - "src/module-definition-core.js: ROLES (смислові ролі для пропозиції класу)"
+  - "easywar-staff setup/staff-bootstrap: CONTRACT_v0_4.md"
+materials:
+  - "tasks/T-0002/brief.md — інтерфейси, тестові сценарії, критерії приймання, рішення JE"
+
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: normal
+important: true                # блокер для C2–C6 (розділ 3 контракту: «блокер для наступних задач»); остаточно визначає JE
+
+acceptance:
+  technical: J3
+  content: J5
+  key_decision: false
+
+checks:
+  subject_kind: commit
+  verify:
+    - "node --test tests/<файли підетапу>.test.mjs"
+    - "node --test tests/collective-core-boundaries.test.mjs"
+    - "npm run test:unit"
+    - "git diff --name-only origin/main...HEAD — лише файли зі scope.in відповідного підетапу"
+    - "CI desktop-build: checks і audit — success на head-коміті PR"
+  review_kind: code
+
+resources:
+  max_calls: 190               # одиниця: виклик інструмента в сеансі J3 разом із C2/C3; розподіл — brief.md, розділ 3
+  max_tokens: null
+  max_cost_usd: null
+  max_attempts: 2
+  max_delegation_depth: 1
+  reviewer: {max_read_files: 15}
+  reserve_pct: 0
+  accuracy: estimate
+  effort_estimate: {value: "4–6 сеансів J3", accuracy: estimate}
+
+reporting:
+  milestones:
+    - "C1a: PR відкрито, verify пройдено"
+    - "C1a: C3 passed, приймання J3 і J5"
+    - "C1b: PR відкрито, verify пройдено"
+    - "C1b: C3 passed, приймання J3 і J5"
+    - "C1c: PR відкрито, verify пройдено"
+    - "C1c: C3 passed, приймання J3 і J5"
+    - "C1d: PR відкрито, verify пройдено"
+    - "C1d: C3 passed, приймання J3 і J5; підсумкове донесення"
+  thresholds:
+    resources_used_pct: 70
+    on_last_attempt: true
+    on_provider_limit: true
+    on_review_incomplete: true
+    on_red_line_risk: true
+
+amendments:
+  - id: A-1
+    proposed_by: J3
+    base_version: 1
+    change: {field: resources.max_calls, from: 190, to: 210}
+    reason: "прогноз перевищення ≈20 (tasks/T-0004/j5-brief.md, розділ D); історичні витрати не обнуляються"
+    status: approved
+    decided_by: JE
+    decided_at: 2026-10-22
+    decision_ref: "tasks/T-0004/j5-final-authorization.md, розділ 5 (JE-T8)" 

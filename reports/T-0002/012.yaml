@@ -1,0 +1,20 @@
+# Змістове приймання J5 C1b (перенесено J3 з рішення J5, переданого JE 22.10.2026 00:35) і стан злиття.
+task_id: T-0002
+task_version: 1
+seq: 12
+author: J5
+kind: milestone
+at: 2026-10-22T00:35:00+03:00
+subject: {kind: commit, ref: 9ec729ee2dae539ab70be028756644785201348a}
+acceptance: {content: {by: J5, subject_ref: 9ec729ee2dae539ab70be028756644785201348a, result: accepted}}
+findings:
+  - {id: F-15, status: deferred, tracked: tasks/T-0002/tracked/F-15.md, note: "перенесення на C3b/C5 погоджено; не виправлено"}
+merge:
+  by: J3
+  pr: "https://github.com/hellwikcoop-arch/EasyWAR/pull/157"
+  head_sha: 9ec729ee2dae539ab70be028756644785201348a
+  merge_sha: null
+  status: blocked
+  pre_checks: ["head = 9ec729ee2dae539ab70be028756644785201348a (API, 2026-10-21T21:39:32+00:00)", "checks success, audit success на 9ec729ee2dae539ab70be028756644785201348a", "main = ea03a14, без нових змін після бази", "нових комітів і коментарів у PR немає"]
+  blocker: "запобіжник середовища J3 відхилив PUT /pulls/157/merge (причина «Merge Without Review»); обхід не виконувався"
+next_action: "злиття за рішенням JE-T9; T-0004 — ready_for_J5_review"

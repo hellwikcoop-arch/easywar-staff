@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/hellwikcoop-arch/easywar-staff/bridge/schema/message.schema.json",
+  "title": "j4.msg/0.1",
+  "description": "Повідомлення J4 Bridge v0.1. Нормативна перевірка — bridge/src/protocol.mjs (validateMessage); опис — bridge/docs/PROTOCOL.md.",
+  "type": "object",
+  "required": ["protocol", "msg_id", "thread_id", "task_id", "task_version", "contract", "subject", "from", "to", "kind", "decision_level", "data_class", "hop", "created_at", "body", "body_sha256"],
+  "properties": {
+    "protocol": {"const": "j4.msg/0.1"},
+    "msg_id": {"type": "string", "pattern": "^M-T-\\d{4}-\\d{4}$", "description": "Ставить J4"},
+    "thread_id": {"type": "string", "pattern": "^TH-T-\\d{4}-\\d{3}$", "description": "Ставить J4 для нової нитки; для відповіді береться з in_reply_to"},
+    "in_reply_to": {"type": ["string", "null"]},
+    "caused_by": {"type": ["string", "null"], "description": "Ставить J4: повідомлення, обробка якого породила це"},
+    "task_id": {"type": "string", "pattern": "^T-\\d{4}$"},
+    "task_version": {"type": "integer", "minimum": 1},
+    "contract": {
+      "type": "object",
+      "required": ["version", "sha256"],
+      "properties": {"version": {"type": "string"}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "sha256 файла контракту в easywar-staff; J4 звіряє з фактичним"}}
+    },
+    "subject": {
+      "type": "object",
+      "required": ["kind", "ref"],
+      "properties": {"kind": {"enum": ["commit", "file_hash", "doc_version"]}, "ref": {"type": "string", "description": "commit — 40 hex; file_hash — 64 hex"}}
+    },
+    "from": {"enum": ["JE", "J3", "J5", "C5.1", "C5.1-R", "C3"]},
+    "to": {"enum": ["JE", "J3", "J5", "C5.1", "C5.1-R", "C3"]},
+    "kind": {"enum": ["request", "response", "report", "ack", "handoff", "review", "escalation", "command", "decision"]},
+    "intent": {"enum": ["question", "proposal", "review_request", "acceptance_request", "status", "task", "answer", "other"]},
+    "decision_level": {"enum": ["A", "B", "C"]},
+    "data_class": {"const": "synthetic"},
+    "hop": {"type": "integer", "minimum": 0},
+    "created_at": {"type": "string", "format": "date-time"},
+    "body_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "body": {
+      "type": "object",
+      "required": ["summary"],
+      "properties": {
+        "summary": {"type": "string", "minLength": 1, "maxLength": 300},
+        "text": {"type": "string", "maxLength": 8000},
+        "refs": {"type": "array", "maxItems": 20, "items": {"type": "string", "pattern": "^[A-Za-z0-9._\\-/]+(@[0-9a-f]{7,64})?$"}},
+        "verdict": {"enum": ["answer", "accepted", "changes_requested", "question", "cannot_answer"]},
+        "decision_needed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["category", "question"],
+            "properties": {
+              "category": {"enum": ["budget_over_reserve", "scope_change", "end_state_change", "priority_change", "third_attempt", "migration_capabilities_csp", "release", "secrets", "key_visual", "new_integration", "other"]},
+              "question": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+task_id: T-0002
+task_version: 2
+seq: 13
+author: J3
+kind: milestone
+at: 2026-10-21T21:46:21+00:00
+subject: {kind: commit, ref: 2106f9ed85d66c8dc3621a1e4739e3e72060b84b}
+situation:
+  current_step: "C1b закрито; T-0004 синхронізовано й створено, передача Codex — контрольованим способом"
+  tool_results_refs: ["https://github.com/hellwikcoop-arch/EasyWAR/pull/157", tasks/T-0002/acceptance-c1b.json, tasks/T-0004/j5-final-authorization.md]
+  done:
+    - "PR #157 злито J3 за JE-T9: head 9ec729ee2dae539ab70be028756644785201348a, merge 2106f9ed85d66c8dc3621a1e4739e3e72060b84b"
+    - "C1b закрито; F-15 — tracked (tasks/T-0002/tracked/F-15.md), не resolved"
+    - "поправка A-1: бюджет T-0002 190 → 210 (JE-T8), історичні витрати збережено"
+    - "пакет T-0004 синхронізовано з JE-T6–JE-T9; task_created зареєстровано"
+verified:
+  - {claim: "PR157 merged, merge SHA 2106f9ed85d66c8dc3621a1e4739e3e72060b84b", evidence: {kind: commit, ref: 2106f9ed85d66c8dc3621a1e4739e3e72060b84b}, subject_ref: 2106f9ed85d66c8dc3621a1e4739e3e72060b84b}
+  - {claim: "main містить src/shared-table-core.js і src/sensitivity-core.js (C1a, C1b)", evidence: {kind: commit, ref: "git ls-tree origin/main src/ @ 2106f9ed85d66c8dc3621a1e4739e3e72060b84b"}, subject_ref: 2106f9ed85d66c8dc3621a1e4739e3e72060b84b}
+  - {claim: "перед злиттям: head = 9ec729ee2dae539ab70be028756644785201348a; checks і audit — success; main = ea03a14", evidence: {kind: log, ref: "GitHub API, сеанс J3"}, subject_ref: 9ec729ee2dae539ab70be028756644785201348a}
+  - {claim: "J4 Bridge: ребра J3 → C5.1 у routes.json немає; демонстрація T-0005 — stub", evidence: {kind: file, ref: "bridge/config/routes.json; reports/T-0005/technical-report.md"}, subject_ref: "setup/staff-bootstrap"}
+claimed: []
+deviation: null
+report_fields:
+  PR157_merge_sha: 2106f9ed85d66c8dc3621a1e4739e3e72060b84b
+  C1b_status: closed
+  T0002_budget_limit: 210
+  T0004_package_commit: "див. git log tasks/T-0004 (коміт цього донесення)"
+  T0004_order_version: 1
+  Codex_task_status: "task_created; очікує передачі й task_accepted від C5.1"
+  Codex_branch: codex/t-0004-c1c-membership
+  ADM_route: not_verified
+usage:
+  calls: {value: 131, accuracy: estimate, note: "з 210; C1c заплановано ≈41 (Codex 25), C1d ≈45 → прогноз ≈217? див. remaining_risks"}
+  tokens: {value: null, accuracy: unknown}
+  cost_usd: {value: null, accuracy: unknown}
+remaining_risks:
+  - "Бюджет: використано ≈131 з 210, залишок ≈79; план C1c ≈41 + C1d ≈45 = 86 → ризик перевищення ≈7. Запобіжник: C1d — один раунд C3, необов'язкові зауваження в tracked; при 70 % (147) — донесення"
+  - "Облік Codex — estimate; реальні виклики C5.1 J3 не бачить"
+  - "Маршрут J4 до Codex не перевірено наживо; передача вручну"
+  - "F-15 відкрите до C3b/C5"
+  - "Нестабільний Rust-тест у CI (раз упав на C1a); причину не встановлено"
+next_action: "JE або J5 передає tasks/T-0004/codex-prompt.md виконавцю C5.1; J3 чекає task_accepted і handoff"

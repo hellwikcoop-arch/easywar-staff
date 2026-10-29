@@ -1,0 +1,13 @@
+{
+  "task_id": "T-0002",
+  "subtask": "C1b",
+  "pr": "https://github.com/hellwikcoop-arch/EasyWAR/pull/157",
+  "subject_sha": "9ec729ee2dae539ab70be028756644785201348a",
+  "review_c3": {"verdict": "passed", "subject_sha": "9ec729ee2dae539ab70be028756644785201348a", "ref": "reports/T-0002/010.yaml"},
+  "acceptance_j3_technical": {"result": "accepted", "subject_sha": "9ec729ee2dae539ab70be028756644785201348a", "ref": "reports/T-0002/011.yaml"},
+  "acceptance_j5_content": {"result": "accepted", "subject_sha": "9ec729ee2dae539ab70be028756644785201348a", "ref": "reports/T-0002/012.yaml"},
+  "ci": {"run": 39638352439, "checks": "success", "audit": "success", "subject_sha": "9ec729ee2dae539ab70be028756644785201348a"},
+  "merge_authorization": {"by": "JE", "decision": "JE-T9", "ref": "tasks/T-0004/j5-final-authorization.md"},
+  "recorded_by": "J3",
+  "recorded_at": "2026-10-21T21:44:49+00:00"
+}

@@ -1,0 +1,28 @@
+# T-0010: передвідкривна перевірка за JE-T10-04 п. 3 (виконано J3 до відкриття PR).
+task_id: T-0010
+from: J3
+to: JE
+cc: [J5]
+authorization: "JE-T10-04 (tasks/T-0010/je-decision-T10-04.md), подія 16"
+control_sha: 96ff45a2feafcf0964eda290a2eacca52d3ab2e3
+base_sha: efe03c959107856f2536771ae5c023f1e007e7be
+pr_plan: {head: t-0010/stabilization, base: t-0009/j4-automation, draft: true, merge: false, body: reports/T-0010/pr-body.md}
+
+pre_open_checks:   # результати зібрано з git і GitHub REST перед записом цього файла
+  - {id: V1, check: "HEAD гілки = origin/t-0010/stabilization; журнали T-0010 (події 1–17), c3-reviews seq 1–2, 003/004/005 закомічені й запушені", result: "виконано; точний HEAD фіксується в PR-коментарі (цей файл не може містити SHA власного коміту)"}
+  - {id: V2, check: "код bridge/ ідентичний контрольному SHA: git diff --name-only 96ff45a..HEAD -- bridge", result: "0 файлів"}
+  - {id: V3, check: "захищені й чужі шляхи в diff efe03c9..HEAD (CONTRACT_v0_4.md, bridge/src/acceptance.mjs, bridge/config/**, .github/**, tasks/T-0011/**, tasks/T-0012/**)", result: "0"}
+  - {id: V4, check: "diff efe03c9..HEAD у bridge/", result: "6 файлів: README.md, bin/j4.mjs, docs/DESIGN.md, src/close.mjs, src/store.mjs, test/t0010.test.mjs"}
+  - {id: V5, check: "секрето-подібні рядки в доданих рядках diff (sk-, ghp_, AKIA, PRIVATE KEY, OPENAI_API_KEY=)", result: "0; дані лише синтетичні"}
+  - {id: V6, check: "база: origin/t-0009/j4-automation", result: "efe03c959107856f2536771ae5c023f1e007e7be — збігається з base_sha; PR №6 open, draft, head efe03c9 (без змін)"}
+  - {id: V7, check: "наявні PR з head t-0010/stabilization", result: "0; CI-запусків на гілці 0"}
+  - {id: V8, check: "прогноз викликів: 96 (J3 96, C3 0, CI 0) + 48 (CI-1, estimate) = 144 ≤ 150; запас 6", result: "в межах ліміту; платних і мережевих викликів 0"}
+  - {id: V9, check: "тригер CI: on pull_request (opened, synchronize, reopened) з paths bridge/**; фільтра draft немає", result: "відкриття PR = рівно одна подія CI; push/close/reopen/ручні запуски — заборонені (кожне ≈ ще 48 → HALT)"}
+
+t_0012_p1: "R-11 (F-T10-11) внесено до проєкту T-0012 як пункт P1 і ворота G4 на гілці orders/T-0010-12 (коміт f85297f); scope.in/out і ліміт чернетки не змінено; T-0011 і T-0012 не запускались"
+
+after_open:
+  - "PR відкривається через REST API (GraphQL у сеансі недоступний), draft: true; перевірка: base, head, draft, mergeable_state не потрібен"
+  - "жодних push, close/reopen, workflow_dispatch, зміни бази; PR не зливати"
+  - "CI успішний → коментар у PR (результат, облік фактичний/оцінений 48; підсумок 144 з 150) і підсумковий звіт J5/JE; CI неуспішний → HALT, доповідь JE без повтору"
+  - "номер PR і результат CI — у PR-коментарі та підсумковому звіті, не в журналі репозиторію"

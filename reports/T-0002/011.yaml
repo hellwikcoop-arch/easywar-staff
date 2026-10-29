@@ -1,0 +1,31 @@
+task_id: T-0002
+task_version: 1
+seq: 11
+author: J3
+kind: milestone
+at: 2026-10-21T16:56:31+00:00
+subject: {kind: commit, ref: 9ec729ee2dae539ab70be028756644785201348a}
+situation:
+  current_step: "C1b: технічне приймання J3; передано J5 на змістове приймання"
+  tool_results_refs: ["https://github.com/hellwikcoop-arch/EasyWAR/pull/157", reports/T-0002/009.yaml, reports/T-0002/010.yaml]
+  done: ["src/shared-table-core.js, tests/shared-table.test.mjs", "межовий тест: повний перелік запланованих ядер C1 (C1_PLANNED_CORES)", "рядки стану в COLLECTIVES_PLAN.md і рев'ю"]
+verified:
+  - {claim: "node --test C1a+C1b+межі — 39/39", evidence: {kind: log, ref: "сеанс J3 на 9ec729ee2dae539ab70be028756644785201348a"}, subject_ref: 9ec729ee2dae539ab70be028756644785201348a}
+  - {claim: "npm run test:unit — 1480/1480", evidence: {kind: log, ref: "сеанс J3 на 9ec729ee2dae539ab70be028756644785201348a"}, subject_ref: 9ec729ee2dae539ab70be028756644785201348a}
+  - {claim: "CI run 39638352439: checks success, audit success", evidence: {kind: log, ref: "GitHub check-runs 9ec729ee2dae539ab70be028756644785201348a"}, subject_ref: 9ec729ee2dae539ab70be028756644785201348a}
+  - {claim: "C3 passed на 9ec729ee2dae539ab70be028756644785201348a; F-8..F-14 закрито; мутаційні проби C3 ловлять F-10, F-11, F-12", evidence: {kind: file, ref: reports/T-0002/010.yaml}, subject_ref: 9ec729ee2dae539ab70be028756644785201348a}
+  - {claim: "лише файли scope.in C1b; src-tauri/**, package*.json, AGENTS.md, legacy HTML не змінено", evidence: {kind: commit, ref: "git diff --name-only ea03a14..9ec729ee2dae539ab70be028756644785201348a"}, subject_ref: 9ec729ee2dae539ab70be028756644785201348a}
+claimed: []
+deviation: null
+review: {review_status: complete, verdict: passed, subject_ref: 9ec729ee2dae539ab70be028756644785201348a, unread: []}
+findings:
+  - {id: F-15, severity: low, mandatory: false, status: deferred, description: "ідемпотентність повторів — за поточним складом writers; наявність решти ядер у межовому тесті", location: "src/shared-table-core.js; tests/collective-core-boundaries.test.mjs", criterion_or_rule_ref: "5.2, 5.3 п.7", how_to_verify: "врахувати в C3b/C5; C1c і C1d перевіряють свої файли в C1_CORES"}
+acceptance: {technical: {by: J3, subject_ref: 9ec729ee2dae539ab70be028756644785201348a, result: accepted}, content: {by: J5, result: pending}}
+usage:
+  calls: {value: 112, accuracy: estimate, note: "T-0002 разом; C1b ≈51 з двома раундами C3; використано 2 спроби з 2 на кроці C1b"}
+  attempts: {value: 2, accuracy: exact}
+  tokens: {value: null, accuracy: unknown}
+  cost_usd: {value: null, accuracy: unknown}
+decision_needed: ["J5: погодження пакета T-0004 (C1c, Codex) і рішення щодо прогнозованого перевищення бюджету ≈8 (tasks/T-0004/j5-brief.md)"]
+remaining: ["змістове приймання J5 PR #157 на 9ec729ee2dae539ab70be028756644785201348a", "злиття J3", "C1c (Codex, T-0004)", "C1d (J3)"]
+next_action: "чекати J5"

@@ -1,0 +1,27 @@
+# Донесення J5 (незалежна перевірка C1a на 90b3a33). Перенесено J3 з повідомлення J5, переданого JE
+# у сеансі J3 21.10.2026 19:18; зміст не змінено, лише стиснуто до полів шаблону.
+task_id: T-0002
+task_version: 1
+seq: 5
+author: J5
+kind: deviation
+at: 2026-10-21T19:18:00+03:00
+subject: {kind: commit, ref: 90b3a3346b038cd673232e3cee19e0bcbce31c80}
+verified:
+  - claim: "Зміни обмежені п'ятьма файлами; Rust, міграції, CSP, capabilities, залежності не зачеплено; ядро не підключене"
+    evidence: {kind: commit, ref: 90b3a3346b038cd673232e3cee19e0bcbce31c80}
+    subject_ref: 90b3a3346b038cd673232e3cee19e0bcbce31c80
+findings:
+  - id: F-6
+    severity: medium
+    mandatory: true
+    status: open
+    description: "effectiveColumnClass() дозволяє власнику підтвердити будь-який клас A–D незалежно від ролі поля чи призначення таблиці; для таблиці планових даних може повернути A"
+    location: "src/sensitivity-core.js, effectiveColumnClass"
+    criterion_or_rule_ref: "COLLECTIVES_PLAN.md: К7; правило для планових даних"
+    how_to_verify: "негативний тест: планова таблиця з підтвердженим класом A; звірка з COLLECTIVES_PLAN.md і точне посилання або виправлення ядра з повторною рецензією"
+decision_needed: []
+acceptance: {content: {by: J5, result: conditional, note: "без дозволу на злиття до закриття F-6, повторної рецензії C3 і зеленого CI на новому коміті"}}
+rules_set:
+  - "Мова для C1b–C1d: коментарі в JS — українською; назви функцій, змінних, типів, API та машинні коди помилок — англійською"
+next_action: "J3: закрити F-6"

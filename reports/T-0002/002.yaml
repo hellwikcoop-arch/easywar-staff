@@ -1,0 +1,21 @@
+# Донесення C3 (рецензія C1a, перший раунд). Перенесено J3 з висновку рецензента без змін змісту;
+# повний текст — у журналі сеансу J3. C3 — окремий запуск Claude (Sonnet), лише читання.
+task_id: T-0002
+task_version: 1
+seq: 2
+author: C3
+kind: milestone
+subject: {kind: commit, ref: e1e11dbc2adb8bae6db36cf55b70550ba39e04a4}
+review:
+  review_status: complete
+  verdict: passed
+  subject_ref: e1e11dbc2adb8bae6db36cf55b70550ba39e04a4
+  unread: []
+  files_read: ["git diff 611841c..e1e11dbc", tasks/T-0002/order.yaml, tasks/T-0002/je-order.md, tasks/T-0002/brief.md,
+               docs/COLLECTIVES_PLAN.md, src/module-definition-core.js]
+findings:
+  - {id: F-1, severity: medium, mandatory: false, status: open, description: "тест не фіксує точний набір ролей класу C", location: "tests/sensitivity.test.mjs:30-41", criterion_or_rule_ref: "COLLECTIVES_PLAN.md додаток А", how_to_verify: "тест на точний набір 11 ролей; перенесення note у клас C має провалити тест"}
+  - {id: F-2, severity: low, mandatory: false, status: open, description: "null у параметрах дає TypeError", location: "src/sensitivity-core.js:94,117,123,135", criterion_or_rule_ref: "невідоме веде до D або відмови", how_to_verify: "виклики з null повертають D/відмову; тест"}
+  - {id: F-3, severity: low, mandatory: false, status: open, description: "не зафіксовано, що підтвердження власника може бути нижчим за пропозицію", location: "src/sensitivity-core.js:117-123", criterion_or_rule_ref: "К7, JE-T3", how_to_verify: "тест-документація поведінки"}
+  - {id: F-4, severity: low, mandatory: false, status: open, description: "межовий тест не покриває таймери, eval, динамічний імпорт і транзитивні залежності", location: "tests/collective-core-boundaries.test.mjs:14-32", criterion_or_rule_ref: "order.yaml red_lines", how_to_verify: "performance.now() у ядрі провалює тест; обхід графа імпортів"}
+  - {id: F-5, severity: low, mandatory: false, status: open, description: "пояснення «клас D» замість «клас не призначено»; кирилиця перевірена не для всіх кодів; мова коментарів; стан C1a у рев'ю", location: "src/sensitivity-core.js:156-160; tests/sensitivity.test.mjs:104-108", criterion_or_rule_ref: "brief.md розділ 1; order.yaml scope.in", how_to_verify: "зонд explainMixedTable; перебір кодів routeFor"}

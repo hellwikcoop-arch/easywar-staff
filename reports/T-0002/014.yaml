@@ -1,0 +1,22 @@
+task_id: T-0002
+task_version: 2
+seq: 14
+author: J3
+kind: deviation
+at: 2026-10-22T18:50:25+00:00
+subject: {kind: commit, ref: e9db3eadac622314569497e1cafb77b1777b3a8d}
+situation:
+  current_step: "C1d: PR #160 відкрито, CI зелений; запущено незалежну рецензію C3"
+  tool_results_refs: ["https://github.com/hellwikcoop-arch/EasyWAR/pull/160"]
+  done: ["src/sync-policy-core.js, src/report-submission-core.js і тести (C1d раніше C1c за рішенням JE, подія №28)"]
+verified:
+  - {claim: "node --test C1d + межі — 24/24; npm run test:unit — 1499/1499", evidence: {kind: log, ref: "сеанс J3 на e9db3eadac622314569497e1cafb77b1777b3a8d"}, subject_ref: e9db3eadac622314569497e1cafb77b1777b3a8d}
+  - {claim: "CI: checks success, audit success", evidence: {kind: log, ref: "GitHub check-runs e9db3eadac622314569497e1cafb77b1777b3a8d"}, subject_ref: e9db3eadac622314569497e1cafb77b1777b3a8d}
+claimed: []
+deviation:
+  type: resources
+  detail: "Досягнуто порогу 70 % бюджету T-0002 (147 з 210): використано ≈148 (estimate). Після рецензії C3 C1d — ≈158. Залишок ≈52 на C1c (план ≈41: Codex 25 + C3 ≈10 + J3 ≈6). Прогноз ≈199 ≤ 210, запас ≈11 — друга спроба на C1d або C1c може його вичерпати"
+budget_separation: "Робота з PR #158 (Комбат, ≈23 виклики) у цей бюджет не входить; окремий бюджет PR #158 — на рішенні JE (пропозиція J5: 40)"
+decision_needed: []
+remaining: ["рецензія C3 C1d", "J3 technical, J5 content, злиття PR #160", "C1c (Codex, T-0004) — після скидання ліміту"]
+next_action: "чекати висновку C3"

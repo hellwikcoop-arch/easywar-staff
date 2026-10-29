@@ -1,0 +1,33 @@
+{
+  "$comment": "Ліміти J4 v0.1. max_cost_usd_per_task = 0: платні виклики неможливі без файла погодження JE (bridge/approvals/live.json), який задає власну межу. Одиниця calls — один виклик адаптера (розділ 3, 'одиниця max_calls').",
+  "defaults": {
+    "max_calls_per_task": 20,
+    "max_calls_per_day": 50,
+    "max_tokens_per_task": 60000,
+    "max_cost_usd_per_task": 0,
+    "max_rounds_per_thread": 4,
+    "max_hops": 3,
+    "max_delegation_depth": 1,
+    "max_attempts": 2,
+    "max_open_threads_per_task": 3,
+    "max_body_chars": 8000,
+    "max_summary_chars": 300,
+    "max_output_tokens": 1500,
+    "reserve_tokens_per_call": 4000,
+    "min_interval_ms": 0,
+    "lock_stale_ms": 600000,
+    "adapter_timeout_ms": 120000
+  },
+  "evidence": {
+    "$comment": "Рівень доказів у журналі: hash — лише хеші тіл; summary — хеші плюс авторське резюме (≤ max_summary_chars). Повний текст тіл і сирі відповіді провайдера в журнал не потрапляють ніколи; вони лише в локальному спулі J4_HOME.",
+    "level": "summary"
+  },
+  "monthly": {
+    "$comment": "Сукупна місячна стеля платних викликів ADM/J4 Bridge (рішення JE, T-0006). Змінює лише JE. Погодження живого виклику не може її підняти.",
+    "cap_usd": 50,
+    "warning_usd": 35,
+    "critical_usd": 45,
+    "stop_usd": 50,
+    "lock_timeout_ms": 5000
+  }
+}
