@@ -1,0 +1,16 @@
+# Облік викликів адаптера J4 для T-0011 (одиниця — як у T-0009/T-0010/T-0012: dispatch_attempt у журналі J4 + прямий adapter.call()). Лише додавання рядків.
+# Ліміт: 180 (JE-T12-01 п. 4). Перевірка перед кожним прогоном з диспетчеризацією: used + next ≤ 180. Не обнуляти.
+task: T-0011
+limits: {effective: 180, halt_rule: "used + next > 180", paid_usd: 0}
+counting_method:
+  - "повний прогін node --test 'bridge/test/*.test.mjs' = 48 (44 dispatch_attempt + 4 прямих у gate.test.mjs); базове значення T-0009/T-0010/T-0012"
+  - "фільтровані прогони запускаються через tasks/T-0011/tools/run-counted.sh (ізольований TMPDIR + сканер dispatch_attempt); результат сканера записується в entries"
+  - "цілі файли t0006/t0007/t0009/recovery диспетчеризують (урок T12-002) — лише з фільтром, спершу перевірити, що фільтр дає 0"
+  - "C3 за diff — 0 (без node --test); CI — 48 за подію (лише за окремим дозволом JE)"
+plan:
+  - "фільтровані прогони t0011 / t0010 / фільтри t0009 / recovery: 0 (підтверджується сканером)"
+  - "повний прогін J3 №1 на контрольному SHA: 48 → 48 ≤ 180"
+  - "резерв CI ×1: 48 (лише за окремим дозволом JE) → 96"
+  - "повний прогін J3 №2 (лише після changes_requested): 48 → 144; третій (192 > 180) — HALT"
+entries: []
+state: {used: 0, forecast_next_full_run: 48, projected_after_full_run: 48, remaining_to_180: 180, paid_api_calls: 0, network_calls: 0, ci_runs: 0}
