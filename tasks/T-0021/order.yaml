@@ -1,0 +1,44 @@
+# Наказ T-0021 — W1 (перша хвиля Core 1.0) за рішенням JE 29.10.2026 20:05 (Київ), «JE-GO — запуск W1 затверджено».
+# Підстава: пакет планування T-0020 / J5-REVIEW (ROADMAP v0.3, 02, 06, 08). Записано J3 (ручний режим ADM, розд. 26).
+id: T-0021
+version: 1
+parent_task_id: null
+title: "W1 — тестова збірка EasyWAR Core для Windows і macOS: гігієна (W1-1), CSP (W1-2), оновлення бази (W1-3)"
+intent:
+  purpose: "Довести EasyWAR Core до стану реальної тестової збірки для Windows і macOS; результат — працездатний застосунок і перевірювані артефакти, а не лише документи"
+  end_state:
+    - "W1-1: справжній SECURITY.md EasyWAR замість шаблону PR #181; усунення блокувальних проблем збірки"
+    - "W1-2: CSP з PR #183 інтегровано на актуальний main; 10 сценаріїв RV-1 підготовлено й перевірено на Windows і macOS (прогін — JE)"
+    - "W1-3: RV-2 — оновлення бази стану 2.2.4 до поточної схеми; кількість і хеші рядків до = після"
+    - "Тестові артефакти Windows і macOS (непідписані/ad-hoc) з CI workflow_dispatch; не публікувати як реліз"
+    - "Результати RV-1…RV-4: PASS/FAIL, SHA, платформа, докази, відкат"
+  red_lines:
+    - "лише синтетичні дані"
+    - "злиття PR — лише після JE-T5"
+    - "не публікувати тестову збірку як офіційний реліз"
+    - "не обходити механізми безпеки заради зеленого тесту"
+    - "E3б / PR #194 — Full; B2–B6 не запускати"
+    - "без нових модулів і адміністративних задач поза W1"
+    - "платні API — лише за окремим дозволом JE"
+scope:
+  in: ["SECURITY.md", "src-tauri/tauri.conf.json (CSP з #183)", "tests/network-boundary.test.mjs", "tests/desktop-frontend.test.mjs", "src-tauri/src/** (лише тест RV-2)", "docs/evidence/**", "docs/BACKLOG.md", "docs/adr/network-and-secret-boundaries.md"]
+  out: ["Cargo.lock, package-lock.json", "capabilities/*, build.rs", "legacy HTML (крім доведеної поломки CSP — тоді стоп і доповідь)", "PR #194 / E3б"]
+data_class: synthetic
+requester: JE
+assignee: J3
+priority: high
+important: true
+acceptance: {technical: J3, content: J5, key_decision: true}
+resources:
+  max_calls_total: 135
+  per_task: {W1-1: 42, W1-2: 41, W1-3: 32, C3_reserve: 20}
+  rule: "резерв не збільшує ліміти окремих задач без погодження JE; доповідь на 70 %"
+  accuracy: estimate
+  counting_note: "лічба викликів J3 почалась з 20:05 (Київ); виклики ADM-реєстрації віднесено до W1-1"
+acceptance_criteria:
+  RV-1: "усі 10 сценаріїв на обох ОС за критеріями ROADMAP v0.3 §6"
+  RV-2: "кількість і хеші рядків до та після оновлення збігаються"
+  RV-3: "тестові інсталятори запускаються; для непідписаної Windows-збірки допускається задокументоване попередження SmartScreen; не видавати за публічний реліз"
+  RV-4: "три послідовні прогони без помилок"
+deliverables: ["артефакт Windows", "артефакт macOS", "результати RV-1…RV-4", "перелік працездатних функцій і обмежень", "висновки C3, J3, J5 на SHA", "звіт про виклики"]
+base: {easywar_main: 15402b2b80304f1304d8400e88b5d8114d403570, staff_main: f33af497977f80e1cd5470ac8485f2a4ccb9a851}
