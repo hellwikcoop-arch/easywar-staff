@@ -4,7 +4,7 @@
 # Передумови: PR #172 злито (0fa5c32); JE-15 Б умовно, JE-16 а, JE-18 Ф — є; підпитання JE-16 (офлайн-операції відкликаного: а/б) — відкрите,
 # робоче припущення (б) відхиляти, доки JE не скаже інакше. Cargo.lock у main уже змінено (#166/#167/#169/#175) — звірити таблицю крейтів ADR §1 на старті.
 id: T-0017
-version: 3
+version: 4
 parent_task_id: null
 title: "R4 / E8 C2 — Rust Crypto Engine: ключі, епохи, конверт EnvelopeV1, сховище секретів (варіант Б, без мережі)"
 intent:
@@ -44,7 +44,7 @@ checks:
     - "npm run test:unit; CI desktop-build checks + audit success"
     - "G06: ті самі вектори на Windows і macOS (поза хмарною сесією — окремий доказ власника або CI на тегах)"
   review_kind: code
-resources: {max_calls: 190, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
+resources: {max_calls: 195, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 25}, accuracy: estimate, effort_estimate: {value: "4–6 сеансів (≈120–160 викликів)", accuracy: estimate}}
 reporting:
   milestones: ["залежності + вектори + codec (PR чернетка)", "identity/epoch/envelope/replay зелені", "secret_store з 5 перевірками JE-18", "G12 звіт", "C3 passed; J3; J5"]
   thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
@@ -70,3 +70,13 @@ amendments:
     decided_by: JE
     decided_at: 2026-10-29
     note: "JE 13:15Z, картка рішення: «Злиття, C3, +40 викликів». Дозволяє коміт злиття main у claude/e8-c2-crypto-engine і вузьку C3 через J4 inbox; НЕ дозволяє merge #180 у main, закриття G12, платні виклики чи production-підключення C2"
+  - id: A-3
+    proposed_by: J3
+    base_version: 3
+    kind: change
+    change: {field: resources.max_calls, from: 190, to: 195}
+    reason: "бюджет ≈190/190 (estimate) вичерпано; потрібно ~3 виклики на злиття документаційного PR #192 і запис merge SHA"
+    scope: "лише злиття #192 і запис SHA; нових завдань і змін коду не дозволяє; done T-0017 — окремим наказом JE"
+    status: approved
+    decided_by: JE
+    decided_at: "2026-10-29T15:53:59Z (картка «Так: злити, бюджет +5»)"
