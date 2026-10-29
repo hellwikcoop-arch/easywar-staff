@@ -1,6 +1,8 @@
-# ЧЕРНЕТКА (J3, 29.10.2026, за п. 7 рішення JE за R3 і JE-21 варіант а). НЕ НАКАЗ. Номер T-XXXX, max_calls і task_created — за J5/JE.
-# Не запускати автоматично. Передумови: злиття PR #172 (інвентар ресурсів ADR network-and-secret-boundaries.md §5).
-id: T-XXXX
+# Наказ T-0018 (CSP головного вікна, P2-1, JE-21 варіант а) за п. 7 рішення JE за R3 і словом JE 29.10.2026 01:24Z («наступний наказ (R4 C2 / CSP»).
+# Оформлено з чернетки tasks/E8-CSP/order.draft.yaml (історія в git). Ресурсний дозвіл JE на max_calls 80 — 29.10.2026 01:30Z (картка рішення в треді);
+# task_accepted J3 — events.jsonl seq 3. Виконання почато 29.10 (паралельно з T-0017, окрема гілка). Передумова: інвентар ресурсів ADR network-and-secret-boundaries.md §5 у main (PR #172).
+# Окремий контрольований PR; злиття з відкритими перевірками Windows/macOS — лише за рішенням JE.
+id: T-0018
 version: 1
 parent_task_id: null
 title: "CSP головного вікна замість null (P2-1, JE-21 варіант а) — окремий контрольований PR"
@@ -28,7 +30,7 @@ checks:
   subject_kind: commit
   verify: ["node --test tests/network-boundary.test.mjs tests/office-isolation.test.mjs tests/desktop-frontend.test.mjs", "npm run build", "run-easywar: сценарії вище без помилок CSP у консолі", "CI desktop-build success"]
   review_kind: code
-resources: {max_calls: NOT_AUTHORIZED, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 15}, accuracy: estimate, effort_estimate: {value: "2–3 сеанси (≈60–80 викликів)", accuracy: estimate}}
+resources: {max_calls: 80, max_attempts: 2, max_delegation_depth: 1, reviewer: {max_read_files: 15}, accuracy: estimate, effort_estimate: {value: "2–3 сеанси (≈60–80 викликів)", accuracy: estimate}}
 reporting:
   milestones: ["CSP-рядок + тести (PR чернетка)", "сценарії run-easywar пройдено, скриншоти", "C3 passed; J3; J5; рішення JE про злиття з відкритим Windows/macOS"]
   thresholds: {resources_used_pct: 70, on_last_attempt: true, on_provider_limit: true, on_review_incomplete: true, on_red_line_risk: true}
